@@ -11,3 +11,12 @@ android/.gradle
 android/build
 android/app/build
 .turbo
+
+# Dev SQLite databases (Drizzle)
+apps/api/*.db
+apps/api/*.db-journal
+apps/api/*.db-wal
+apps/api/*.db-shm
+
+# Uploads (local photo storage)
+apps/api/uploads
