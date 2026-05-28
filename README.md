@@ -1,4 +1,4 @@
-# Home Inspection App (Florida v1)
+# Inspect AI (Florida)
 
 A mobile app for professional home inspectors performing **Florida 4-Point** and
 **Wind Mitigation (OIR-B1-1802)** inspections. Captures photos, runs AI analysis
@@ -13,12 +13,12 @@ on each photo, looks up property data by address, and generates a PDF report.
 - **PDF** — `pdf-lib`, server-side rendering
 
 ```
-home-inspection-app/
+inspect-ai/
 ├── apps/
-│   ├── api/      # Hono backend
-│   └── mobile/   # Expo app
+│   ├── api/      # Hono backend (@inspect-ai/api)
+│   └── mobile/   # Expo app   (@inspect-ai/mobile)
 └── packages/
-    └── shared/   # Types + 4-point and wind mit Zod schemas
+    └── shared/   # Types + 4-point and wind mit Zod schemas (@inspect-ai/shared)
 ```
 
 ## Run it
@@ -26,7 +26,7 @@ home-inspection-app/
 Requires Node 22 and pnpm 11.
 
 ```bash
-cd /src/home-inspection-app
+cd /src/home-inspection-app   # repo dir, package name is inspect-ai
 pnpm install
 
 # Backend (port 8787)

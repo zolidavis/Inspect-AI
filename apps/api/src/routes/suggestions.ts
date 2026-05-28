@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { FourPoint, WindMit } from "@hia/shared";
+import { FourPoint, WindMit } from "@inspect-ai/shared";
 import { store } from "../store.js";
 import { formForTag } from "./ai.js";
 

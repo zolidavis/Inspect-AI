@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "Home Inspection",
-    "slug": "hia-mobile",
-    "scheme": "hia",
+    "name": "Inspect AI",
+    "slug": "inspect-ai-mobile",
+    "scheme": "inspectai",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "bundleIdentifier": "com.hia.mobile",
+      "bundleIdentifier": "com.inspectai.mobile",
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "Capture inspection photos for reports.",
@@ -16,14 +16,14 @@
       }
     },
     "android": {
-      "package": "com.hia.mobile",
+      "package": "com.inspectai.mobile",
       "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE"]
     },
     "plugins": [
       "expo-router",
       [
         "expo-camera",
-        { "cameraPermission": "Allow Home Inspection to access your camera." }
+        { "cameraPermission": "Allow Inspect AI to access your camera." }
       ]
     ],
     "extra": {

@@ -6,7 +6,7 @@ import { useRouter } from "expo-router";
 import { FieldEditor, getAt, setAt } from "./FieldEditor";
 import type { SectionMeta } from "../lib/form-meta";
 import { api } from "../lib/api";
-import type { Inspection } from "@hia/shared";
+import type { Inspection } from "@inspect-ai/shared";
 
 /**
  * Reusable editor. Given a section list and the form key on Inspection

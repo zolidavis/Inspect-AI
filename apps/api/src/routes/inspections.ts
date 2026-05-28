@@ -6,7 +6,7 @@ import {
   InspectionTypeSchema,
   WindMit,
   type Inspection,
-} from "@hia/shared";
+} from "@inspect-ai/shared";
 import { z } from "zod";
 import { store } from "../store.js";
 

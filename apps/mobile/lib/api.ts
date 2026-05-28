@@ -5,7 +5,7 @@ import type {
   InspectionType,
   Photo,
   PropertyLookup,
-} from "@hia/shared";
+} from "@inspect-ai/shared";
 
 const BASE = (Constants.expoConfig?.extra?.apiBaseUrl as string) ?? "http://localhost:8787";
 

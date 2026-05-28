@@ -1,4 +1,4 @@
-import type { Inspection, Photo } from "@hia/shared";
+import type { Inspection, Photo } from "@inspect-ai/shared";
 
 /**
  * Trivial in-memory store for v1. Swap for Drizzle + Postgres when ready.

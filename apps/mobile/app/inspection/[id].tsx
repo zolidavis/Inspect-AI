@@ -4,7 +4,7 @@ import {
   StyleSheet, Text, View,
 } from "react-native";
 import { Link, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
-import { FourPoint, WindMit, type Inspection } from "@hia/shared";
+import { FourPoint, WindMit, type Inspection } from "@inspect-ai/shared";
 import { api, CompleteError } from "../../lib/api";
 
 export default function InspectionDetail() {

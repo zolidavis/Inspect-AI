@@ -1,11 +1,11 @@
 {
-  "name": "home-inspection-app",
+  "name": "inspect-ai",
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@11.1.2",
   "scripts": {
-    "api": "pnpm --filter @hia/api dev",
-    "mobile": "pnpm --filter @hia/mobile start",
+    "api": "pnpm --filter @inspect-ai/api dev",
+    "mobile": "pnpm --filter @inspect-ai/mobile start",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck"
   },

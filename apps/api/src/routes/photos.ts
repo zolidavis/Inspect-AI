@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { Photo } from "@hia/shared";
+import type { Photo } from "@inspect-ai/shared";
 import { store } from "../store.js";
 
 export const photos = new Hono();

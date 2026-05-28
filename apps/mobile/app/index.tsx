@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { Link, useFocusEffect, useRouter } from "expo-router";
-import type { Inspection } from "@hia/shared";
+import type { Inspection } from "@inspect-ai/shared";
 import { api } from "../lib/api";
 
 export default function Inspections() {

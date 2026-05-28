@@ -4,7 +4,7 @@ import {
   StyleSheet, Text, TextInput, View,
 } from "react-native";
 import { useRouter } from "expo-router";
-import type { InspectionType } from "@hia/shared";
+import type { InspectionType } from "@inspect-ai/shared";
 import { api } from "../lib/api";
 
 const TYPES: { value: InspectionType; label: string }[] = [

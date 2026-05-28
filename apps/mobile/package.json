@@ -1,5 +1,5 @@
 {
-  "name": "@hia/mobile",
+  "name": "@inspect-ai/mobile",
   "version": "0.1.0",
   "private": true,
   "main": "expo-router/entry",
@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hia/shared": "workspace:*",
+    "@inspect-ai/shared": "workspace:*",
     "expo": "~52.0.0",
     "expo-camera": "~16.0.0",
     "expo-constants": "~17.0.0",

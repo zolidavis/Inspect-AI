@@ -101,5 +101,5 @@ pdf.get("/:inspectionId", async (c) => {
     "Content-Disposition",
     `inline; filename="inspection-${inspection.id}.pdf"`
   );
-  return c.body(bytes);
+  return c.body(bytes as unknown as ArrayBuffer);
 });

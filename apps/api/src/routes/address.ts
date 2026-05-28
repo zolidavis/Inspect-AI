@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { AddressSchema, PropertyLookupSchema, type PropertyLookup } from "@hia/shared";
+import { AddressSchema, PropertyLookupSchema, type PropertyLookup } from "@inspect-ai/shared";
 
 export const address = new Hono();
 

@@ -1,5 +1,5 @@
 {
-  "name": "@hia/api",
+  "name": "@inspect-ai/api",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
-    "@hia/shared": "workspace:*",
+    "@inspect-ai/shared": "workspace:*",
     "@hono/node-server": "^1.13.7",
     "hono": "^4.6.12",
     "pdf-lib": "^1.17.1",

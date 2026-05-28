@@ -1,7 +1,7 @@
 /**
  * UI rendering metadata for the 4-point and wind-mit forms.
  *
- * Mirrors the Zod schemas in `@hia/shared/forms/*` — kept here (rather
+ * Mirrors the Zod schemas in `@inspect-ai/shared/forms/*` — kept here (rather
  * than derived from Zod) for explicit control over labels, ordering,
  * and field types.
  *
