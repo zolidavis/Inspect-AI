@@ -7,7 +7,17 @@ import type {
   PropertyLookup,
 } from "@inspect-ai/shared";
 
-const BASE = (Constants.expoConfig?.extra?.apiBaseUrl as string) ?? "http://localhost:8787";
+/**
+ * Resolution order:
+ *   1. EXPO_PUBLIC_API_BASE_URL — baked in at build time by EAS profile
+ *      env (preview/production point at https://inspect-ai-api.vercel.app)
+ *   2. app.json#extra.apiBaseUrl — fallback for dev builds / Expo Go
+ *   3. localhost:8787 — fallback for local Node dev
+ */
+const BASE =
+  process.env.EXPO_PUBLIC_API_BASE_URL ??
+  (Constants.expoConfig?.extra?.apiBaseUrl as string) ??
+  "http://localhost:8787";
 
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
