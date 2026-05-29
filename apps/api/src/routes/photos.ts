@@ -33,7 +33,7 @@ photos.post("/", async (c) => {
   if (!inspectionId || !tag || !(file instanceof File)) {
     return c.json({ error: "missing_fields" }, 400);
   }
-  if (!store.getInspection(inspectionId)) {
+  if (!(await store.getInspection(inspectionId))) {
     return c.json({ error: "inspection_not_found" }, 404);
   }
 
@@ -55,7 +55,7 @@ photos.post("/", async (c) => {
     storageKey: key,
     capturedAt: new Date().toISOString(),
   };
-  store.putPhoto(photo);
+  await store.putPhoto(photo);
   return c.json(await withUrl(photo), 201);
 });
 
@@ -64,7 +64,7 @@ photos.post("/", async (c) => {
  * Returns the photos for an inspection, each with a freshly-signed URL.
  */
 photos.get("/inspection/:id", async (c) => {
-  const list = store.listPhotos(c.req.param("id"));
+  const list = await store.listPhotos(c.req.param("id"));
   const withUrls = await Promise.all(list.map(withUrl));
   return c.json(withUrls);
 });

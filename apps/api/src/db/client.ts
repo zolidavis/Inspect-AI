@@ -1,32 +1,33 @@
 /**
- * SQLite + Drizzle client. Auto-runs migrations from ./drizzle on
- * first import so `pnpm api` is a single command.
+ * Drizzle + postgres-js client (Neon).
  *
- * For prod (Postgres), swap to:
- *   import { drizzle } from "drizzle-orm/postgres-js";
- *   import postgres from "postgres";
- *   const sql = postgres(process.env.DATABASE_URL!);
- *   export const db = drizzle(sql, { schema });
+ * Single source of truth for DB access. Runs on Node locally and on
+ * Vercel's Edge runtime in prod — `postgres` is dual-published and the
+ * pooled Neon URL works in both.
+ *
+ * Migrations are NOT auto-applied at import time anymore. Pooled
+ * Postgres connections can flake on DDL, and Edge cold-starts shouldn't
+ * pay the cost. Use `pnpm db:migrate` once after schema changes (the
+ * standalone migrator in ./migrate.ts uses an unpooled connection).
  */
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { migrate } from "drizzle-orm/better-sqlite3/migrator";
-import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import * as schema from "./schema.js";
 
-const rawUrl = process.env.DATABASE_URL ?? "file:./inspect-ai.db";
-const dbPath = rawUrl.replace(/^file:/, "");
+const url = process.env.DATABASE_URL;
+if (!url) {
+  throw new Error(
+    "DATABASE_URL is not set. Provision a Neon (or any Postgres) " +
+      "instance and add the connection string to your env.",
+  );
+}
 
-const sqlite = new Database(dbPath);
-sqlite.pragma("journal_mode = WAL");
-sqlite.pragma("foreign_keys = ON");
+// `postgres` defaults are good. Tune for serverless if needed:
+//   max: 1 — single connection per worker (Edge instance)
+//   prepare: false — Neon's pooler doesn't support session-scoped prepared statements
+const sql = postgres(url, {
+  max: 1,
+  prepare: false,
+});
 
-export const db = drizzle(sqlite, { schema });
-
-// Run pending migrations on startup. Path is relative to this source
-// file so it works both from `tsx watch src/index.ts` and from compiled
-// dist/.
-const here = dirname(fileURLToPath(import.meta.url));
-const migrationsFolder = resolve(here, "../../drizzle");
-migrate(db, { migrationsFolder });
+export const db = drizzle(sql, { schema });

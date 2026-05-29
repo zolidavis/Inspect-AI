@@ -26,6 +26,11 @@ export interface PutOptions {
 export interface Storage {
   readonly backend: StorageBackend;
   put(key: string, bytes: Buffer, opts?: PutOptions): Promise<void>;
+  /**
+   * Fetch raw bytes for server-side use (e.g. feeding a photo into
+   * Claude vision). Works in both backends.
+   */
+  get(key: string): Promise<{ bytes: Buffer; contentType: string }>;
   signedGetUrl(key: string, ttlSeconds?: number): Promise<string>;
   /** Local backend only — read raw bytes for the dev pass-through route. */
   readLocal?(key: string): Promise<{ bytes: Buffer; contentType: string }>;
@@ -60,6 +65,12 @@ function createR2Storage(): Storage {
         }),
       );
     },
+    async get(key) {
+      const res = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+      if (!res.Body) throw new Error(`r2.get: empty body for ${key}`);
+      const bytes = Buffer.from(await res.Body.transformToByteArray());
+      return { bytes, contentType: res.ContentType ?? "application/octet-stream" };
+    },
     async signedGetUrl(key, ttlSeconds = 3600) {
       return getSignedUrl(client, new GetObjectCommand({ Bucket: bucket, Key: key }), {
         expiresIn: ttlSeconds,
@@ -83,6 +94,21 @@ function publicBaseUrl(): string {
 }
 
 function createLocalStorage(): Storage {
+  async function readLocalImpl(key: string): Promise<{ bytes: Buffer; contentType: string }> {
+    const target = join(LOCAL_UPLOAD_DIR, key);
+    await stat(target); // throws if missing → 404 in caller
+    const bytes = await readFile(target);
+    // Best-effort content-type from extension.
+    const ext = key.split(".").pop()?.toLowerCase();
+    const ct =
+      ext === "jpg" || ext === "jpeg" ? "image/jpeg"
+      : ext === "png" ? "image/png"
+      : ext === "webp" ? "image/webp"
+      : ext === "heic" ? "image/heic"
+      : "application/octet-stream";
+    return { bytes, contentType: ct };
+  }
+
   return {
     backend: "local",
     async put(key, bytes) {
@@ -93,25 +119,13 @@ function createLocalStorage(): Storage {
       if (dir) await mkdir(dir, { recursive: true });
       await writeFile(target, bytes);
     },
+    get: readLocalImpl,
     async signedGetUrl(key) {
       // Local "signing" is just opaque path encoding — the dev route
       // accepts the same key back. No expiry for dev.
       return `${publicBaseUrl()}/photos/local/${encodeURIComponent(key)}`;
     },
-    async readLocal(key) {
-      const target = join(LOCAL_UPLOAD_DIR, key);
-      await stat(target); // throws if missing → 404 in caller
-      const bytes = await readFile(target);
-      // Best-effort content-type from extension.
-      const ext = key.split(".").pop()?.toLowerCase();
-      const ct =
-        ext === "jpg" || ext === "jpeg" ? "image/jpeg"
-        : ext === "png" ? "image/png"
-        : ext === "webp" ? "image/webp"
-        : ext === "heic" ? "image/heic"
-        : "application/octet-stream";
-      return { bytes, contentType: ct };
-    },
+    readLocal: readLocalImpl,
   };
 }
 

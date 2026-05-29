@@ -53,10 +53,10 @@ function coerce(raw: string): unknown {
  * Aggregates all per-photo AI findings into a deduplicated list of
  * suggestions, highest-confidence first per (form, path).
  */
-suggestions.get("/inspections/:id/suggestions", (c) => {
-  const inspection = store.getInspection(c.req.param("id"));
+suggestions.get("/inspections/:id/suggestions", async (c) => {
+  const inspection = await store.getInspection(c.req.param("id"));
   if (!inspection) return c.json({ error: "not_found" }, 404);
-  const photos = store.listPhotos(inspection.id);
+  const photos = await store.listPhotos(inspection.id);
 
   // (form, path) -> best suggestion so far
   const best = new Map<string, Suggestion>();
@@ -114,7 +114,7 @@ const FourPointPartial = FourPoint.FourPointFormSchema.deepPartial();
 const WindMitPartial = WindMit.WindMitFormSchema.deepPartial();
 
 suggestions.post("/inspections/:id/apply", async (c) => {
-  const inspection = store.getInspection(c.req.param("id"));
+  const inspection = await store.getInspection(c.req.param("id"));
   if (!inspection) return c.json({ error: "not_found" }, 404);
   const parsed = ApplyBody.safeParse(await c.req.json());
   if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
@@ -146,6 +146,6 @@ suggestions.post("/inspections/:id/apply", async (c) => {
     windMit: wmResult.data,
     updatedAt: new Date().toISOString(),
   };
-  store.putInspection(updated);
+  await store.putInspection(updated);
   return c.json(updated);
 });

@@ -1,13 +1,10 @@
 /**
- * Drizzle-backed store for inspections + photos.
+ * Drizzle-backed store for inspections + photos. Async/await across
+ * the board — postgres-js is promise-based (unlike better-sqlite3
+ * which was sync). All route handlers that touch the store await.
  *
- * The store layer is a thin facade — routes call these methods, the
- * route data shape stays unchanged. Swapping SQLite → Postgres later
- * only requires changing the import in ./db/client.ts.
- *
- * NOTE: keep this synchronous-feeling. `better-sqlite3` is synchronous
- * by design; routes await nothing for DB work, which simplifies error
- * handling and matches the original in-memory Store API.
+ * Swapping providers (Neon → another Postgres) only requires updating
+ * the connection in ./db/client.ts.
  */
 import { desc, eq } from "drizzle-orm";
 import type { Inspection, Photo } from "@inspect-ai/shared";
@@ -87,68 +84,66 @@ function photoToRow(p: Photo) {
   };
 }
 
-// ---- store API (signatures match the previous in-memory impl) ----
+// ---- store API (all methods async now) ----
 
 class Store {
-  listInspections(): Inspection[] {
-    return db
+  async listInspections(): Promise<Inspection[]> {
+    const rows = await db
       .select()
       .from(inspectionsTable)
-      .orderBy(desc(inspectionsTable.updatedAt))
-      .all()
-      .map(rowToInspection);
+      .orderBy(desc(inspectionsTable.updatedAt));
+    return rows.map(rowToInspection);
   }
 
-  getInspection(id: string): Inspection | undefined {
-    const row = db
+  async getInspection(id: string): Promise<Inspection | undefined> {
+    const rows = await db
       .select()
       .from(inspectionsTable)
       .where(eq(inspectionsTable.id, id))
-      .get();
-    return row ? rowToInspection(row) : undefined;
+      .limit(1);
+    return rows[0] ? rowToInspection(rows[0]) : undefined;
   }
 
-  putInspection(i: Inspection): Inspection {
+  async putInspection(i: Inspection): Promise<Inspection> {
     const row = inspectionToRow(i);
-    db.insert(inspectionsTable)
+    await db
+      .insert(inspectionsTable)
       .values(row)
-      .onConflictDoUpdate({ target: inspectionsTable.id, set: row })
-      .run();
+      .onConflictDoUpdate({ target: inspectionsTable.id, set: row });
     return i;
   }
 
-  deleteInspection(id: string): boolean {
-    const result = db
+  async deleteInspection(id: string): Promise<boolean> {
+    const result = await db
       .delete(inspectionsTable)
       .where(eq(inspectionsTable.id, id))
-      .run();
-    return result.changes > 0;
+      .returning({ id: inspectionsTable.id });
+    return result.length > 0;
   }
 
-  listPhotos(inspectionId: string): Photo[] {
-    return db
+  async listPhotos(inspectionId: string): Promise<Photo[]> {
+    const rows = await db
       .select()
       .from(photosTable)
-      .where(eq(photosTable.inspectionId, inspectionId))
-      .all()
-      .map(rowToPhoto);
+      .where(eq(photosTable.inspectionId, inspectionId));
+    return rows.map(rowToPhoto);
   }
 
-  getPhoto(id: string): Photo | undefined {
-    const row = db
+  async getPhoto(id: string): Promise<Photo | undefined> {
+    const rows = await db
       .select()
       .from(photosTable)
       .where(eq(photosTable.id, id))
-      .get();
-    return row ? rowToPhoto(row) : undefined;
+      .limit(1);
+    return rows[0] ? rowToPhoto(rows[0]) : undefined;
   }
 
-  putPhoto(p: Photo): Photo {
+  async putPhoto(p: Photo): Promise<Photo> {
     const row = photoToRow(p);
-    db.insert(photosTable)
+    await db
+      .insert(photosTable)
       .values(row)
-      .onConflictDoUpdate({ target: photosTable.id, set: row })
-      .run();
+      .onConflictDoUpdate({ target: photosTable.id, set: row });
     return p;
   }
 }

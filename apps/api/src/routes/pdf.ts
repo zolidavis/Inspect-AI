@@ -13,7 +13,7 @@ export const pdf = new Hono();
  * template (pdf-lib + AcroForm fields).
  */
 pdf.get("/:inspectionId", async (c) => {
-  const inspection = store.getInspection(c.req.param("inspectionId"));
+  const inspection = await store.getInspection(c.req.param("inspectionId"));
   if (!inspection) return c.json({ error: "not_found" }, 404);
   const type = (c.req.query("type") ?? inspection.type) as
     | "four_point"

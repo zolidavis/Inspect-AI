@@ -1,14 +1,13 @@
 /**
- * Drizzle schema for Inspect AI.
+ * Drizzle schema for Inspect AI (Postgres).
  *
- * SQLite for local dev; designed to be Postgres-compatible for prod
- * (text IDs, ISO date strings, JSON columns). Swap the dialect package
- * (`drizzle-orm/better-sqlite3` → `drizzle-orm/postgres-js`) without
- * touching this file (column types map cleanly).
+ * Runs on Neon (prod + local dev) via postgres-js. JSONB columns hold
+ * shapes validated by the Zod form schemas in @inspect-ai/shared/forms/*
+ * before write.
  */
-import { sqliteTable, text, index } from "drizzle-orm/sqlite-core";
+import { pgTable, text, jsonb, index } from "drizzle-orm/pg-core";
 
-export const inspections = sqliteTable(
+export const inspections = pgTable(
   "inspections",
   {
     id: text("id").primaryKey(),
@@ -25,11 +24,11 @@ export const inspections = sqliteTable(
     inspectorName: text("inspector_name"),
     inspectorLicense: text("inspector_license"),
 
-    // Nested objects stored as JSON. Shapes are validated by Zod schemas
+    // Nested objects stored as JSONB. Shapes are validated by Zod schemas
     // in @inspect-ai/shared/forms/* before write.
-    property: text("property", { mode: "json" }),
-    fourPoint: text("four_point", { mode: "json" }),
-    windMit: text("wind_mit", { mode: "json" }),
+    property: jsonb("property"),
+    fourPoint: jsonb("four_point"),
+    windMit: jsonb("wind_mit"),
 
     // 'draft' | 'complete'
     status: text("status").notNull().default("draft"),
@@ -44,7 +43,7 @@ export const inspections = sqliteTable(
   }),
 );
 
-export const photos = sqliteTable(
+export const photos = pgTable(
   "photos",
   {
     id: text("id").primaryKey(),
@@ -54,7 +53,7 @@ export const photos = sqliteTable(
     tag: text("tag").notNull(),
     storageKey: text("storage_key").notNull(),
     // { summary: string, findings: [...] } per the AI analyze route
-    aiAnalysis: text("ai_analysis", { mode: "json" }),
+    aiAnalysis: jsonb("ai_analysis"),
     capturedAt: text("captured_at").notNull(),
   },
   (t) => ({

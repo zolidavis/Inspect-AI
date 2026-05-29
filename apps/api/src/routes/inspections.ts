@@ -19,7 +19,7 @@ const CreateBody = z.object({
   inspectorLicense: z.string().optional(),
 });
 
-inspections.get("/", (c) => c.json(store.listInspections()));
+inspections.get("/", async (c) => c.json(await store.listInspections()));
 
 inspections.post("/", async (c) => {
   const parsed = CreateBody.safeParse(await c.req.json());
@@ -37,19 +37,19 @@ inspections.post("/", async (c) => {
     createdAt: now,
     updatedAt: now,
   };
-  store.putInspection(inspection);
+  await store.putInspection(inspection);
   return c.json(inspection, 201);
 });
 
-inspections.get("/:id", (c) => {
-  const i = store.getInspection(c.req.param("id"));
+inspections.get("/:id", async (c) => {
+  const i = await store.getInspection(c.req.param("id"));
   if (!i) return c.json({ error: "not_found" }, 404);
-  const photos = store.listPhotos(i.id);
+  const photos = await store.listPhotos(i.id);
   return c.json({ ...i, photos });
 });
 
 inspections.patch("/:id", async (c) => {
-  const existing = store.getInspection(c.req.param("id"));
+  const existing = await store.getInspection(c.req.param("id"));
   if (!existing) return c.json({ error: "not_found" }, 404);
   const patch = await c.req.json();
   const next: Inspection = {
@@ -59,12 +59,12 @@ inspections.patch("/:id", async (c) => {
     createdAt: existing.createdAt,
     updatedAt: new Date().toISOString(),
   };
-  store.putInspection(next);
+  await store.putInspection(next);
   return c.json(next);
 });
 
-inspections.delete("/:id", (c) => {
-  const ok = store.deleteInspection(c.req.param("id"));
+inspections.delete("/:id", async (c) => {
+  const ok = await store.deleteInspection(c.req.param("id"));
   return c.json({ ok });
 });
 
@@ -76,8 +76,8 @@ inspections.delete("/:id", (c) => {
  * On failure, returns 400 with per-form flattened field errors so the
  * client can highlight what's missing.
  */
-inspections.post("/:id/complete", (c) => {
-  const existing = store.getInspection(c.req.param("id"));
+inspections.post("/:id/complete", async (c) => {
+  const existing = await store.getInspection(c.req.param("id"));
   if (!existing) return c.json({ error: "not_found" }, 404);
 
   const needFp = existing.type === "four_point" || existing.type === "both";
@@ -115,6 +115,6 @@ inspections.post("/:id/complete", (c) => {
     inspectedOn: existing.inspectedOn ?? new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  store.putInspection(next);
+  await store.putInspection(next);
   return c.json(next);
 });

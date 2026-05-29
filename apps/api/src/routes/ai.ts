@@ -1,13 +1,11 @@
 import { Hono } from "hono";
 import Anthropic from "@anthropic-ai/sdk";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import { z } from "zod";
 import { store } from "../store.js";
+import { storage } from "../storage.js";
 
 export const ai = new Hono();
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR ?? "./uploads";
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-5";
 
 const client = process.env.ANTHROPIC_API_KEY
@@ -154,7 +152,7 @@ const Body = z.object({ photoId: z.string().uuid() });
 ai.post("/analyze", async (c) => {
   const parsed = Body.safeParse(await c.req.json());
   if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
-  const photo = store.getPhoto(parsed.data.photoId);
+  const photo = await store.getPhoto(parsed.data.photoId);
   if (!photo) return c.json({ error: "photo_not_found" }, 404);
 
   const spec = TAG_SPECS[photo.tag];
@@ -164,14 +162,17 @@ ai.post("/analyze", async (c) => {
       summary: "AI analysis unavailable (ANTHROPIC_API_KEY not set).",
       findings: [],
     };
-    store.putPhoto({ ...photo, aiAnalysis: analysis });
+    await store.putPhoto({ ...photo, aiAnalysis: analysis });
     return c.json(analysis);
   }
 
-  const filePath = join(UPLOAD_DIR, photo.storageKey.replace("/", "_"));
-  const bytes = await readFile(filePath);
-  const base64 = bytes.toString("base64");
-  const mediaType = photo.storageKey.endsWith(".png") ? "image/png" : "image/jpeg";
+  // Fetch the photo bytes through the storage adapter (R2 or local).
+  const fetched = await storage.get(photo.storageKey);
+  const base64 = fetched.bytes.toString("base64");
+  const mediaType =
+    fetched.contentType.startsWith("image/")
+      ? (fetched.contentType as "image/jpeg" | "image/png" | "image/webp")
+      : photo.storageKey.endsWith(".png") ? "image/png" : "image/jpeg";
 
   const fieldList = spec
     ? spec.fields
@@ -235,7 +236,7 @@ ai.post("/analyze", async (c) => {
     );
   }
 
-  store.putPhoto({ ...photo, aiAnalysis: analysis as any });
+  await store.putPhoto({ ...photo, aiAnalysis: analysis as any });
   return c.json(analysis);
 });
 
