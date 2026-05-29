@@ -4,7 +4,11 @@ Snapshot taken 2026-05-29.
 
 ## 🔥 Active
 
-- [ ] **Verify Google OAuth on device.** APK `82421226-af4d-4e79-9208-60d04344f30a` (commit `084b62b`, preview/android profile) is the test build. Install on phone, tap "Sign in with Google" on the welcome screen, confirm browser → account chooser → app return → signed-in state. Capture `adb logcat` if anything crashes.
+_(nothing — last active item, Google OAuth, was verified end-to-end on device 2026-05-29.)_
+
+## ✅ Recently shipped
+
+- [x] **Google OAuth on device** — APK `h5VmdNoMH37Atc4458pZxY` (build `82421226-…`, commit `084b62b`). Sign-in works first-shot on Android. Profile screen accessible from header avatar.
 
 ## ⏭ Short-term
 
