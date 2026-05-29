@@ -22,6 +22,17 @@
         "READ_EXTERNAL_STORAGE",
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "category": ["DEFAULT", "BROWSABLE"],
+          "data": [
+            {
+              "scheme": "com.googleusercontent.apps.1058024176284-5j44ndq836lpsmkqea5l1kjauetb460o"
+            }
+          ]
+        }
       ]
     },
     "plugins": [
@@ -43,6 +54,9 @@
     ],
     "extra": {
       "apiBaseUrl": "http://localhost:8787",
+      "googleWebClientId": "1058024176284-cubmrr92eatljpr1vfhsklk8dg8ih6e9.apps.googleusercontent.com",
+      "googleAndroidClientId": "1058024176284-5j44ndq836lpsmkqea5l1kjauetb460o.apps.googleusercontent.com",
+      "googleIosClientId": "",
       "router": {
         "origin": false
       },
