@@ -1,1 +1,5 @@
-.vercel
+# Vercel build output (the bundle, not the project linkage)
+.vercel/output
+
+# Local env files pulled by `vercel env pull`
+.vercel/.env.*
