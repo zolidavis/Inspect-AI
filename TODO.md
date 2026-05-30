@@ -8,6 +8,9 @@ _(nothing — last active item, Google OAuth, was verified end-to-end on device 
 
 ## ✅ Recently shipped
 
+- [x] **RentCast API live in prod** — `/address/lookup` returns real property data (owner, year built, sqft, bed/bath, lot, parcel ID).
+- [x] **All 3 leaked tokens rotated** (Vercel, Anthropic, Expo).
+- [x] **App icon shipped** — user-supplied house+AI magnifying glass icon, all 4 sizes (icon/adaptive/splash/favicon) wired into app.json. Building now (`26672419489`).
 - [x] **4-Point Citizens overlay (V1)** — commit `bc9f0d0`. `/pdf/:id?type=four_point` now overlays values on the official Citizens Insp4pt 03 25 template (de facto FL carrier standard). V1 fills the page-1 header (insured name, address, year built, date inspected) and page-3 inspector signature line (name + license). Body sections (electrical/HVAC/plumbing/roof) marked TODO(v2) — those need ~50 individually-measured x/y positions, the pdftotext bbox HTML at /tmp/oir/4pt-bbox.html has all label coordinates ready to parse.
 - [x] **AcroForm OIR-B1-1802 fill** — carrier-acceptable Wind Mitigation PDF generation. 198 AcroForm fields mapped. Prod verified.
 - [x] **`ANTHROPIC_API_KEY` live in prod** — verified end-to-end on deployment `inspect-ai-bfbmn5p5k`. Real Claude vision response on a test photo. Pipeline Mobile→Edge→R2→Claude→response works.
@@ -27,7 +30,7 @@ _(nothing — last active item, Google OAuth, was verified end-to-end on device 
 ### Vercel env vars
 
 - [x] **`ANTHROPIC_API_KEY`** — set in production + development 2026-05-29 evening. Verified live: `/ai/analyze` returned a real Claude response on a test photo. Headline AI feature is now ACTIVE in prod.
-- [ ] **`RENTCAST_API_KEY`** — optional. Currently empty; `/address/lookup` returns mocked owner + year built. App still works without real property data.
+- [x] **`RENTCAST_API_KEY`** — added 2026-05-30 evening, verified live. Sample lookup for 4111 W El Prado Blvd Tampa returned real owner ("James Michael Doherty"), year built (1953), sqft (1629), bed/bath (3/2). Free tier = 50 calls/month. When inspector enters an address, owner/year/sqft auto-populate.
 - [ ] **`R2_*` + `DATABASE_URL` + `ANTHROPIC_API_KEY` in preview env** — production + development are set, preview is empty. PR previews would fail until populated. Quick `vercel env add NAME preview` × 6.
 
 ### Stage 2 step 7 — DONE
