@@ -32,7 +32,7 @@ _(nothing — last active item, Google OAuth, was verified end-to-end on device 
 
 ### Stage 2 step 7 — DONE
 
-- [x] **AcroForm fillable PDFs.** Commit `9b7d910` deployed at `ce0b03b`. `/pdf/:id?type=wind_mitigation` now fills the official Florida OIR-B1-1802 (Rev. 01/12) template — 198 AcroForm fields mapped via `apps/api/src/pdf/wind-mit.ts`. 4-point stays as a generated summary (no official form). `type=both` merges via `copyPages`. Prod verified: 308 KB PDF with all values filled correctly. Sample at /src/inspect-ai-oir-1802-sample.pdf.
+- [x] **AcroForm fillable PDFs.** Commit `9b7d910` deployed at `ce0b03b`. `/pdf/:id?type=wind_mitigation` now fills the official Florida OIR-B1-1802 (Rev. 01/12) template — 198 AcroForm fields mapped via `apps/api/src/pdf/wind-mit.ts`. 4-point stays as a generated summary (no official form). `type=both` merges via `copyPages`. Prod verified: 308 KB PDF with all values filled correctly. Sample at /src/samples/inspect-ai-oir-1802-sample.pdf.
 
 ### Pinned
 
