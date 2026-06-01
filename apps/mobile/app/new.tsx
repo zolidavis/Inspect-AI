@@ -7,6 +7,35 @@ import { useRouter } from "expo-router";
 import type { InspectionType } from "@inspect-ai/shared";
 import { api } from "../lib/api";
 
+/**
+ * Derive OIR-B1-1802 Q1 (Building Code) from the property data RentCast
+ * returns. The rule from the form itself:
+ *   A. Built ≥ 2002 → FBC compliant
+ *   B. Built 1994-2001 AND HVHZ (Miami-Dade or Broward) → SFBC-94
+ *   C. Anything else (incl. year unknown) → "Unknown / doesn't meet A or B"
+ *
+ * Inspector can always override on the wind-mit edit screen, but >90% of
+ * the time the year alone determines the answer. Saves a tap.
+ */
+function deriveWindMitFromProperty(p: {
+  yearBuilt?: number | null;
+  county?: string | null;
+}): { buildingCode: string; yearOfHomeOriginalConstruction: number } | null {
+  const year = p.yearBuilt;
+  if (!year || typeof year !== "number") return null;
+  let buildingCode: string;
+  if (year >= 2002) {
+    buildingCode = "a_built_2002_or_later_fbc";
+  } else {
+    const isHvhz = !!p.county && /miami|broward/i.test(p.county);
+    buildingCode =
+      isHvhz && year >= 1994 && year <= 2001
+        ? "b_built_1994_2001_sfbc"
+        : "c_unknown_or_not_meeting";
+  }
+  return { buildingCode, yearOfHomeOriginalConstruction: year };
+}
+
 const TYPES: { value: InspectionType; label: string }[] = [
   { value: "four_point", label: "4-Point" },
   { value: "wind_mitigation", label: "Wind Mitigation" },
@@ -36,10 +65,16 @@ export default function NewInspection() {
         inspectorName: inspectorName || undefined,
         inspectorLicense: license || undefined,
       });
-      // Best-effort address enrichment.
+      // Best-effort address enrichment. Also auto-pre-fills the wind-mit
+      // building-code section since that's fully derivable from year + county.
       try {
         const property = await api.lookupAddress(inspection.address);
-        await api.patchInspection(inspection.id, { property } as any);
+        const patch: any = { property };
+        if (type === "wind_mitigation" || type === "both") {
+          const wm = deriveWindMitFromProperty(property);
+          if (wm) patch.windMit = wm;
+        }
+        await api.patchInspection(inspection.id, patch);
       } catch {}
       router.replace(`/inspection/${inspection.id}`);
     } catch (e: any) {

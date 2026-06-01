@@ -55,6 +55,7 @@ address.post("/lookup", async (c) => {
     bedrooms: first?.bedrooms ?? null,
     bathrooms: first?.bathrooms ?? null,
     parcelId: first?.assessorID ?? null,
+    county: first?.county ?? null,
     permits: [], // TODO: county scrapers
     source: "rentcast",
   };

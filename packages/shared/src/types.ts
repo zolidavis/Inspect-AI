@@ -18,6 +18,8 @@ export const PropertyLookupSchema = z.object({
   bedrooms: z.number().int().nullable(),
   bathrooms: z.number().nullable(),
   parcelId: z.string().nullable(),
+  /** FL county the property is in. Used to detect HVHZ (Miami-Dade / Broward). */
+  county: z.string().nullable().optional(),
   // Permits stubbed for v1 — wire county scrapers later.
   permits: z
     .array(
