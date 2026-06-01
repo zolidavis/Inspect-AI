@@ -4,6 +4,8 @@ import {
   StyleSheet, Text, View,
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import * as ImagePicker from "expo-image-picker";
+import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { api } from "../../../lib/api";
 
@@ -27,19 +29,50 @@ export default function Camera() {
     );
   }
 
+  /** Shared upload + AI analyze tail. Works for either capture or gallery pick. */
+  const uploadAndAnalyze = async (uri: string) => {
+    const uploaded = await api.uploadPhoto({ inspectionId: id!, tag: tag!, uri });
+    try {
+      const analysis = await api.analyzePhoto(uploaded.id);
+      setAiSummary(analysis.summary);
+    } catch {
+      // Photo uploaded fine; AI analysis can fail without blocking the user.
+      setAiSummary("Photo uploaded (AI analysis unavailable).");
+    }
+  };
+
   const capture = async () => {
     if (!camRef.current || busy) return;
     setBusy(true); setAiSummary(null);
     try {
       const photo = await camRef.current.takePictureAsync({ quality: 0.85 });
       if (!photo?.uri) throw new Error("no photo");
-      const uploaded = await api.uploadPhoto({
-        inspectionId: id!, tag: tag!, uri: photo.uri,
-      });
-      const analysis = await api.analyzePhoto(uploaded.id);
-      setAiSummary(analysis.summary);
+      await uploadAndAnalyze(photo.uri);
     } catch (e: any) {
       Alert.alert("Capture failed", e.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const pickFromGallery = async () => {
+    if (busy) return;
+    setBusy(true); setAiSummary(null);
+    try {
+      // expo-image-picker uses the system picker on Android 13+ (no
+      // runtime permission), and prompts NSPhotoLibraryUsageDescription
+      // on iOS the first time.
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.85,
+        // allowsEditing: false — full-res for AI vision
+      });
+      if (result.canceled) return;
+      const uri = result.assets?.[0]?.uri;
+      if (!uri) throw new Error("no asset selected");
+      await uploadAndAnalyze(uri);
+    } catch (e: any) {
+      Alert.alert("Gallery upload failed", e.message);
     } finally {
       setBusy(false);
     }
@@ -55,10 +88,21 @@ export default function Camera() {
           <Pressable style={styles.secondary} onPress={() => router.back()}>
             <Text style={styles.secondaryText}>Done</Text>
           </Pressable>
-          <Pressable style={[styles.shutter, busy && { opacity: 0.5 }]} disabled={busy} onPress={capture}>
+          <Pressable
+            style={[styles.shutter, busy && { opacity: 0.5 }]}
+            disabled={busy}
+            onPress={capture}
+          >
             {busy ? <ActivityIndicator color="#000" /> : <View style={styles.shutterInner} />}
           </Pressable>
-          <View style={{ width: 80 }} />
+          <Pressable
+            style={[styles.secondary, styles.galleryBtn, busy && { opacity: 0.5 }]}
+            disabled={busy}
+            onPress={pickFromGallery}
+          >
+            <Ionicons name="images-outline" size={22} color="#fff" />
+            <Text style={styles.galleryText}>Gallery</Text>
+          </Pressable>
         </View>
       </View>
     </View>
@@ -85,6 +129,12 @@ const styles = StyleSheet.create({
     borderRadius: 8, width: 80, alignItems: "center",
   },
   secondaryText: { color: "#fff", fontWeight: "600" },
+  galleryBtn: {
+    paddingVertical: 8,
+    flexDirection: "column",
+    gap: 2,
+  },
+  galleryText: { color: "#fff", fontWeight: "600", fontSize: 11 },
   button: { backgroundColor: "#0a66ff", padding: 12, borderRadius: 8 },
   buttonText: { color: "#fff", fontWeight: "600" },
 });
