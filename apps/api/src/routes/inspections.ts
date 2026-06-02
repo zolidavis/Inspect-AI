@@ -16,6 +16,8 @@ const CreateBody = z.object({
   address: AddressSchema,
   inspectorName: z.string().optional(),
   inspectorLicense: z.string().optional(),
+  ownerEmail: z.string().optional(),
+  ownerPhone: z.string().optional(),
 });
 
 inspections.get("/", async (c) => c.json(await store.listInspections()));
@@ -32,6 +34,8 @@ inspections.post("/", async (c) => {
     photos: [],
     inspectorName: parsed.data.inspectorName,
     inspectorLicense: parsed.data.inspectorLicense,
+    ownerEmail: parsed.data.ownerEmail,
+    ownerPhone: parsed.data.ownerPhone,
     status: "draft",
     createdAt: now,
     updatedAt: now,

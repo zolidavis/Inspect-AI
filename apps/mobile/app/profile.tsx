@@ -37,6 +37,8 @@ export default function ProfileScreen() {
 
   const [name, setName] = useState(profile?.displayName ?? "");
   const [email, setEmail] = useState(profile?.email ?? "");
+  const [inspectorName, setInspectorName] = useState(profile?.inspectorName ?? "");
+  const [inspectorLicense, setInspectorLicense] = useState(profile?.inspectorLicense ?? "");
   const [saving, setSaving] = useState(false);
 
   const isGoogleAccount = profile?.provider === "google";
@@ -47,7 +49,7 @@ export default function ProfileScreen() {
       return;
     }
     setSaving(true);
-    await saveProfile({ displayName: name, email });
+    await saveProfile({ displayName: name, email, inspectorName, inspectorLicense });
     setSaving(false);
   };
 
@@ -130,14 +132,45 @@ export default function ProfileScreen() {
           <Text style={styles.hint}>Managed by your Google account.</Text>
         )}
 
-        <Pressable
-          style={[styles.saveBtn, saving && { opacity: 0.5 }]}
-          disabled={saving}
-          onPress={save}
-        >
-          <Text style={styles.saveBtnText}>{saving ? "Saving…" : "Save"}</Text>
-        </Pressable>
       </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Inspector Info</Text>
+        <Text style={styles.hint}>
+          Stamped on every inspection and PDF report. Set once, applies forever.
+        </Text>
+
+        <Text style={[styles.cardTitle, { marginTop: 14 }]}>Licensed name</Text>
+        <TextInput
+          style={styles.input}
+          value={inspectorName}
+          onChangeText={setInspectorName}
+          placeholder="As it appears on your FL license"
+          placeholderTextColor={COLORS.textFaint}
+          autoCapitalize="words"
+          editable={!saving}
+        />
+
+        <Text style={[styles.cardTitle, { marginTop: 14 }]}>License #</Text>
+        <TextInput
+          style={styles.input}
+          value={inspectorLicense}
+          onChangeText={setInspectorLicense}
+          placeholder="e.g. HI-12345"
+          placeholderTextColor={COLORS.textFaint}
+          autoCapitalize="characters"
+          autoCorrect={false}
+          editable={!saving}
+        />
+      </View>
+
+      <Pressable
+        style={[styles.saveBtn, saving && { opacity: 0.5 }]}
+        disabled={saving}
+        onPress={save}
+      >
+        <Text style={styles.saveBtnText}>{saving ? "Saving…" : "Save"}</Text>
+      </Pressable>
 
       <Pressable onPress={doSignOut} style={styles.signOutBtn}>
         <Ionicons name="log-out-outline" size={18} color={COLORS.danger} />
@@ -206,9 +239,8 @@ const styles = StyleSheet.create({
   hint: { color: COLORS.textFaint, fontSize: 11, marginTop: 4, marginBottom: 0 },
 
   saveBtn: {
-    marginTop: 14,
     backgroundColor: COLORS.accent,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 10,
     alignItems: "center",
   },

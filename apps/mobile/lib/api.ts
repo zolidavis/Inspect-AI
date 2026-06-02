@@ -39,6 +39,8 @@ export const api = {
     address: Address;
     inspectorName?: string;
     inspectorLicense?: string;
+    ownerEmail?: string;
+    ownerPhone?: string;
   }) =>
     req<Inspection>("/inspections", { method: "POST", body: JSON.stringify(body) }),
   patchInspection: (id: string, body: Partial<Inspection>) =>

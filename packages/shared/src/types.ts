@@ -73,6 +73,9 @@ export const InspectionSchema = z.object({
   photos: z.array(PhotoSchema).default([]),
   inspectorName: z.string().optional(),
   inspectorLicense: z.string().optional(),
+  /** Customer / property-owner contact, captured at inspection creation. */
+  ownerEmail: z.string().optional(),
+  ownerPhone: z.string().optional(),
   inspectedOn: z.string().optional(),
   status: z.enum(["draft", "in_progress", "complete"]).default("draft"),
   createdAt: z.string(),

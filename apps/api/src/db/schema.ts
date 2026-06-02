@@ -24,6 +24,10 @@ export const inspections = pgTable(
     inspectorName: text("inspector_name"),
     inspectorLicense: text("inspector_license"),
 
+    // Customer / property-owner contact (captured at inspection creation).
+    ownerEmail: text("owner_email"),
+    ownerPhone: text("owner_phone"),
+
     // Nested objects stored as JSONB. Shapes are validated by Zod schemas
     // in @inspect-ai/shared/forms/* before write.
     property: jsonb("property"),

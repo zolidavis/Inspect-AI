@@ -154,6 +154,12 @@ export async function fillWindMit(inspection: Inspection): Promise<Uint8Array> {
   setText(form, "Zip", inspection.address.zip);
   setText(form, "Year of Home", property.yearBuilt);
 
+  // ── Customer / owner contact ───────────────────────────────────────────
+  setText(form, "Email", inspection.ownerEmail);
+  // OIR-B1-1802 has Home / Work / Cell phone fields. We capture one
+  // generic phone on mobile and stamp it as "Home Phone".
+  setText(form, "Home Phone", inspection.ownerPhone);
+
   // ── Inspector ──────────────────────────────────────────────────────────
   setText(form, "Qualified Inspector Name", inspection.inspectorName);
   setText(form, "License or Certificate", inspection.inspectorLicense);

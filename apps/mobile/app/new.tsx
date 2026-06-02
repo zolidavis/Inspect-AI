@@ -6,16 +6,26 @@ import {
 import { useRouter } from "expo-router";
 import type { InspectionType } from "@inspect-ai/shared";
 import { api } from "../lib/api";
+import {
+  inspectorNameOf,
+  isInspectorComplete,
+  useProfile,
+} from "../store/profile";
+
+const TYPES: { value: InspectionType; label: string }[] = [
+  { value: "four_point", label: "4-Point" },
+  { value: "wind_mitigation", label: "Wind Mitigation" },
+  { value: "both", label: "Both" },
+];
 
 /**
  * Derive OIR-B1-1802 Q1 (Building Code) from the property data RentCast
- * returns. The rule from the form itself:
+ * returns:
  *   A. Built ≥ 2002 → FBC compliant
  *   B. Built 1994-2001 AND HVHZ (Miami-Dade or Broward) → SFBC-94
- *   C. Anything else (incl. year unknown) → "Unknown / doesn't meet A or B"
+ *   C. Anything else → "Unknown / doesn't meet A or B"
  *
- * Inspector can always override on the wind-mit edit screen, but >90% of
- * the time the year alone determines the answer. Saves a tap.
+ * Inspector can always override on the wind-mit edit screen.
  */
 function deriveWindMitFromProperty(p: {
   yearBuilt?: number | null;
@@ -36,20 +46,17 @@ function deriveWindMitFromProperty(p: {
   return { buildingCode, yearOfHomeOriginalConstruction: year };
 }
 
-const TYPES: { value: InspectionType; label: string }[] = [
-  { value: "four_point", label: "4-Point" },
-  { value: "wind_mitigation", label: "Wind Mitigation" },
-  { value: "both", label: "Both" },
-];
-
 export default function NewInspection() {
   const router = useRouter();
+  const profile = useProfile((s) => s.profile);
+  const inspectorOk = isInspectorComplete(profile);
+
   const [type, setType] = useState<InspectionType>("four_point");
   const [line1, setLine1] = useState("");
   const [city, setCity] = useState("");
   const [zip, setZip] = useState("");
-  const [inspectorName, setInspectorName] = useState("");
-  const [license, setLicense] = useState("");
+  const [ownerEmail, setOwnerEmail] = useState("");
+  const [ownerPhone, setOwnerPhone] = useState("");
   const [busy, setBusy] = useState(false);
 
   const create = async () => {
@@ -57,13 +64,24 @@ export default function NewInspection() {
       Alert.alert("Address required", "Enter line 1, city, and zip.");
       return;
     }
+    if (!inspectorOk) {
+      Alert.alert(
+        "Inspector info missing",
+        "Set your licensed name + license number on the Profile screen first.",
+      );
+      return;
+    }
     setBusy(true);
     try {
       const inspection = await api.createInspection({
         type,
         address: { line1, city, state: "FL", zip },
-        inspectorName: inspectorName || undefined,
-        inspectorLicense: license || undefined,
+        // Stamp the inspector identity from the profile (set once, applies
+        // to every inspection going forward — see Profile screen).
+        inspectorName: inspectorNameOf(profile) || undefined,
+        inspectorLicense: profile?.inspectorLicense || undefined,
+        ownerEmail: ownerEmail.trim() || undefined,
+        ownerPhone: ownerPhone.trim() || undefined,
       });
       // Best-effort address enrichment. Also auto-pre-fills the wind-mit
       // building-code section since that's fully derivable from year + county.
@@ -86,6 +104,19 @@ export default function NewInspection() {
 
   return (
     <ScrollView contentContainerStyle={styles.root} keyboardShouldPersistTaps="handled">
+      {!inspectorOk && (
+        <Pressable
+          style={styles.banner}
+          onPress={() => router.push("/profile")}
+        >
+          <Text style={styles.bannerTitle}>⚠ Inspector info missing</Text>
+          <Text style={styles.bannerHint}>
+            Tap to add your licensed name + license # on the Profile screen.
+            They'll auto-fill every inspection from now on.
+          </Text>
+        </Pressable>
+      )}
+
       <Text style={styles.label}>Inspection type</Text>
       <View style={styles.segmented}>
         {TYPES.map((t) => (
@@ -114,11 +145,32 @@ export default function NewInspection() {
         />
       </View>
 
-      <Text style={styles.label}>Inspector (optional)</Text>
-      <TextInput style={styles.input} placeholder="Name" value={inspectorName} onChangeText={setInspectorName} />
-      <TextInput style={styles.input} placeholder="License #" value={license} onChangeText={setLicense} />
+      <Text style={styles.label}>Owner contact (optional)</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={ownerEmail}
+        onChangeText={setOwnerEmail}
+        keyboardType="email-address"
+        autoCapitalize="none"
+        autoCorrect={false}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Phone"
+        value={ownerPhone}
+        onChangeText={setOwnerPhone}
+        keyboardType="phone-pad"
+      />
 
-      <Pressable style={[styles.button, busy && { opacity: 0.6 }]} disabled={busy} onPress={create}>
+      <Pressable
+        style={[
+          styles.button,
+          (busy || !inspectorOk) && { opacity: 0.6 },
+        ]}
+        disabled={busy || !inspectorOk}
+        onPress={create}
+      >
         {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Create</Text>}
       </Pressable>
     </ScrollView>
@@ -142,4 +194,14 @@ const styles = StyleSheet.create({
     paddingVertical: 14, alignItems: "center",
   },
   buttonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
+  banner: {
+    backgroundColor: "#fff8d0",
+    borderColor: "#e5c400",
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 8,
+  },
+  bannerTitle: { fontSize: 14, fontWeight: "700", color: "#7a5a0a" },
+  bannerHint: { color: "#7a5a0a", fontSize: 12, lineHeight: 18, marginTop: 4 },
 });
