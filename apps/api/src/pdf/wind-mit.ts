@@ -201,6 +201,41 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
     checkBox(out, 0, REGION_X[wm.region]!, 446);
   }
 
+  // ── Q4. Roof Covering — type row + per-row compliance columns ──────────
+  // 7 type rows on page 1 (top-down y positions of the checkbox/label).
+  // Each row has columns at:
+  //   Permit Date:     x ≈ 168 (blank ____/____/____)
+  //   Product Approval #: x ≈ 248 (blank ________________)
+  //   Year of Original:   x ≈ 349 (blank ________________)
+  //   No Info checkbox:   x ≈ 466
+  const COVERING_ROW_Y: Record<string, number> = {
+    asphalt_fiberglass_shingle: 577,
+    concrete_clay_tile:         598,
+    // 04/26 added Synthetic/Composite Tile — schema doesn't track it
+    // separately yet; "other" routes to the bottom "Other ___" row.
+    metal:                      619,
+    built_up:                   629,
+    membrane:                   640,
+    wood_shake:                 655,  // routes to "Other"
+    other:                      655,
+  };
+  const rc: any = wm.roofCovering ?? {};
+  const rowY = COVERING_ROW_Y[rc.type];
+  if (rowY !== undefined) {
+    // 1. Mark the type checkbox at x=41
+    checkBox(out, 0, 41, rowY);
+    // 2. Permit Application Date column
+    push({ page: 0, x: 168, y: yFromTop(rowY + 7), value: rc.permitApplicationDate, size: 8 });
+    // 3. FBC or MDC Product Approval #
+    push({ page: 0, x: 248, y: yFromTop(rowY + 7), value: rc.productApprovalNumber, size: 8 });
+    // 4. Year of Original Installation/Replacement
+    push({ page: 0, x: 349, y: yFromTop(rowY + 7), value: rc.yearOfOriginalInstallation, size: 8 });
+    // 5. No Info Provided checkbox at x=466
+    if (rc.noInformationProvided) {
+      checkBox(out, 0, 466, rowY);
+    }
+  }
+
   // ── Q3. Roof Slope ─────────────────────────────────────────────────────
   // y≈492 (top-down). ≥ 6:12 at x=36, < 6:12 at x=176.
   const ROOF_SLOPE_X: Record<string, number> = {

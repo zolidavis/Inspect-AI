@@ -57,10 +57,20 @@ export const RoofCoveringTypeSchema = z.enum([
 ]);
 export const RoofCoveringSchema = z.object({
   type: RoofCoveringTypeSchema,
-  // Per-covering FBC/Miami-Dade product approval data
-  permitApplicationDate: z.string().nullable(), // ISO date
-  installationDate: z.string().nullable(),
-  fbcOrMiamiDadeApproved: z.boolean(),
+  // Per-covering compliance data (the 4 columns on the form, any of
+  // which can be filled by the inspector to demonstrate compliance):
+  /** Permit Application Date — MM/DD/YYYY free-text. */
+  permitApplicationDate: z.string().nullable().optional(),
+  /** FBC or MDC Product Approval # — the actual number from the label. */
+  productApprovalNumber: z.string().nullable().optional(),
+  /** Year of Original Installation or Replacement — YYYY. */
+  yearOfOriginalInstallation: z.string().nullable().optional(),
+  /** "No Information Provided for Compliance" checkbox. */
+  noInformationProvided: z.boolean().optional(),
+  /** Legacy "is there any FBC/MDC approval visible?" boolean. The AI
+   *  vision route still emits this hint. */
+  fbcOrMiamiDadeApproved: z.boolean().optional(),
+  /** Overall compliance question A/B/C/D (covers the whole roof). */
   meetsCode: z.enum(["a_compliant", "b_non_compliant", "c_unknown"]),
 });
 

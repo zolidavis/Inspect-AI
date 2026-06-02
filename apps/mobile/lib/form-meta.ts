@@ -164,9 +164,13 @@ export const WIND_MIT_SECTIONS: SectionMeta[] = [
           "built_up", "membrane", "wood_shake", "other",
         ]),
       },
-      { kind: "boolean", path: "roofCovering.fbcOrMiamiDadeApproved", label: "FBC/Miami-Dade approved" },
+      // Per-type compliance columns. Inspector fills whichever applies.
+      { kind: "string", path: "roofCovering.permitApplicationDate", label: "Permit application date (MM/DD/YYYY)", placeholder: "e.g. 06/15/2010" },
+      { kind: "string", path: "roofCovering.productApprovalNumber", label: "FBC or MDC product approval #", placeholder: "e.g. FL12345-R1" },
+      { kind: "string", path: "roofCovering.yearOfOriginalInstallation", label: "Year of original installation/replacement", placeholder: "YYYY" },
+      { kind: "boolean", path: "roofCovering.noInformationProvided", label: "No information provided for compliance" },
       {
-        kind: "enum", path: "roofCovering.meetsCode", label: "Compliance",
+        kind: "enum", path: "roofCovering.meetsCode", label: "Overall compliance",
         options: [
           { value: "a_compliant", label: "A. Compliant" },
           { value: "b_non_compliant", label: "B. Non-compliant" },
