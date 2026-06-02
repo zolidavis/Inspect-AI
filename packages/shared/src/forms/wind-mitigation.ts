@@ -126,7 +126,8 @@ export const SwrSubMethodSchema = z.enum([
   "m4_spray_foam",      // Spray foam product along rafter/deck intersections
 ]);
 
-// 7. Opening Protection
+// 9a. Opening Protection — the WEAKEST overall protection (kept for back-compat
+// with the existing summary field).
 export const OpeningProtectionSchema = z.enum([
   "a_hurricane_impact",
   "b_basic_impact",
@@ -134,6 +135,39 @@ export const OpeningProtectionSchema = z.enum([
   "n_other",
   "x_unknown",
 ]);
+
+// 9a. Opening Protection chart — rows are protection levels.
+//
+//  Glazed columns can be N/A, A, B, C, N, X, Z (no D — D only applies to
+//  non-glazed entry / garage doors per the form's gray-out).
+//  Non-glazed columns add D.
+//
+// Rows:
+//   N/A — Not applicable (no openings of this type)
+//   A   — Verified cyclic pressure + large missile (9 lb / windows;
+//         4.5 lb / skylights)
+//   B   — Verified cyclic pressure + large missile (4-8 lb / windows;
+//         2 lb / skylights)
+//   C   — Verified plywood/OSB meeting Table 1609.1.2 of FBC 2007
+//   D   — (non-glazed only) Verified per ASTM E 330, ANSI/DASMA 108,
+//         or PA/TAS 202
+//   N   — Appear to be A or B but not verified / Other products
+//         that cannot be identified as A, B, or C
+//   X   — No windborne debris protection
+//   Z   — Damaged openings in need of repair/replacement
+export const Q9LevelGlazedSchema    = z.enum(["na", "a", "b", "c", "n", "x", "z"]);
+export const Q9LevelNonGlazedSchema = z.enum(["na", "a", "b", "c", "d", "n", "x", "z"]);
+
+export const Q9OpeningProtectionChartSchema = z.object({
+  // Glazed openings
+  windowsOrEntryDoorsGlazed: Q9LevelGlazedSchema.optional(),
+  garageDoorsGlazed:         Q9LevelGlazedSchema.optional(),
+  skylightsGlazed:           Q9LevelGlazedSchema.optional(),
+  glassBlockGlazed:          Q9LevelGlazedSchema.optional(),
+  // Non-glazed openings
+  entryDoorsNonGlazed:       Q9LevelNonGlazedSchema.optional(),
+  garageDoorsNonGlazed:      Q9LevelNonGlazedSchema.optional(),
+});
 
 export const WindMitFormSchema = z.object({
   // NOTE area
@@ -174,7 +208,9 @@ export const WindMitFormSchema = z.object({
   swrSubMethod: SwrSubMethodSchema.optional(),
   /** Optional flag: "entire roof deck underside covered" (typically with spray foam). */
   swrEntireDeckCovered: z.boolean().optional(),
-  openingProtection: OpeningProtectionSchema,
+  // 9. Opening Protection
+  openingProtection: OpeningProtectionSchema,                          // 9a summary "WEAKEST" enum
+  openingProtectionChart: Q9OpeningProtectionChartSchema.optional(),   // 9a per-opening chart
   notes: z.string().optional(),
 });
 export type WindMitForm = z.infer<typeof WindMitFormSchema>;

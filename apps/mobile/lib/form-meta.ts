@@ -324,17 +324,98 @@ export const WIND_MIT_SECTIONS: SectionMeta[] = [
       },
     ],
   },
+  // 9a. Opening Protection — per-opening chart.
+  // Inspector picks the WEAKEST protection level for each of the 6
+  // opening types. Levels:
+  //   N/A · A (9lb cyclic) · B (4-8lb) · C (plywood/OSB per FBC 2007) ·
+  //   D (non-glazed only — ASTM E 330 etc.) ·
+  //   N (appears A/B but unverified) · X (none) · Z (damaged/repair)
   {
-    title: "9. Opening Protection",
+    title: "9a. Opening Protection — Glazed Openings",
     fields: [
       {
-        kind: "enum", path: "openingProtection", label: "Protection",
+        kind: "enum", path: "openingProtectionChart.windowsOrEntryDoorsGlazed",
+        label: "Windows or Entry Doors",
+        options: [
+          { value: "na", label: "N/A — no openings of this type" },
+          { value: "a",  label: "A. Cyclic + large missile (9 lb)" },
+          { value: "b",  label: "B. Cyclic + large missile (4-8 lb)" },
+          { value: "c",  label: "C. Plywood/OSB per Table 1609.1.2 FBC 2007" },
+          { value: "n",  label: "N. Appears A/B but not verified, OR unidentifiable" },
+          { value: "x",  label: "X. No windborne debris protection" },
+          { value: "z",  label: "Z. Damaged — needs repair/replacement" },
+        ],
+      },
+      {
+        kind: "enum", path: "openingProtectionChart.garageDoorsGlazed",
+        label: "Garage Doors (glazed)",
+        options: [
+          { value: "na", label: "N/A" }, { value: "a", label: "A" },
+          { value: "b",  label: "B" },   { value: "c", label: "C" },
+          { value: "n",  label: "N" },   { value: "x", label: "X" },
+          { value: "z",  label: "Z" },
+        ],
+      },
+      {
+        kind: "enum", path: "openingProtectionChart.skylightsGlazed",
+        label: "Skylights",
+        options: [
+          { value: "na", label: "N/A" }, { value: "a", label: "A (4.5 lb)" },
+          { value: "b",  label: "B (2 lb)" }, { value: "c", label: "C" },
+          { value: "n",  label: "N" },   { value: "x", label: "X" },
+          { value: "z",  label: "Z" },
+        ],
+      },
+      {
+        kind: "enum", path: "openingProtectionChart.glassBlockGlazed",
+        label: "Glass Block",
+        options: [
+          { value: "na", label: "N/A" }, { value: "a", label: "A" },
+          { value: "b",  label: "B" },   { value: "c", label: "C" },
+          { value: "n",  label: "N" },   { value: "x", label: "X" },
+          { value: "z",  label: "Z" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "9a. Opening Protection — Non-Glazed Openings",
+    fields: [
+      {
+        kind: "enum", path: "openingProtectionChart.entryDoorsNonGlazed",
+        label: "Entry Doors (non-glazed)",
+        options: [
+          { value: "na", label: "N/A" }, { value: "a", label: "A" },
+          { value: "b",  label: "B" },   { value: "c", label: "C" },
+          { value: "d",  label: "D. ASTM E 330 / ANSI/DASMA 108 / PA/TAS 202" },
+          { value: "n",  label: "N" },   { value: "x", label: "X" },
+          { value: "z",  label: "Z" },
+        ],
+      },
+      {
+        kind: "enum", path: "openingProtectionChart.garageDoorsNonGlazed",
+        label: "Garage Doors (non-glazed)",
+        options: [
+          { value: "na", label: "N/A" }, { value: "a", label: "A" },
+          { value: "b",  label: "B" },   { value: "c", label: "C" },
+          { value: "d",  label: "D. ASTM E 330 / ANSI/DASMA 108 / PA/TAS 202" },
+          { value: "n",  label: "N" },   { value: "x", label: "X" },
+          { value: "z",  label: "Z" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "9a. WEAKEST overall protection (summary)",
+    fields: [
+      {
+        kind: "enum", path: "openingProtection", label: "WEAKEST overall",
         options: [
           { value: "a_hurricane_impact", label: "A. Hurricane impact" },
-          { value: "b_basic_impact", label: "B. Basic impact" },
-          { value: "c_none", label: "C. None" },
-          { value: "n_other", label: "N. Other" },
-          { value: "x_unknown", label: "X. Unknown" },
+          { value: "b_basic_impact",     label: "B. Basic impact" },
+          { value: "c_none",             label: "C. None" },
+          { value: "n_other",            label: "N. Other" },
+          { value: "x_unknown",          label: "X. Unknown" },
         ],
       },
       { kind: "string", path: "notes", label: "Notes", placeholder: "Optional" },
