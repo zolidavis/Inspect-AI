@@ -3,6 +3,7 @@ import type {
   Address,
   Inspection,
   InspectionType,
+  InspectorLicenseType,
   Photo,
   PropertyLookup,
 } from "@inspect-ai/shared";
@@ -39,6 +40,9 @@ export const api = {
     address: Address;
     inspectorName?: string;
     inspectorLicense?: string;
+    inspectorLicenseType?: InspectorLicenseType;
+    inspectorCompany?: string;
+    inspectorPhone?: string;
     ownerEmail?: string;
     ownerPhone?: string;
   }) =>

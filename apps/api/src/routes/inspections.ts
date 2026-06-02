@@ -3,6 +3,7 @@ import {
   AddressSchema,
   FourPoint,
   InspectionTypeSchema,
+  InspectorLicenseTypeSchema,
   WindMit,
   type Inspection,
 } from "@inspect-ai/shared";
@@ -16,6 +17,9 @@ const CreateBody = z.object({
   address: AddressSchema,
   inspectorName: z.string().optional(),
   inspectorLicense: z.string().optional(),
+  inspectorLicenseType: InspectorLicenseTypeSchema.optional(),
+  inspectorCompany: z.string().optional(),
+  inspectorPhone: z.string().optional(),
   ownerEmail: z.string().optional(),
   ownerPhone: z.string().optional(),
 });
@@ -34,6 +38,9 @@ inspections.post("/", async (c) => {
     photos: [],
     inspectorName: parsed.data.inspectorName,
     inspectorLicense: parsed.data.inspectorLicense,
+    inspectorLicenseType: parsed.data.inspectorLicenseType,
+    inspectorCompany: parsed.data.inspectorCompany,
+    inspectorPhone: parsed.data.inspectorPhone,
     ownerEmail: parsed.data.ownerEmail,
     ownerPhone: parsed.data.ownerPhone,
     status: "draft",

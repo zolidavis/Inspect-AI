@@ -1,7 +1,8 @@
 /**
  * Profile screen. Reached from the avatar in the inspection list's
  * header. Shows: avatar + display name + email + provider, edit fields,
- * sign out.
+ * inspector certification block (the OIR-B1-1802 "Qualified Inspector"
+ * section — set once, auto-fills every inspection + PDF), sign out.
  */
 import { useState } from "react";
 import {
@@ -15,7 +16,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { initialsFor, useProfile } from "../store/profile";
+import {
+  INSPECTOR_LICENSE_TYPES,
+  initialsFor,
+  useProfile,
+  type InspectorLicenseType,
+} from "../store/profile";
 
 const COLORS = {
   bg: "#0b1014",
@@ -39,6 +45,11 @@ export default function ProfileScreen() {
   const [email, setEmail] = useState(profile?.email ?? "");
   const [inspectorName, setInspectorName] = useState(profile?.inspectorName ?? "");
   const [inspectorLicense, setInspectorLicense] = useState(profile?.inspectorLicense ?? "");
+  const [inspectorLicenseType, setInspectorLicenseType] = useState<InspectorLicenseType | "">(
+    profile?.inspectorLicenseType ?? "",
+  );
+  const [inspectorCompany, setInspectorCompany] = useState(profile?.inspectorCompany ?? "");
+  const [inspectorPhone, setInspectorPhone] = useState(profile?.inspectorPhone ?? "");
   const [saving, setSaving] = useState(false);
 
   const isGoogleAccount = profile?.provider === "google";
@@ -49,7 +60,15 @@ export default function ProfileScreen() {
       return;
     }
     setSaving(true);
-    await saveProfile({ displayName: name, email, inspectorName, inspectorLicense });
+    await saveProfile({
+      displayName: name,
+      email,
+      inspectorName,
+      inspectorLicense,
+      inspectorLicenseType,
+      inspectorCompany,
+      inspectorPhone,
+    });
     setSaving(false);
   };
 
@@ -135,9 +154,10 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Inspector Info</Text>
+        <Text style={styles.cardTitle}>Qualified Inspector</Text>
         <Text style={styles.hint}>
-          Stamped on every inspection and PDF report. Set once, applies forever.
+          OIR-B1-1802 certification info. Stamped on every wind-mit + 4-Point
+          PDF. Set once, applies forever.
         </Text>
 
         <Text style={[styles.cardTitle, { marginTop: 14 }]}>Licensed name</Text>
@@ -151,7 +171,7 @@ export default function ProfileScreen() {
           editable={!saving}
         />
 
-        <Text style={[styles.cardTitle, { marginTop: 14 }]}>License #</Text>
+        <Text style={[styles.cardTitle, { marginTop: 14 }]}>License or Certificate #</Text>
         <TextInput
           style={styles.input}
           value={inspectorLicense}
@@ -162,6 +182,59 @@ export default function ProfileScreen() {
           autoCorrect={false}
           editable={!saving}
         />
+
+        <Text style={[styles.cardTitle, { marginTop: 14 }]}>Inspection Company</Text>
+        <TextInput
+          style={styles.input}
+          value={inspectorCompany}
+          onChangeText={setInspectorCompany}
+          placeholder="Company name"
+          placeholderTextColor={COLORS.textFaint}
+          autoCapitalize="words"
+          editable={!saving}
+        />
+
+        <Text style={[styles.cardTitle, { marginTop: 14 }]}>Phone</Text>
+        <TextInput
+          style={styles.input}
+          value={inspectorPhone}
+          onChangeText={setInspectorPhone}
+          placeholder="(555) 555-5555"
+          placeholderTextColor={COLORS.textFaint}
+          keyboardType="phone-pad"
+          editable={!saving}
+        />
+
+        <Text style={[styles.cardTitle, { marginTop: 18 }]}>
+          I hold an active license as a:
+        </Text>
+        <Text style={styles.hint}>Pick one. Matches the "check one" box on the form.</Text>
+        <View style={{ gap: 8, marginTop: 8 }}>
+          {INSPECTOR_LICENSE_TYPES.map((t) => {
+            const selected = inspectorLicenseType === t.value;
+            return (
+              <Pressable
+                key={t.value}
+                onPress={() => setInspectorLicenseType(selected ? "" : t.value)}
+                disabled={saving}
+                style={[
+                  styles.licenseRow,
+                  selected && styles.licenseRowOn,
+                ]}
+              >
+                <View style={[styles.licenseDot, selected && styles.licenseDotOn]}>
+                  {selected && <View style={styles.licenseDotInner} />}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.licenseLabel, selected && styles.licenseLabelOn]}>
+                    {t.label}
+                  </Text>
+                  <Text style={styles.licenseSub}>{t.sub}</Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
       <Pressable
@@ -237,6 +310,53 @@ const styles = StyleSheet.create({
   },
   inputDisabled: { opacity: 0.6 },
   hint: { color: COLORS.textFaint, fontSize: 11, marginTop: 4, marginBottom: 0 },
+
+  licenseRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: COLORS.bgRow,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  licenseRowOn: {
+    borderColor: COLORS.accent,
+    backgroundColor: "#163a30",
+  },
+  licenseDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: COLORS.textFaint,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  licenseDotOn: {
+    borderColor: COLORS.accent,
+  },
+  licenseDotInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: COLORS.accent,
+  },
+  licenseLabel: {
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  licenseLabelOn: {
+    color: COLORS.accent,
+  },
+  licenseSub: {
+    color: COLORS.textDim,
+    fontSize: 11,
+    marginTop: 2,
+  },
 
   saveBtn: {
     backgroundColor: COLORS.accent,

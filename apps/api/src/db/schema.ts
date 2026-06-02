@@ -23,6 +23,11 @@ export const inspections = pgTable(
 
     inspectorName: text("inspector_name"),
     inspectorLicense: text("inspector_license"),
+    // Qualified Inspector certification (OIR-B1-1802 04/26).
+    // Set once on the Profile screen, auto-stamped on every inspection.
+    inspectorLicenseType: text("inspector_license_type"),
+    inspectorCompany: text("inspector_company"),
+    inspectorPhone: text("inspector_phone"),
 
     // Customer / property-owner contact (captured at inspection creation).
     ownerEmail: text("owner_email"),

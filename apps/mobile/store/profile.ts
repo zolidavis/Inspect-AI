@@ -2,14 +2,40 @@
  * Local user profile (Zustand + AsyncStorage).
  *
  * Stores both the auth identity (displayName + email from OAuth) AND
- * the licensed-inspector info (inspectorName + inspectorLicense) that
- * stamps onto every inspection. Type-once, applies forever (until
- * sign-out or storage clear).
+ * the licensed-inspector info (inspectorName + inspectorLicense + license
+ * type + company + phone) that stamps onto every inspection. Type-once,
+ * applies forever (until sign-out or storage clear).
  */
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export type AuthProvider = "local" | "apple" | "google";
+
+/**
+ * "I hold an active license as a:" — the six categories listed on the
+ * Qualified Inspector section of the OIR-B1-1802 (Rev. 04/26) form.
+ * Stamped on every wind-mit report.
+ */
+export type InspectorLicenseType =
+  | "home_inspector"            // §468.8314, FL Statutes (home inspector)
+  | "building_code_inspector"   // §468.607 (building code inspector)
+  | "contractor"                // §489.111 (general / building / residential contractor)
+  | "engineer"                  // §471.015 (professional engineer)
+  | "architect"                 // §481.213 (professional architect)
+  | "other_authorized";         // any other entity recognized by the insurer
+
+export const INSPECTOR_LICENSE_TYPES: {
+  value: InspectorLicenseType;
+  label: string;
+  sub: string;
+}[] = [
+  { value: "home_inspector",          label: "Home Inspector",          sub: "§468.8314, F.S." },
+  { value: "building_code_inspector", label: "Building Code Inspector", sub: "§468.607" },
+  { value: "contractor",              label: "Contractor",              sub: "§489.111 — general / building / residential" },
+  { value: "engineer",                label: "Professional Engineer",   sub: "§471.015" },
+  { value: "architect",               label: "Professional Architect",  sub: "§481.213" },
+  { value: "other_authorized",        label: "Other authorized entity", sub: "Recognized by the insurer" },
+];
 
 export interface Profile {
   displayName: string;
@@ -26,6 +52,12 @@ export interface Profile {
   inspectorName: string;
   /** FL inspector license / certificate number. Stamped on every report. */
   inspectorLicense: string;
+  /** Category of license held (OIR-B1-1802 "check one" box). */
+  inspectorLicenseType: InspectorLicenseType | "";
+  /** Inspection company name (top of the certification block). */
+  inspectorCompany: string;
+  /** Inspector phone number. */
+  inspectorPhone: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -41,6 +73,9 @@ interface ProfileStore {
     providerUserId?: string;
     inspectorName?: string;
     inspectorLicense?: string;
+    inspectorLicenseType?: InspectorLicenseType | "";
+    inspectorCompany?: string;
+    inspectorPhone?: string;
   }) => Promise<void>;
   signOut: () => Promise<void>;
   hydrate: () => Promise<void>;
@@ -63,6 +98,10 @@ export const useProfile = create<ProfileStore>((set, get) => ({
       providerUserId: patch.providerUserId ?? existing?.providerUserId ?? "",
       inspectorName: (patch.inspectorName ?? existing?.inspectorName ?? "").trim(),
       inspectorLicense: (patch.inspectorLicense ?? existing?.inspectorLicense ?? "").trim(),
+      inspectorLicenseType:
+        patch.inspectorLicenseType ?? existing?.inspectorLicenseType ?? "",
+      inspectorCompany: (patch.inspectorCompany ?? existing?.inspectorCompany ?? "").trim(),
+      inspectorPhone: (patch.inspectorPhone ?? existing?.inspectorPhone ?? "").trim(),
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     };
@@ -92,6 +131,10 @@ export const useProfile = create<ProfileStore>((set, get) => ({
           providerUserId: saved.providerUserId ?? "",
           inspectorName: saved.inspectorName ?? "",
           inspectorLicense: saved.inspectorLicense ?? "",
+          inspectorLicenseType:
+            (saved.inspectorLicenseType as InspectorLicenseType | "") ?? "",
+          inspectorCompany: saved.inspectorCompany ?? "",
+          inspectorPhone: saved.inspectorPhone ?? "",
           createdAt: saved.createdAt ?? new Date().toISOString(),
           updatedAt: saved.updatedAt ?? new Date().toISOString(),
         };
@@ -130,4 +173,12 @@ export function isInspectorComplete(profile: Profile | null): boolean {
     (profile.inspectorName?.trim().length ?? 0) > 0 &&
     (profile.inspectorLicense?.trim().length ?? 0) > 0
   );
+}
+
+/** Human-friendly label for the stored license-type enum. */
+export function inspectorLicenseTypeLabel(
+  v: InspectorLicenseType | "" | undefined,
+): string {
+  if (!v) return "";
+  return INSPECTOR_LICENSE_TYPES.find((t) => t.value === v)?.label ?? "";
 }

@@ -81,6 +81,9 @@ export default function NewInspection() {
         // to every inspection going forward — see Profile screen).
         inspectorName: inspectorNameOf(profile) || undefined,
         inspectorLicense: profile?.inspectorLicense || undefined,
+        inspectorLicenseType: profile?.inspectorLicenseType || undefined,
+        inspectorCompany: profile?.inspectorCompany || undefined,
+        inspectorPhone: profile?.inspectorPhone || undefined,
         ownerEmail: ownerEmail.trim() || undefined,
         ownerPhone: ownerPhone.trim() || undefined,
       });

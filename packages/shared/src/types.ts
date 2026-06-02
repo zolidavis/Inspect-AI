@@ -38,6 +38,20 @@ export type PropertyLookup = z.infer<typeof PropertyLookupSchema>;
 export const InspectionTypeSchema = z.enum(["four_point", "wind_mitigation", "both"]);
 export type InspectionType = z.infer<typeof InspectionTypeSchema>;
 
+/**
+ * "I hold an active license as a:" — Qualified Inspector category on the
+ * OIR-B1-1802 (Rev. 04/26) form. Stamped on every wind-mit report.
+ */
+export const InspectorLicenseTypeSchema = z.enum([
+  "home_inspector",            // §468.8314, FL Statutes (home inspector)
+  "building_code_inspector",   // §468.607 (building code inspector)
+  "contractor",                // §489.111 (general / building / residential contractor)
+  "engineer",                  // §471.015 (professional engineer)
+  "architect",                 // §481.213 (professional architect)
+  "other_authorized",          // any other entity recognized by the insurer
+]);
+export type InspectorLicenseType = z.infer<typeof InspectorLicenseTypeSchema>;
+
 export const PhotoSchema = z.object({
   id: z.string().uuid(),
   inspectionId: z.string().uuid(),
@@ -73,6 +87,12 @@ export const InspectionSchema = z.object({
   photos: z.array(PhotoSchema).default([]),
   inspectorName: z.string().optional(),
   inspectorLicense: z.string().optional(),
+  /** "I hold an active license as a:" category from the OIR-B1-1802 form. */
+  inspectorLicenseType: InspectorLicenseTypeSchema.optional(),
+  /** Inspection company name. */
+  inspectorCompany: z.string().optional(),
+  /** Inspector contact phone. */
+  inspectorPhone: z.string().optional(),
   /** Customer / property-owner contact, captured at inspection creation. */
   ownerEmail: z.string().optional(),
   ownerPhone: z.string().optional(),
