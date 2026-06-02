@@ -169,6 +169,15 @@ export const Q9OpeningProtectionChartSchema = z.object({
   garageDoorsNonGlazed:      Q9LevelNonGlazedSchema.optional(),
 });
 
+// 9b. Secondary classification. The primary picks the protection
+// product class for the glazed openings (A through Z), and the sub
+// picks how the non-glazed openings are classified relative to that.
+export const Q9bPrimarySchema = z.enum(["a", "b", "c", "n", "x", "z"]);
+export const Q9bASubSchema = z.enum(["a1", "a2", "a3"]);
+export const Q9bBSubSchema = z.enum(["b1", "b2"]);
+export const Q9bCSubSchema = z.enum(["c1", "c2", "c3"]);
+export const Q9bNSubSchema = z.enum(["n1", "n2", "n3"]);
+
 export const WindMitFormSchema = z.object({
   // NOTE area
   fortifiedHome: FortifiedHomeSchema.optional(),
@@ -211,6 +220,12 @@ export const WindMitFormSchema = z.object({
   // 9. Opening Protection
   openingProtection: OpeningProtectionSchema,                          // 9a summary "WEAKEST" enum
   openingProtectionChart: Q9OpeningProtectionChartSchema.optional(),   // 9a per-opening chart
+  // 9b secondary classification — primary + per-primary sub picker
+  q9bPrimary: Q9bPrimarySchema.optional(),
+  q9bSubA: Q9bASubSchema.optional(),
+  q9bSubB: Q9bBSubSchema.optional(),
+  q9bSubC: Q9bCSubSchema.optional(),
+  q9bSubN: Q9bNSubSchema.optional(),
   notes: z.string().optional(),
 });
 export type WindMitForm = z.infer<typeof WindMitFormSchema>;

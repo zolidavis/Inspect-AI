@@ -418,7 +418,71 @@ export const WIND_MIT_SECTIONS: SectionMeta[] = [
           { value: "x_unknown",          label: "X. Unknown" },
         ],
       },
-      { kind: "string", path: "notes", label: "Notes", placeholder: "Optional" },
+    ],
+  },
+  // 9b — Secondary classification. Inspector picks a primary class
+  // (A/B/C/N/X/Z) describing the GLAZED opening product compliance,
+  // then a sub-class describing how the NON-GLAZED openings relate.
+  {
+    title: "9b. Secondary Classification",
+    fields: [
+      {
+        kind: "enum", path: "q9bPrimary", label: "Primary classification",
+        options: [
+          { value: "a", label: "A. Cyclic + 9 lb large missile (Level A — Miami-Dade PA 201/202/203, TAS, ASTM E 1886/1996)" },
+          { value: "b", label: "B. Cyclic + 4-8 lb large missile (Level B — ASTM, SSTD 12)" },
+          { value: "c", label: "C. Wood structural panels per FBC 2007 (Level C — plywood/OSB)" },
+          { value: "n", label: "N. Unverified shutter systems / no documentation" },
+          { value: "x", label: "X. None or some glazed unprotected" },
+          { value: "z", label: "Z. Damaged openings — repair/replacement" },
+        ],
+      },
+      // A sub-conditions
+      {
+        kind: "enum", path: "q9bSubA", label: "A. Non-glazed scenario",
+        showIf: { path: "q9bPrimary", equals: "a" },
+        options: [
+          { value: "a1", label: "A.1 All non-glazed are A, or no non-glazed exist" },
+          { value: "a2", label: "A.2 Some non-glazed are B or D; none are C, N, X, or Z" },
+          { value: "a3", label: "A.3 Some non-glazed are C, N, X, or Z" },
+        ],
+      },
+      // B sub-conditions
+      {
+        kind: "enum", path: "q9bSubB", label: "B. Non-glazed scenario",
+        showIf: { path: "q9bPrimary", equals: "b" },
+        options: [
+          { value: "b1", label: "B.1 All non-glazed are A or B" },
+          { value: "b2", label: "B.2 Some non-glazed are C, N, X or Z; or no non-glazed exist" },
+        ],
+      },
+      // C sub-conditions
+      {
+        kind: "enum", path: "q9bSubC", label: "C. Non-glazed scenario",
+        showIf: { path: "q9bPrimary", equals: "c" },
+        options: [
+          { value: "c1", label: "C.1 All non-glazed are A, B or C; or no non-glazed exist" },
+          { value: "c2", label: "C.2 Some non-glazed are D; none are N or X" },
+          { value: "c3", label: "C.3 Some non-glazed are N or X" },
+        ],
+      },
+      // N sub-conditions
+      {
+        kind: "enum", path: "q9bSubN", label: "N. Non-glazed scenario",
+        showIf: { path: "q9bPrimary", equals: "n" },
+        options: [
+          { value: "n1", label: "N.1 All non-glazed are A, B or C; or no non-glazed exist" },
+          { value: "n2", label: "N.2 Some non-glazed are D; none are N or X" },
+          { value: "n3", label: "N.3 Some non-glazed are N or X" },
+        ],
+      },
+      // X / Z have no sub-conditions
+    ],
+  },
+  {
+    title: "Notes",
+    fields: [
+      { kind: "string", path: "notes", label: "Inspector notes", placeholder: "Optional" },
     ],
   },
 ];
