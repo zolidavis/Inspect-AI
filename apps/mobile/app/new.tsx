@@ -33,15 +33,16 @@ function deriveWindMitFromProperty(p: {
 }): { buildingCode: string; yearOfHomeOriginalConstruction: number } | null {
   const year = p.yearBuilt;
   if (!year || typeof year !== "number") return null;
+  const isHvhz = !!p.county && /miami|broward/i.test(p.county);
   let buildingCode: string;
-  if (year >= 2002) {
-    buildingCode = "a_built_2002_or_later_fbc";
+  if (year >= 2007) {
+    buildingCode = "b_fbc_2007_later";
+  } else if (year >= 2002) {
+    buildingCode = "a_fbc_2001_2004";
+  } else if (isHvhz && year >= 1994 && year <= 2001) {
+    buildingCode = "c_hvhz_sfbc_94";
   } else {
-    const isHvhz = !!p.county && /miami|broward/i.test(p.county);
-    buildingCode =
-      isHvhz && year >= 1994 && year <= 2001
-        ? "b_built_1994_2001_sfbc"
-        : "c_unknown_or_not_meeting";
+    buildingCode = "d_unknown";
   }
   return { buildingCode, yearOfHomeOriginalConstruction: year };
 }

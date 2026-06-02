@@ -46,6 +46,9 @@ export const api = {
   patchInspection: (id: string, body: Partial<Inspection>) =>
     req<Inspection>(`/inspections/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
 
+  deleteInspection: (id: string) =>
+    req<{ ok: boolean }>(`/inspections/${id}`, { method: "DELETE" }),
+
   lookupAddress: (address: Address) =>
     req<PropertyLookup>("/address/lookup", {
       method: "POST",

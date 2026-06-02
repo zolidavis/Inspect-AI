@@ -119,9 +119,10 @@ export const WIND_MIT_SECTIONS: SectionMeta[] = [
       {
         kind: "enum", path: "buildingCode", label: "Code path",
         options: [
-          { value: "a_built_2002_or_later_fbc", label: "A. FBC 2001 & 2004 (built 2002+)" },
-          { value: "b_built_1994_2001_sfbc", label: "B. FBC 2007 and later" },
-          { value: "c_unknown_or_not_meeting", label: "C. HVHZ only — SFBC-94" },
+          { value: "a_fbc_2001_2004",   label: "A. FBC 2001 & 2004 (built 2002–2006)" },
+          { value: "b_fbc_2007_later",  label: "B. FBC 2007 and later (built 2007+)" },
+          { value: "c_hvhz_sfbc_94",    label: "C. HVHZ only — SFBC-94 (built 1994–2001)" },
+          { value: "d_unknown",         label: "D. Unknown or doesn't meet A/B/C" },
         ],
       },
       { kind: "integer", path: "yearOfHomeOriginalConstruction", label: "Year of original construction", min: 1800, max: 2100 },
@@ -180,7 +181,7 @@ export const WIND_MIT_SECTIONS: SectionMeta[] = [
     ],
   },
   {
-    title: "3. Roof Deck Attachment",
+    title: "5. Roof Deck Attachment",
     fields: [
       {
         kind: "enum", path: "roofDeckAttachment", label: "Attachment",
@@ -196,7 +197,7 @@ export const WIND_MIT_SECTIONS: SectionMeta[] = [
     ],
   },
   {
-    title: "4. Roof-to-Wall Attachment",
+    title: "6. Roof-to-Wall Attachment",
     fields: [
       {
         kind: "enum", path: "roofToWallAttachment", label: "Attachment",
@@ -213,7 +214,7 @@ export const WIND_MIT_SECTIONS: SectionMeta[] = [
     ],
   },
   {
-    title: "5. Roof Geometry",
+    title: "7. Roof Geometry",
     fields: [
       {
         kind: "enum", path: "roofGeometry", label: "Geometry",
@@ -226,7 +227,7 @@ export const WIND_MIT_SECTIONS: SectionMeta[] = [
     ],
   },
   {
-    title: "6. Secondary Water Resistance",
+    title: "8. Secondary Water Resistance",
     fields: [
       {
         kind: "enum", path: "secondaryWaterResistance", label: "SWR",
@@ -239,7 +240,7 @@ export const WIND_MIT_SECTIONS: SectionMeta[] = [
     ],
   },
   {
-    title: "7. Opening Protection",
+    title: "9. Opening Protection",
     fields: [
       {
         kind: "enum", path: "openingProtection", label: "Protection",

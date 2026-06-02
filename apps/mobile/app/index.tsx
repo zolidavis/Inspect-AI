@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import {
+  Alert,
   FlatList,
   Pressable,
   RefreshControl,
@@ -7,7 +8,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { Link, useFocusEffect, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect, useRouter } from "expo-router";
 import type { Inspection } from "@inspect-ai/shared";
 import { api } from "../lib/api";
 
@@ -16,6 +18,7 @@ export default function Inspections() {
   const [items, setItems] = useState<Inspection[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -27,6 +30,46 @@ export default function Inspections() {
   }, []);
 
   useFocusEffect(useCallback(() => { void load(); }, [load]));
+
+  const open = (id: string) => router.push(`/inspection/${id}`);
+
+  const confirmDelete = (item: Inspection) => {
+    Alert.alert(
+      "Delete inspection?",
+      `${item.address.line1}, ${item.address.city}\n\nThis can't be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            setBusyId(item.id);
+            try {
+              await api.deleteInspection(item.id);
+              setItems((cur) => cur.filter((i) => i.id !== item.id));
+            } catch (e: any) {
+              Alert.alert("Couldn't delete", e.message);
+            } finally {
+              setBusyId(null);
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  /** Long-press → action menu (Open / Delete). */
+  const showRowMenu = (item: Inspection) => {
+    Alert.alert(
+      `${item.address.line1}, ${item.address.city}`,
+      labelForType(item.type) + " · " + item.status,
+      [
+        { text: "Open", onPress: () => open(item.id) },
+        { text: "Delete", style: "destructive", onPress: () => confirmDelete(item) },
+        { text: "Cancel", style: "cancel" },
+      ],
+    );
+  };
 
   return (
     <View style={styles.root}>
@@ -46,16 +89,29 @@ export default function Inspections() {
           </View>
         }
         renderItem={({ item }) => (
-          <Link href={`/inspection/${item.id}`} asChild>
-            <Pressable style={styles.row}>
+          <Pressable
+            style={[styles.row, busyId === item.id && { opacity: 0.4 }]}
+            onPress={() => open(item.id)}
+            onLongPress={() => showRowMenu(item)}
+            disabled={busyId === item.id}
+          >
+            <View style={{ flex: 1 }}>
               <Text style={styles.rowTitle}>
                 {item.address.line1}, {item.address.city}
               </Text>
               <Text style={styles.rowMeta}>
                 {labelForType(item.type)} · {item.status}
               </Text>
+            </View>
+            {/* Trash icon — confirmation-dialog delete. */}
+            <Pressable
+              hitSlop={12}
+              onPress={() => confirmDelete(item)}
+              style={({ pressed }) => [styles.trashBtn, pressed && { opacity: 0.5 }]}
+            >
+              <Ionicons name="trash-outline" size={20} color="#a02020" />
             </Pressable>
-          </Link>
+          </Pressable>
         )}
       />
       <Pressable style={styles.fab} onPress={() => router.push("/new")}>
@@ -71,9 +127,22 @@ function labelForType(t: Inspection["type"]) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#fff" },
-  row: { padding: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: "#ddd" },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: "#ddd",
+  },
   rowTitle: { fontSize: 16, fontWeight: "600" },
   rowMeta: { fontSize: 13, color: "#666", marginTop: 2 },
+  trashBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   empty: { padding: 40, alignItems: "center" },
   emptyTitle: { fontSize: 18, fontWeight: "600" },
   emptyHint: { color: "#666", marginTop: 6 },

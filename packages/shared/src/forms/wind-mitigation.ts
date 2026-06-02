@@ -8,11 +8,17 @@ import { z } from "zod";
  * See: https://floir.gov/consumers/wind-mitigation-resources
  */
 
-// 1. Building Code (mapped to the 04/26 form's three-way A/B/C question
-// + D unknown). Existing rows pre-04/26 may carry the old enum values
-// (a_built_2002_or_later_fbc etc.) — the PDF filler accepts both, the
-// mobile UI shows the new labels going forward.
+// 1. Building Code — the 04/26 form has 4 options A/B/C/D. The UI offers
+// all four. Legacy 01/12 enum values (a_built_2002_or_later_fbc etc.)
+// are accepted for back-compat — the PDF filler routes them to the
+// correct A/B/C/D box.
 export const BuildingCodeSchema = z.enum([
+  // New 04/26 explicit values
+  "a_fbc_2001_2004",          // A. FBC 2001 & 2004 (built 2002-2006)
+  "b_fbc_2007_later",         // B. FBC 2007 and later (built 2007+)
+  "c_hvhz_sfbc_94",           // C. HVHZ only — SFBC-94 (built 1994-2001 HVHZ)
+  "d_unknown",                // D. Unknown or doesn't meet A/B/C
+  // Legacy 01/12 values (kept for back-compat with stored inspections)
   "a_built_2002_or_later_fbc",
   "b_built_1994_2001_sfbc",
   "c_unknown_or_not_meeting",

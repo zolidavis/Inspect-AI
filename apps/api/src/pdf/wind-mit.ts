@@ -150,27 +150,29 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
   }
 
   // ── Q1. Building Code ──────────────────────────────────────────────────
-  // The 04/26 form has 4 options A/B/C/D. Our schema has 3 enums; map
-  // using the year of construction to disambiguate A (FBC 2001-2004,
-  // homes built 2002-2006) vs B (FBC 2007+, homes built 2007+).
+  // The 04/26 form has 4 options A/B/C/D. Either the inspector picked
+  // one of the new explicit enums (a_fbc_2001_2004 etc.) OR we fall back
+  // to the legacy 01/12 enum + year-based smart routing.
   const year =
     Number(wm.yearOfHomeOriginalConstruction) || Number(property.yearBuilt) || 0;
-  let q1Box: { x: number; y: number; yearBlankX?: number; yearBlankY?: number } | null = null;
-  // Box y positions per option (top-down)
-  if (wm.buildingCode === "a_built_2002_or_later_fbc") {
-    if (year >= 2007) {
-      // 1.B FBC 2007 and later
-      q1Box = { x: 35, y: 354, yearBlankX: 400, yearBlankY: 366 };
-    } else {
-      // 1.A FBC 2001 & 2004
-      q1Box = { x: 36, y: 331, yearBlankX: 400, yearBlankY: 343 };
-    }
-  } else if (wm.buildingCode === "b_built_1994_2001_sfbc") {
-    // 1.C HVHZ Only SFBC-94
-    q1Box = { x: 35, y: 377, yearBlankX: 419, yearBlankY: 389 };
-  } else if (wm.buildingCode === "c_unknown_or_not_meeting") {
-    // 1.D Unknown
-    q1Box = { x: 36, y: 412 };
+  // Box y positions per option (top-down) — used by both explicit + legacy paths.
+  const Q1A = { x: 36, y: 331, yearBlankX: 400, yearBlankY: 343 };
+  const Q1B = { x: 35, y: 354, yearBlankX: 400, yearBlankY: 366 };
+  const Q1C = { x: 35, y: 377, yearBlankX: 419, yearBlankY: 389 };
+  const Q1D = { x: 36, y: 412 } as { x: number; y: number; yearBlankX?: number; yearBlankY?: number };
+  type Q1Box = typeof Q1A;
+  let q1Box: Q1Box | typeof Q1D | null = null;
+  switch (wm.buildingCode) {
+    case "a_fbc_2001_2004":  q1Box = Q1A; break;
+    case "b_fbc_2007_later": q1Box = Q1B; break;
+    case "c_hvhz_sfbc_94":   q1Box = Q1C; break;
+    case "d_unknown":        q1Box = Q1D; break;
+    // Legacy 01/12 enum values → smart-route based on year.
+    case "a_built_2002_or_later_fbc":
+      q1Box = year >= 2007 ? Q1B : Q1A;
+      break;
+    case "b_built_1994_2001_sfbc": q1Box = Q1C; break;
+    case "c_unknown_or_not_meeting": q1Box = Q1D; break;
   }
   if (q1Box) {
     checkBox(out, 0, q1Box.x, q1Box.y);
