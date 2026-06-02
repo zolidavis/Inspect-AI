@@ -100,21 +100,62 @@ export const FOUR_POINT_SECTIONS: SectionMeta[] = [
 
 export const WIND_MIT_SECTIONS: SectionMeta[] = [
   {
+    title: "NOTE (FORTIFIED Home certificate)",
+    fields: [
+      {
+        kind: "enum", path: "fortifiedHome", label: "FORTIFIED certificate",
+        options: [
+          { value: "none", label: "None / Not FORTIFIED" },
+          { value: "roof", label: "FORTIFIED Roof" },
+          { value: "silver", label: "FORTIFIED Silver" },
+          { value: "gold", label: "FORTIFIED Gold" },
+        ],
+      },
+    ],
+  },
+  {
     title: "1. Building Code",
     fields: [
       {
         kind: "enum", path: "buildingCode", label: "Code path",
         options: [
-          { value: "a_built_2002_or_later_fbc", label: "A. Built 2002+ (FBC)" },
-          { value: "b_built_1994_2001_sfbc", label: "B. 1994–2001 (SFBC)" },
-          { value: "c_unknown_or_not_meeting", label: "C. Unknown / not meeting" },
+          { value: "a_built_2002_or_later_fbc", label: "A. FBC 2001 & 2004 (built 2002+)" },
+          { value: "b_built_1994_2001_sfbc", label: "B. FBC 2007 and later" },
+          { value: "c_unknown_or_not_meeting", label: "C. HVHZ only — SFBC-94" },
         ],
       },
       { kind: "integer", path: "yearOfHomeOriginalConstruction", label: "Year of original construction", min: 1800, max: 2100 },
+      { kind: "string", path: "buildingPermitDate", label: "Building permit application date (MM/DD/YYYY)", placeholder: "e.g. 06/15/2010" },
     ],
   },
   {
-    title: "2. Roof Covering",
+    title: "2. Region (ASCE 7-22 windspeed)",
+    fields: [
+      {
+        kind: "enum", path: "region", label: "Region",
+        options: [
+          { value: "hvhz",     label: "HVHZ (Miami-Dade / Broward)" },
+          { value: "region_1", label: "Region 1 (≥ 140 mph)" },
+          { value: "region_2", label: "Region 2 (130–139 mph)" },
+          { value: "region_3", label: "Region 3 (< 130 mph)" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "3. Roof Slope",
+    fields: [
+      {
+        kind: "enum", path: "roofSlope", label: "Predominant slope",
+        options: [
+          { value: "ge_6_12", label: "Greater than or equal to 6:12" },
+          { value: "lt_6_12", label: "Less than 6:12" },
+        ],
+      },
+    ],
+  },
+  {
+    title: "4. Roof Covering",
     fields: [
       {
         kind: "enum", path: "roofCovering.type", label: "Type",

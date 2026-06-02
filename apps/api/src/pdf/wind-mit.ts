@@ -78,8 +78,21 @@ function fmtAddress(insp: Inspection): string {
   return `${a.line1}, ${a.city}, ${a.state} ${a.zip}`;
 }
 
+/** "X" mark inside a checkbox printed at top-down (xBox, yBox). */
+function checkBox(out: FieldDraw[], page: number, xBox: number, yBox: number) {
+  out.push({
+    page,
+    x: xBox + 0.5,
+    y: yFromTop(yBox + 7),
+    size: 10,
+    value: "X",
+    bold: true,
+  });
+}
+
 function fieldsFor(inspection: Inspection): FieldDraw[] {
   const property: any = inspection.property ?? {};
+  const wm: any = inspection.windMit ?? {};
   const addr = inspection.address;
   const out: FieldDraw[] = [];
 
@@ -127,6 +140,77 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
   push({ page: 0, x: 118, y: yFromTop(224), value: property.yearBuilt });
   push({ page: 0, x: 394, y: yFromTop(224), value: inspection.ownerEmail });
 
+  // ── NOTE — FORTIFIED Home certificate checkboxes ───────────────────────
+  // Checkboxes at top-down y≈251. Positions: Roof x=285, Silver x=321, Gold x=374.
+  const FORTIFIED_X: Record<string, number> = {
+    roof: 285, silver: 321, gold: 374,
+  };
+  if (wm.fortifiedHome && FORTIFIED_X[wm.fortifiedHome]) {
+    checkBox(out, 0, FORTIFIED_X[wm.fortifiedHome]!, 251);
+  }
+
+  // ── Q1. Building Code ──────────────────────────────────────────────────
+  // The 04/26 form has 4 options A/B/C/D. Our schema has 3 enums; map
+  // using the year of construction to disambiguate A (FBC 2001-2004,
+  // homes built 2002-2006) vs B (FBC 2007+, homes built 2007+).
+  const year =
+    Number(wm.yearOfHomeOriginalConstruction) || Number(property.yearBuilt) || 0;
+  let q1Box: { x: number; y: number; yearBlankX?: number; yearBlankY?: number } | null = null;
+  // Box y positions per option (top-down)
+  if (wm.buildingCode === "a_built_2002_or_later_fbc") {
+    if (year >= 2007) {
+      // 1.B FBC 2007 and later
+      q1Box = { x: 35, y: 354, yearBlankX: 400, yearBlankY: 366 };
+    } else {
+      // 1.A FBC 2001 & 2004
+      q1Box = { x: 36, y: 331, yearBlankX: 400, yearBlankY: 343 };
+    }
+  } else if (wm.buildingCode === "b_built_1994_2001_sfbc") {
+    // 1.C HVHZ Only SFBC-94
+    q1Box = { x: 35, y: 377, yearBlankX: 419, yearBlankY: 389 };
+  } else if (wm.buildingCode === "c_unknown_or_not_meeting") {
+    // 1.D Unknown
+    q1Box = { x: 36, y: 412 };
+  }
+  if (q1Box) {
+    checkBox(out, 0, q1Box.x, q1Box.y);
+    // Year built blank (only A/B/C have a Year Built input)
+    if (q1Box.yearBlankX && q1Box.yearBlankY && year > 0) {
+      push({ page: 0, x: q1Box.yearBlankX, y: yFromTop(q1Box.yearBlankY), value: year });
+    }
+    // Permit date — MM/DD/YYYY split blank at x≈478, y just below box
+    if (wm.buildingPermitDate && q1Box.yearBlankY) {
+      push({
+        page: 0,
+        x: 478,
+        y: yFromTop(q1Box.yearBlankY + 11),
+        value: wm.buildingPermitDate,
+      });
+    }
+  }
+
+  // ── Q2. Region ─────────────────────────────────────────────────────────
+  // y≈446 (top-down). Positions per option:
+  const REGION_X: Record<string, number> = {
+    hvhz: 36,
+    region_1: 79,
+    region_2: 180,
+    region_3: 318,
+  };
+  if (wm.region && REGION_X[wm.region] !== undefined) {
+    checkBox(out, 0, REGION_X[wm.region]!, 446);
+  }
+
+  // ── Q3. Roof Slope ─────────────────────────────────────────────────────
+  // y≈492 (top-down). ≥ 6:12 at x=36, < 6:12 at x=176.
+  const ROOF_SLOPE_X: Record<string, number> = {
+    ge_6_12: 36,
+    lt_6_12: 176,
+  };
+  if (wm.roofSlope && ROOF_SLOPE_X[wm.roofSlope] !== undefined) {
+    checkBox(out, 0, ROOF_SLOPE_X[wm.roofSlope]!, 492);
+  }
+
   // ── Per-page footers (Inspectors Initials + Property Address × 6) ─────
   const fullAddr = fmtAddress(inspection);
   const initials = initialsOf(inspection.inspectorName);
@@ -136,8 +220,9 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
     push({ page: p, x: 220, y: yFromTop(725), value: fullAddr });
   }
 
-  // TODO(v2): body questions Q1-Q9, inspector signature block on
-  // pages 5-6 (Qualified Inspector type check + signature + license).
+  // TODO(v2): Q4 Roof Covering (rows of dates + product approval),
+  // Q5 Roof Geometry, Q6 SWR, Q7 Opening Protection, Q8/Q9 new questions,
+  // inspector signature block on page 5/6.
 
   return out;
 }

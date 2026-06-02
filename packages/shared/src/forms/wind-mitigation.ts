@@ -2,17 +2,47 @@ import { z } from "zod";
 
 /**
  * Uniform Mitigation Verification Inspection Form
- * OIR-B1-1802 (Rev. 01/12), the Florida wind mitigation form.
+ * OIR-B1-1802 (Rev. 04/26), the Florida wind mitigation form.
  *
  * Section letters/numbers below mirror the official form.
- * See: https://www.floir.com/sections/pandc/forms.aspx
+ * See: https://floir.gov/consumers/wind-mitigation-resources
  */
 
-// 1. Building Code
+// 1. Building Code (mapped to the 04/26 form's three-way A/B/C question
+// + D unknown). Existing rows pre-04/26 may carry the old enum values
+// (a_built_2002_or_later_fbc etc.) — the PDF filler accepts both, the
+// mobile UI shows the new labels going forward.
 export const BuildingCodeSchema = z.enum([
   "a_built_2002_or_later_fbc",
   "b_built_1994_2001_sfbc",
   "c_unknown_or_not_meeting",
+]);
+
+/** Building permit application date as MM/DD/YYYY (free-text for inspector). */
+export const BuildingPermitDateSchema = z.string();
+
+// 2. Region — new in the 04/26 revision. Based on ASCE 7-22 design wind
+// speed (700-year MRI), Risk Category 2.
+export const RegionSchema = z.enum([
+  "hvhz",       // High-Velocity Hurricane Zone (Miami-Dade / Broward)
+  "region_1",   // ≥ 140 mph
+  "region_2",   // 130 mph – 139 mph
+  "region_3",   // < 130 mph
+]);
+
+// 3. Roof Slope — new in the 04/26 revision.
+export const RoofSlopeSchema = z.enum([
+  "ge_6_12",    // ≥ 6:12
+  "lt_6_12",    // < 6:12
+]);
+
+// NOTE block — FORTIFIED Home certificate (optional, the form's NOTE
+// area lists this on page 1).
+export const FortifiedHomeSchema = z.enum([
+  "none",
+  "roof",
+  "silver",
+  "gold",
 ]);
 
 // 2. Roof Covering
@@ -71,14 +101,25 @@ export const OpeningProtectionSchema = z.enum([
 ]);
 
 export const WindMitFormSchema = z.object({
+  // NOTE area
+  fortifiedHome: FortifiedHomeSchema.optional(),
+  // 1. Building Code
   buildingCode: BuildingCodeSchema,
+  buildingPermitDate: BuildingPermitDateSchema.optional(),
+  yearOfHomeOriginalConstruction: z.number().int(),
+  // 2. Region
+  region: RegionSchema.optional(),
+  // 3. Roof Slope
+  roofSlope: RoofSlopeSchema.optional(),
+  // 4. Roof Covering
   roofCovering: RoofCoveringSchema,
+  // 5+. (legacy 01/12 enums kept; the 04/26 form re-shuffled the numbers
+  // but the underlying classifications still apply)
   roofDeckAttachment: RoofDeckAttachmentSchema,
   roofToWallAttachment: RoofToWallSchema,
   roofGeometry: RoofGeometrySchema,
   secondaryWaterResistance: SwrSchema,
   openingProtection: OpeningProtectionSchema,
-  yearOfHomeOriginalConstruction: z.number().int(),
   notes: z.string().optional(),
 });
 export type WindMitForm = z.infer<typeof WindMitFormSchema>;
