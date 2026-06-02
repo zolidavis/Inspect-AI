@@ -65,12 +65,36 @@ export default function Camera() {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.85,
-        // allowsEditing: false — full-res for AI vision
+        allowsMultipleSelection: true,
+        selectionLimit: 20,
       });
       if (result.canceled) return;
-      const uri = result.assets?.[0]?.uri;
-      if (!uri) throw new Error("no asset selected");
-      await uploadAndAnalyze(uri);
+      const assets = result.assets ?? [];
+      if (assets.length === 0) throw new Error("no assets selected");
+
+      let okCount = 0;
+      let lastSummary: string | null = null;
+      for (let i = 0; i < assets.length; i++) {
+        const uri = assets[i]!.uri;
+        setAiSummary(`Uploading ${i + 1} of ${assets.length}…`);
+        try {
+          const uploaded = await api.uploadPhoto({ inspectionId: id!, tag: tag!, uri });
+          okCount++;
+          // AI analysis is best-effort per photo — don't let one failure
+          // (rate-limit, blurry image, etc.) abort the rest of the batch.
+          try {
+            const analysis = await api.analyzePhoto(uploaded.id);
+            lastSummary = analysis.summary;
+          } catch {}
+        } catch (err) {
+          console.warn(`photo ${i + 1} upload failed:`, err);
+        }
+      }
+      setAiSummary(
+        assets.length === 1
+          ? (lastSummary ?? "Photo uploaded.")
+          : `${okCount} of ${assets.length} uploaded. ${lastSummary ? "Last: " + lastSummary : ""}`,
+      );
     } catch (e: any) {
       Alert.alert("Gallery upload failed", e.message);
     } finally {

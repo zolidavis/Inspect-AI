@@ -7,7 +7,12 @@ export function getAt(obj: any, path: string): any {
   return path.split(".").reduce((acc, k) => (acc == null ? acc : acc[k]), obj);
 }
 export function setAt<T extends object>(obj: T, path: string, value: unknown): T {
-  const next: any = structuredClone(obj);
+  // Deep-clone via JSON. Form data is plain JSON-shaped (strings, numbers,
+  // booleans, nested objects) so this is safe and equivalent to
+  // structuredClone — which Hermes (RN's JS engine on Android) doesn't
+  // ship in our currently-pinned version, causing a runtime ReferenceError
+  // the moment FormEditor renders.
+  const next: any = obj == null ? {} : JSON.parse(JSON.stringify(obj));
   const parts = path.split(".");
   let cur = next;
   for (let i = 0; i < parts.length - 1; i++) {
