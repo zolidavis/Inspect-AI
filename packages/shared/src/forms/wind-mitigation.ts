@@ -109,11 +109,22 @@ export const RoofToWallAQualifierSchema = z.enum(["a1", "a2", "a3"]);
 /** Shared 1/2/3 minimal-condition picker for options B / C / D. */
 export const RoofToWallMinimalConditionSchema = z.enum(["m1", "m2", "m3"]);
 
-// 5. Roof Geometry
+// 7. Roof Geometry (was Q5 in 01/12)
 export const RoofGeometrySchema = z.enum(["a_hip", "b_flat", "c_other"]);
 
-// 6. Secondary Water Resistance (SWR)
+// 8. Secondary Water Resistance / Sealed Roof Deck (was Q6 in 01/12).
+// A = Sealed Roof Deck (the value our schema legacy-encodes as "a_yes")
+// B = No sealed roof deck (was "b_no")
+// C = Unknown or undetermined (was "c_unknown")
 export const SwrSchema = z.enum(["a_yes", "b_no", "c_unknown"]);
+
+/** Q8.A sub-method — which qualifying construction is in place. */
+export const SwrSubMethodSchema = z.enum([
+  "m1_astm_d1970",      // Fully adhered ASTM D1970 polymer-modified bitumen
+  "m2_taped_seams",     // Tape over roof deck seams (≥ 3.75″ self-adhering strip)
+  "m3_double_layer",    // Double layer of felt/synthetic with no tape
+  "m4_spray_foam",      // Spray foam product along rafter/deck intersections
+]);
 
 // 7. Opening Protection
 export const OpeningProtectionSchema = z.enum([
@@ -145,8 +156,24 @@ export const WindMitFormSchema = z.object({
   roofToWallAQualifier: RoofToWallAQualifierSchema.optional(),
   /** B/C/D shared minimal-condition picker (1/2/3). */
   roofToWallMinimalCondition: RoofToWallMinimalConditionSchema.optional(),
+
+  // 7. Roof Geometry. A. Hip needs perimeter lengths; B. Flat needs areas.
   roofGeometry: RoofGeometrySchema,
+  /** A. Hip: total length of non-hip features (feet). */
+  roofGeometryNonHipPerimeter: z.number().optional(),
+  /** A. Hip: total roof system perimeter (feet). */
+  roofGeometryTotalPerimeter: z.number().optional(),
+  /** B. Flat: roof area with slope less than 2:12 (sq ft). */
+  roofGeometryFlatAreaLt2_12: z.number().optional(),
+  /** B. Flat: total roof area (sq ft). */
+  roofGeometryTotalArea: z.number().optional(),
+
+  // 8. SWR / Sealed Roof Deck.
   secondaryWaterResistance: SwrSchema,
+  /** A. Sealed Roof Deck: which qualifying method. */
+  swrSubMethod: SwrSubMethodSchema.optional(),
+  /** Optional flag: "entire roof deck underside covered" (typically with spray foam). */
+  swrEntireDeckCovered: z.boolean().optional(),
   openingProtection: OpeningProtectionSchema,
   notes: z.string().optional(),
 });

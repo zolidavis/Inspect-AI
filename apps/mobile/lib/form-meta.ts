@@ -260,25 +260,67 @@ export const WIND_MIT_SECTIONS: SectionMeta[] = [
     title: "7. Roof Geometry",
     fields: [
       {
-        kind: "enum", path: "roofGeometry", label: "Geometry",
+        kind: "enum", path: "roofGeometry", label: "Roof shape",
         options: [
-          { value: "a_hip", label: "A. Hip" },
-          { value: "b_flat", label: "B. Flat" },
+          { value: "a_hip",   label: "A. Hip Roof" },
+          { value: "b_flat",  label: "B. Flat Roof (5+ unit bldg, ≥90% area < 2:12)" },
           { value: "c_other", label: "C. Other (gable, etc.)" },
         ],
+      },
+      // A. Hip needs the perimeter lengths
+      {
+        kind: "integer", path: "roofGeometryNonHipPerimeter",
+        label: "Total length of non-hip features (feet)",
+        showIf: { path: "roofGeometry", equals: "a_hip" },
+        min: 0,
+      },
+      {
+        kind: "integer", path: "roofGeometryTotalPerimeter",
+        label: "Total length of roof system perimeter (feet)",
+        showIf: { path: "roofGeometry", equals: "a_hip" },
+        min: 0,
+      },
+      // B. Flat needs the areas
+      {
+        kind: "integer", path: "roofGeometryFlatAreaLt2_12",
+        label: "Roof area with slope < 2:12 (sq ft)",
+        showIf: { path: "roofGeometry", equals: "b_flat" },
+        min: 0,
+      },
+      {
+        kind: "integer", path: "roofGeometryTotalArea",
+        label: "Total roof area (sq ft)",
+        showIf: { path: "roofGeometry", equals: "b_flat" },
+        min: 0,
       },
     ],
   },
   {
-    title: "8. Secondary Water Resistance",
+    title: "8. Sealed Roof Deck / Secondary Water Resistance",
     fields: [
       {
-        kind: "enum", path: "secondaryWaterResistance", label: "SWR",
+        kind: "enum", path: "secondaryWaterResistance", label: "Sealed Roof Deck",
         options: [
-          { value: "a_yes", label: "A. Yes" },
-          { value: "b_no", label: "B. No" },
-          { value: "c_unknown", label: "C. Unknown" },
+          { value: "a_yes",     label: "A. Sealed Roof Deck (SWR)" },
+          { value: "b_no",      label: "B. No sealed roof deck" },
+          { value: "c_unknown", label: "C. Unknown or undetermined" },
         ],
+      },
+      // A. Sealed Roof Deck → which qualifying method
+      {
+        kind: "enum", path: "swrSubMethod", label: "A. Qualifying method",
+        showIf: { path: "secondaryWaterResistance", equals: "a_yes" },
+        options: [
+          { value: "m1_astm_d1970",   label: "1. ASTM D1970 polymer-modified bitumen (fully adhered)" },
+          { value: "m2_taped_seams",  label: "2. Tape over roof deck seams (≥ 3.75″ self-adhering)" },
+          { value: "m3_double_layer", label: "3. Double layer of felt or synthetic, no tape" },
+          { value: "m4_spray_foam",   label: "4. Spray foam along rafter/deck intersections" },
+        ],
+      },
+      {
+        kind: "boolean", path: "swrEntireDeckCovered",
+        label: "Entire roof deck underside covered",
+        showIf: { path: "secondaryWaterResistance", equals: "a_yes" },
       },
     ],
   },
