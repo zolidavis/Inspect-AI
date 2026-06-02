@@ -5,6 +5,7 @@ import {
 import { useRouter } from "expo-router";
 import { FieldEditor, getAt, setAt } from "./FieldEditor";
 import type { SectionMeta } from "../lib/form-meta";
+import { isFieldVisible } from "../lib/form-meta";
 import { api } from "../lib/api";
 import type { Inspection } from "@inspect-ai/shared";
 
@@ -67,20 +68,26 @@ export function FormEditor({
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.list}>
         <Text style={styles.h1}>{title}</Text>
-        {sections.map((section) => (
-          <View key={section.title} style={styles.card}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-            {section.fields.map((field) => (
-              <FieldEditor
-                key={field.path}
-                field={field}
-                value={getAt(state, field.path)}
-                error={errors[field.path]}
-                onChange={(v) => update(field.path, v)}
-              />
-            ))}
-          </View>
-        ))}
+        {sections.map((section) => {
+          // Render only the visible fields; hide a whole card if everything
+          // inside is conditional and currently off.
+          const visible = section.fields.filter((f) => isFieldVisible(f, state, getAt));
+          if (visible.length === 0) return null;
+          return (
+            <View key={section.title} style={styles.card}>
+              <Text style={styles.sectionTitle}>{section.title}</Text>
+              {visible.map((field) => (
+                <FieldEditor
+                  key={field.path}
+                  field={field}
+                  value={getAt(state, field.path)}
+                  error={errors[field.path]}
+                  onChange={(v) => update(field.path, v)}
+                />
+              ))}
+            </View>
+          );
+        })}
       </ScrollView>
       <View style={styles.footer}>
         <Pressable

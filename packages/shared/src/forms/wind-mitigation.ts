@@ -90,7 +90,8 @@ export const RoofDeckAttachmentSchema = z.enum([
   "f_unknown",
 ]);
 
-// 4. Roof to Wall Attachment
+// 6. Roof to Wall Attachment (was Q4 in 01/12, renumbered in 04/26).
+// New form added "H. Connection(s) not installed as intended".
 export const RoofToWallSchema = z.enum([
   "a_toe_nails",
   "b_clips",
@@ -99,7 +100,14 @@ export const RoofToWallSchema = z.enum([
   "e_structural",
   "f_other",
   "g_unknown",
+  "h_not_installed",
 ]);
+
+/** A.1/A.2/A.3 — which qualifying condition for option A. */
+export const RoofToWallAQualifierSchema = z.enum(["a1", "a2", "a3"]);
+
+/** Shared 1/2/3 minimal-condition picker for options B / C / D. */
+export const RoofToWallMinimalConditionSchema = z.enum(["m1", "m2", "m3"]);
 
 // 5. Roof Geometry
 export const RoofGeometrySchema = z.enum(["a_hip", "b_flat", "c_other"]);
@@ -129,10 +137,14 @@ export const WindMitFormSchema = z.object({
   roofSlope: RoofSlopeSchema.optional(),
   // 4. Roof Covering
   roofCovering: RoofCoveringSchema,
-  // 5+. (legacy 01/12 enums kept; the 04/26 form re-shuffled the numbers
-  // but the underlying classifications still apply)
+  // 5+. (the 04/26 form re-shuffled the numbers but the underlying
+  // classifications still apply)
   roofDeckAttachment: RoofDeckAttachmentSchema,
   roofToWallAttachment: RoofToWallSchema,
+  /** A. Toenails: which of A.1/A.2/A.3 qualifying condition applies. */
+  roofToWallAQualifier: RoofToWallAQualifierSchema.optional(),
+  /** B/C/D shared minimal-condition picker (1/2/3). */
+  roofToWallMinimalCondition: RoofToWallMinimalConditionSchema.optional(),
   roofGeometry: RoofGeometrySchema,
   secondaryWaterResistance: SwrSchema,
   openingProtection: OpeningProtectionSchema,
