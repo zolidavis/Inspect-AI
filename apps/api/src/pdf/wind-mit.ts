@@ -361,6 +361,48 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
     }
   }
 
+  // ── PAGE 4 — Q9a Opening Protection Level Chart ───────────────────────
+  // 6 columns × 8 rows. The inspector marks an "X" in each row that
+  // applies for each opening type column. We render the picked level
+  // for each column as an X in that row's cell.
+  //
+  // Column centers (x positions for centered "X"):
+  const Q9A_COL_X: Record<string, number> = {
+    windowsOrEntryDoorsGlazed: 305, // Windows or Entry Doors (glazed)
+    garageDoorsGlazed:         355, // Garage Doors (glazed)
+    skylightsGlazed:           405, // Skylights
+    glassBlockGlazed:          455, // Glass Block
+    entryDoorsNonGlazed:       505, // Entry Doors (non-glazed)
+    garageDoorsNonGlazed:      555, // Garage Doors (non-glazed)
+  };
+  // Row label y positions (top-down) — baseline of the level letter.
+  const Q9A_ROW_Y: Record<string, number> = {
+    na: 178,  // N/A
+    a:  204,
+    b:  229,
+    c:  252,
+    d:  281,  // non-glazed only on form
+    n:  311,
+    x:  343,
+    z:  364,
+  };
+  const chart = wm.openingProtectionChart ?? {};
+  for (const [colKey, level] of Object.entries(chart)) {
+    if (typeof level !== "string") continue;
+    const colX = Q9A_COL_X[colKey];
+    const rowY = Q9A_ROW_Y[level];
+    if (colX !== undefined && rowY !== undefined) {
+      out.push({
+        page: 3,
+        x: colX,
+        y: yFromTop(rowY),
+        size: 11,
+        value: "X",
+        bold: true,
+      });
+    }
+  }
+
   // ── PAGE 4-5 — Q9b Secondary Classification ───────────────────────────
   // Primary picker (A/B/C/N/X/Z) + per-primary sub picker (a1..3, b1..3, c1..3, n1..3).
   type Q9bBox = { page: number; y: number };
