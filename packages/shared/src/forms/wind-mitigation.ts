@@ -231,10 +231,7 @@ export const WindMitFormSchema = z.object({
 export type WindMitForm = z.infer<typeof WindMitFormSchema>;
 
 export const photoTags = [
-  "wm.elevation_front",
-  "wm.elevation_rear",
-  "wm.elevation_left",
-  "wm.elevation_right",
+  "wm.elevation",
   "wm.roof_covering",
   "wm.roof_deck_attic",
   "wm.roof_to_wall",
