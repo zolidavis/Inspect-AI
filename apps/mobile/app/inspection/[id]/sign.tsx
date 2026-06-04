@@ -33,7 +33,7 @@ const COLORS = {
   textDim: "#8a96a4",
   textFaint: "#54616f",
   border: "#222a32",
-  accent: "#2dd4a3",
+  accent: "#3b82f6",     // matches Profile palette
   danger: "#ef5a5a",
 };
 
@@ -265,5 +265,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 4,
   },
-  saveBtnText: { color: "#0b1014", fontWeight: "800", fontSize: 14 },
+  saveBtnText: { color: "#ffffff", fontWeight: "800", fontSize: 14 },
 });

@@ -44,6 +44,7 @@ export const api = {
     inspectorCompany?: string;
     inspectorPhone?: string;
     inspectorSignaturePng?: string;
+    businessLogoPng?: string;
     ownerEmail?: string;
     ownerPhone?: string;
   }) =>

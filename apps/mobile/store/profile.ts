@@ -64,6 +64,12 @@ export interface Profile {
    * inspection's signature line.
    */
   inspectorSignaturePng: string;
+  /**
+   * Optional business logo as a base64 data URI (PNG or JPEG). When set,
+   * a cover page is prepended to every generated PDF: logo centered up
+   * top, inspection address + owner + date below.
+   */
+  businessLogoPng: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -83,6 +89,7 @@ interface ProfileStore {
     inspectorCompany?: string;
     inspectorPhone?: string;
     inspectorSignaturePng?: string;
+    businessLogoPng?: string;
   }) => Promise<void>;
   signOut: () => Promise<void>;
   hydrate: () => Promise<void>;
@@ -110,6 +117,7 @@ export const useProfile = create<ProfileStore>((set, get) => ({
       inspectorCompany: (patch.inspectorCompany ?? existing?.inspectorCompany ?? "").trim(),
       inspectorPhone: (patch.inspectorPhone ?? existing?.inspectorPhone ?? "").trim(),
       inspectorSignaturePng: patch.inspectorSignaturePng ?? existing?.inspectorSignaturePng ?? "",
+      businessLogoPng: patch.businessLogoPng ?? existing?.businessLogoPng ?? "",
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     };
@@ -144,6 +152,7 @@ export const useProfile = create<ProfileStore>((set, get) => ({
           inspectorCompany: saved.inspectorCompany ?? "",
           inspectorPhone: saved.inspectorPhone ?? "",
           inspectorSignaturePng: saved.inspectorSignaturePng ?? "",
+          businessLogoPng: saved.businessLogoPng ?? "",
           createdAt: saved.createdAt ?? new Date().toISOString(),
           updatedAt: saved.updatedAt ?? new Date().toISOString(),
         };

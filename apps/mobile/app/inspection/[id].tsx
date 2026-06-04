@@ -58,7 +58,8 @@ export default function InspectionDetail() {
     (profileHas(profile?.inspectorLicenseType) && !insp.inspectorLicenseType) ||
     (profileHas(profile?.inspectorCompany) && !insp.inspectorCompany) ||
     (profileHas(profile?.inspectorPhone) && !insp.inspectorPhone) ||
-    (profileHas(profile?.inspectorSignaturePng) && !insp.inspectorSignaturePng);
+    (profileHas(profile?.inspectorSignaturePng) && !insp.inspectorSignaturePng) ||
+    (profileHas(profile?.businessLogoPng) && !insp.businessLogoPng);
 
   /** PATCH the inspection with any profile-derived inspector fields it lacks. */
   const syncFromProfile = async () => {
@@ -75,6 +76,9 @@ export default function InspectionDetail() {
       if (!insp.inspectorPhone && profile.inspectorPhone) patch.inspectorPhone = profile.inspectorPhone;
       if (!insp.inspectorSignaturePng && profile.inspectorSignaturePng) {
         patch.inspectorSignaturePng = profile.inspectorSignaturePng;
+      }
+      if (!insp.businessLogoPng && profile.businessLogoPng) {
+        patch.businessLogoPng = profile.businessLogoPng;
       }
       const updated = await api.patchInspection(insp.id, patch);
       setInsp(updated);
@@ -121,18 +125,27 @@ export default function InspectionDetail() {
         </View>
       </View>
 
-      {insp.property && (
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Property</Text>
-          <Row k="Owner" v={insp.property.ownerName ?? "—"} />
-          <Row k="Year Built" v={insp.property.yearBuilt ? String(insp.property.yearBuilt) : "—"} />
-          <Row k="Sq Ft" v={insp.property.squareFootage ? String(insp.property.squareFootage) : "—"} />
-          <Row k="Source" v={insp.property.source} />
-          {insp.property.permits.length === 0 && (
-            <Text style={styles.dim}>Permit lookup is stubbed — county scrapers TBD.</Text>
-          )}
+      <View style={styles.card}>
+        <View style={styles.cardHead}>
+          <Text style={styles.cardTitle}>Property &amp; customer</Text>
+          <Pressable onPress={() => router.push(`/inspection/${insp.id}/edit-info`)}>
+            <Text style={styles.editLink}>Edit</Text>
+          </Pressable>
         </View>
-      )}
+        <Row k="Owner" v={insp.property?.ownerName ?? "—"} />
+        <Row k="Email" v={fmt(insp.ownerEmail)} />
+        <Row k="Phone" v={fmt(insp.ownerPhone)} />
+        {insp.property && (
+          <>
+            <Row k="Year Built" v={insp.property.yearBuilt ? String(insp.property.yearBuilt) : "—"} />
+            <Row k="Sq Ft" v={insp.property.squareFootage ? String(insp.property.squareFootage) : "—"} />
+            <Row k="Source" v={insp.property.source} />
+            {insp.property.permits.length === 0 && (
+              <Text style={styles.dim}>Permit lookup is stubbed — county scrapers TBD.</Text>
+            )}
+          </>
+        )}
+      </View>
 
       {pendingCount > 0 && (
         <Link href={`/inspection/${insp.id}/suggestions`} asChild>

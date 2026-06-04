@@ -29,6 +29,13 @@
       "when": 1780578759103,
       "tag": "0003_tiny_sunfire",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1780581308340,
+      "tag": "0004_peaceful_la_nuit",
+      "breakpoints": true
     }
   ]
 }

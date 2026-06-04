@@ -21,6 +21,7 @@ const CreateBody = z.object({
   inspectorCompany: z.string().optional(),
   inspectorPhone: z.string().optional(),
   inspectorSignaturePng: z.string().optional(),
+  businessLogoPng: z.string().optional(),
   ownerEmail: z.string().optional(),
   ownerPhone: z.string().optional(),
 });
@@ -43,6 +44,7 @@ inspections.post("/", async (c) => {
     inspectorCompany: parsed.data.inspectorCompany,
     inspectorPhone: parsed.data.inspectorPhone,
     inspectorSignaturePng: parsed.data.inspectorSignaturePng,
+    businessLogoPng: parsed.data.businessLogoPng,
     ownerEmail: parsed.data.ownerEmail,
     ownerPhone: parsed.data.ownerPhone,
     status: "draft",

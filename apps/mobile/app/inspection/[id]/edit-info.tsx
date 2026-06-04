@@ -1,0 +1,299 @@
+/**
+ * Edit property + customer info for an existing inspection.
+ *
+ * Lets the inspector fix typos in the address, owner name, owner
+ * email/phone after the inspection was created. Useful when RentCast
+ * returned a slightly different owner name or when the inspector got
+ * the contact email wrong on the new-inspection form.
+ *
+ * Hits PATCH /inspections/:id with only the changed fields. The owner
+ * name lives inside the `property` blob (RentCast-shaped), so we send
+ * the full property back with the override applied — but only if there
+ * was an existing property record to begin with (don't fabricate one
+ * just because the inspector typed an owner name override).
+ */
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import type { Inspection } from "@inspect-ai/shared";
+import { api } from "../../../lib/api";
+
+const COLORS = {
+  bg: "#0b1014",
+  card: "#10161c",
+  bgRow: "#161c22",
+  text: "#f0f4f8",
+  textDim: "#8a96a4",
+  textFaint: "#54616f",
+  border: "#222a32",
+  accent: "#3b82f6",
+};
+
+export default function EditInfo() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [insp, setInsp] = useState<Inspection | null>(null);
+
+  const [line1, setLine1] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("FL");
+  const [zip, setZip] = useState("");
+  const [ownerName, setOwnerName] = useState("");
+  const [ownerEmail, setOwnerEmail] = useState("");
+  const [ownerPhone, setOwnerPhone] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const i = await api.getInspection(id!);
+        setInsp(i);
+        setLine1(i.address.line1);
+        setCity(i.address.city);
+        setState(i.address.state);
+        setZip(i.address.zip);
+        setOwnerName(i.property?.ownerName ?? "");
+        setOwnerEmail(i.ownerEmail ?? "");
+        setOwnerPhone(i.ownerPhone ?? "");
+      } catch (e: any) {
+        Alert.alert("Failed to load", e.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
+
+  if (loading || !insp) {
+    return (
+      <View style={[styles.root, styles.center]}>
+        <ActivityIndicator color={COLORS.accent} />
+      </View>
+    );
+  }
+
+  const save = async () => {
+    if (!line1.trim() || !city.trim() || !zip.trim()) {
+      Alert.alert("Address required", "Line 1, City, and ZIP must be filled.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const patch: Partial<Inspection> = {
+        address: {
+          line1: line1.trim(),
+          city: city.trim(),
+          state: state.trim() || "FL",
+          zip: zip.trim(),
+        },
+        ownerEmail: ownerEmail.trim() || undefined,
+        ownerPhone: ownerPhone.trim() || undefined,
+      };
+      // Only patch property.ownerName if we already had a property record
+      // (don't fabricate one from a single override field).
+      if (insp.property) {
+        patch.property = {
+          ...insp.property,
+          ownerName: ownerName.trim() || null,
+        };
+      } else if (ownerName.trim()) {
+        // Property data wasn't fetched yet, but inspector wants to record
+        // the name — create a minimal mock-source property record.
+        patch.property = {
+          address: patch.address!,
+          ownerName: ownerName.trim(),
+          yearBuilt: null,
+          squareFootage: null,
+          lotSize: null,
+          bedrooms: null,
+          bathrooms: null,
+          parcelId: null,
+          permits: [],
+          source: "mock",
+        };
+      }
+      await api.patchInspection(insp.id, patch);
+      router.back();
+    } catch (e: any) {
+      Alert.alert("Save failed", e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.scroll}
+      keyboardShouldPersistTaps="handled"
+    >
+      <Text style={styles.h1}>Property & customer info</Text>
+      <Text style={styles.sub}>
+        Edit anything that needs correcting. Saved instantly on tap.
+      </Text>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Property address</Text>
+
+        <Text style={styles.label}>Street address</Text>
+        <TextInput
+          style={styles.input}
+          value={line1}
+          onChangeText={setLine1}
+          placeholder="123 Main St"
+          placeholderTextColor={COLORS.textFaint}
+          autoCapitalize="words"
+        />
+
+        <View style={{ flexDirection: "row", gap: 10 }}>
+          <View style={{ flex: 2 }}>
+            <Text style={styles.label}>City</Text>
+            <TextInput
+              style={styles.input}
+              value={city}
+              onChangeText={setCity}
+              placeholder="Tampa"
+              placeholderTextColor={COLORS.textFaint}
+              autoCapitalize="words"
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.label}>State</Text>
+            <TextInput
+              style={styles.input}
+              value={state}
+              onChangeText={setState}
+              autoCapitalize="characters"
+              maxLength={2}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.label}>ZIP</Text>
+            <TextInput
+              style={styles.input}
+              value={zip}
+              onChangeText={setZip}
+              keyboardType="number-pad"
+              maxLength={10}
+            />
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Customer info</Text>
+
+        <Text style={styles.label}>Owner name</Text>
+        <TextInput
+          style={styles.input}
+          value={ownerName}
+          onChangeText={setOwnerName}
+          placeholder={insp.property?.ownerName ?? "e.g. John Smith"}
+          placeholderTextColor={COLORS.textFaint}
+          autoCapitalize="words"
+        />
+        {insp.property?.source === "rentcast" && (
+          <Text style={styles.hint}>
+            Overrides the name RentCast returned for this address.
+          </Text>
+        )}
+
+        <Text style={[styles.label, { marginTop: 14 }]}>Owner email</Text>
+        <TextInput
+          style={styles.input}
+          value={ownerEmail}
+          onChangeText={setOwnerEmail}
+          placeholder="owner@example.com"
+          placeholderTextColor={COLORS.textFaint}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+
+        <Text style={[styles.label, { marginTop: 14 }]}>Owner phone</Text>
+        <TextInput
+          style={styles.input}
+          value={ownerPhone}
+          onChangeText={setOwnerPhone}
+          placeholder="(555) 555-5555"
+          placeholderTextColor={COLORS.textFaint}
+          keyboardType="phone-pad"
+        />
+      </View>
+
+      <Pressable
+        style={[styles.saveBtn, saving && { opacity: 0.5 }]}
+        disabled={saving}
+        onPress={save}
+      >
+        {saving ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.saveBtnText}>Save changes</Text>
+        )}
+      </Pressable>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: COLORS.bg },
+  scroll: { padding: 16, gap: 14 },
+  center: { alignItems: "center", justifyContent: "center" },
+  h1: { color: COLORS.text, fontSize: 22, fontWeight: "700" },
+  sub: { color: COLORS.textDim, fontSize: 13 },
+  card: {
+    backgroundColor: COLORS.card,
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  cardTitle: {
+    color: COLORS.text,
+    fontWeight: "700",
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    marginBottom: 10,
+  },
+  label: {
+    color: COLORS.textDim,
+    fontSize: 12,
+    fontWeight: "600",
+    marginBottom: 4,
+    marginTop: 8,
+  },
+  input: {
+    backgroundColor: COLORS.bgRow,
+    color: COLORS.text,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    fontSize: 16,
+  },
+  hint: {
+    color: COLORS.textFaint,
+    fontSize: 11,
+    marginTop: 4,
+  },
+  saveBtn: {
+    backgroundColor: COLORS.accent,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 4,
+  },
+  saveBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
+});

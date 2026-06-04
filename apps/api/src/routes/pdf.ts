@@ -4,6 +4,7 @@ import { store } from "../store.js";
 import { fillWindMit } from "../pdf/wind-mit.js";
 import { fillFourPoint } from "../pdf/four-point.js";
 import { buildPhotoPagesPdf } from "../pdf/photos-pages.js";
+import { buildCoverPage } from "../pdf/cover-page.js";
 
 export const pdf = new Hono();
 
@@ -28,6 +29,10 @@ pdf.get("/:inspectionId", async (c) => {
     | "wind_mitigation"
     | "both";
 
+  // Optional cover page (only when the inspector has set a business
+  // logo on their profile — empty PDF otherwise so merge skips it).
+  const coverBytes = await buildCoverPage(inspection);
+
   // Build the form-fill parts.
   const formParts: Uint8Array[] = [];
   if (type === "wind_mitigation") {
@@ -44,7 +49,8 @@ pdf.get("/:inspectionId", async (c) => {
   const photos = await store.listPhotos(inspection.id);
   const photoBytes = await buildPhotoPagesPdf(inspection, photos);
 
-  const bytes = await mergePdfs([...formParts, photoBytes]);
+  // Order: business logo cover → form fills → photo documentation
+  const bytes = await mergePdfs([coverBytes, ...formParts, photoBytes]);
 
   c.header("Content-Type", "application/pdf");
   c.header(

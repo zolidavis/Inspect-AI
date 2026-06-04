@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   headerLink: {
-    color: "#2dd4a3",
+    color: "#3b82f6",
     fontSize: 15,
   },
   hint: {

@@ -1,0 +1,1 @@
+ALTER TABLE "inspections" ADD COLUMN "business_logo_png" text;

@@ -85,6 +85,7 @@ export default function NewInspection() {
         inspectorCompany: profile?.inspectorCompany || undefined,
         inspectorPhone: profile?.inspectorPhone || undefined,
         inspectorSignaturePng: profile?.inspectorSignaturePng || undefined,
+        businessLogoPng: profile?.businessLogoPng || undefined,
         ownerEmail: ownerEmail.trim() || undefined,
         ownerPhone: ownerPhone.trim() || undefined,
       });

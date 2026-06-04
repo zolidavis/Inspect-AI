@@ -39,6 +39,8 @@ export const inspections = pgTable(
     inspectorSignaturePng: text("inspector_signature_png"),
     homeownerSignaturePng: text("homeowner_signature_png"),
     homeownerSignedAt: text("homeowner_signed_at"),
+    // Optional inspector business logo (data URI) — drives the cover page.
+    businessLogoPng: text("business_logo_png"),
 
     // Nested objects stored as JSONB. Shapes are validated by Zod schemas
     // in @inspect-ai/shared/forms/* before write.

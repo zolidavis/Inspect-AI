@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { SignaturePad } from "../components/SignaturePad";
 import {
@@ -25,6 +26,12 @@ import {
   type InspectorLicenseType,
 } from "../store/profile";
 
+/**
+ * Blue palette tuned to the app icon (navy backdrop #1c4280).
+ *   accent     — primary brand blue, bright on dark background
+ *   accentDeep — saved-button text on lighter chips, also the icon
+ *                navy when we need it
+ */
 const COLORS = {
   bg: "#0b1014",
   bgRow: "#161c22",
@@ -33,7 +40,9 @@ const COLORS = {
   textDim: "#8a96a4",
   textFaint: "#54616f",
   border: "#222a32",
-  accent: "#2dd4a3",
+  accent: "#3b82f6",         // bright blue (Tailwind blue-500)
+  accentDeep: "#1c4280",     // icon backdrop navy
+  accentSoft: "#1a2c4a",     // selected-row fill on dark bg
   danger: "#ef5a5a",
 };
 
@@ -55,6 +64,10 @@ export default function ProfileScreen() {
   const [inspectorSignaturePng, setInspectorSignaturePng] = useState(
     profile?.inspectorSignaturePng ?? "",
   );
+  const [businessLogoPng, setBusinessLogoPng] = useState(
+    profile?.businessLogoPng ?? "",
+  );
+  const [pickingLogo, setPickingLogo] = useState(false);
   const [sigPadOpen, setSigPadOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -75,8 +88,43 @@ export default function ProfileScreen() {
       inspectorCompany,
       inspectorPhone,
       inspectorSignaturePng,
+      businessLogoPng,
     });
     setSaving(false);
+  };
+
+  /** Pick a logo image and read it as a data URI for cover-page embedding. */
+  const pickLogo = async () => {
+    if (pickingLogo) return;
+    setPickingLogo(true);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.9,
+        allowsEditing: false,
+        base64: true,
+      });
+      if (result.canceled) return;
+      const asset = result.assets?.[0];
+      if (!asset?.base64) {
+        Alert.alert("Couldn't load image", "Try a different image.");
+        return;
+      }
+      const mime = (asset.mimeType ?? "image/png").toLowerCase();
+      const dataUri = `data:${mime};base64,${asset.base64}`;
+      setBusinessLogoPng(dataUri);
+    } catch (e: any) {
+      Alert.alert("Image picker failed", e.message);
+    } finally {
+      setPickingLogo(false);
+    }
+  };
+
+  const clearLogo = () => {
+    Alert.alert("Remove logo?", "The PDF cover page will no longer include it.", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Remove", style: "destructive", onPress: () => setBusinessLogoPng("") },
+    ]);
   };
 
   const doSignOut = () => {
@@ -245,6 +293,51 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.card}>
+        <Text style={styles.cardTitle}>Business logo</Text>
+        <Text style={styles.hint}>
+          When set, a cover page is prepended to every PDF report with your
+          logo + property address + inspector details.
+        </Text>
+
+        {businessLogoPng ? (
+          <View style={styles.logoPreviewWrap}>
+            <Image
+              source={{ uri: businessLogoPng }}
+              style={styles.logoPreviewImg}
+              resizeMode="contain"
+            />
+          </View>
+        ) : (
+          <View style={styles.logoEmpty}>
+            <Ionicons name="image-outline" size={28} color={COLORS.textFaint} />
+            <Text style={styles.sigEmptyText}>No logo on file</Text>
+          </View>
+        )}
+
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          <Pressable
+            onPress={pickLogo}
+            disabled={pickingLogo}
+            style={[styles.sigEditBtn, { flex: 1 }, pickingLogo && { opacity: 0.5 }]}
+          >
+            <Ionicons name="cloud-upload-outline" size={16} color={COLORS.accent} />
+            <Text style={styles.sigEditBtnText}>
+              {businessLogoPng ? "Replace logo" : "Upload logo"}
+            </Text>
+          </Pressable>
+          {businessLogoPng ? (
+            <Pressable
+              onPress={clearLogo}
+              style={[styles.sigEditBtn, { width: 110, borderColor: COLORS.danger }]}
+            >
+              <Ionicons name="trash-outline" size={16} color={COLORS.danger} />
+              <Text style={[styles.sigEditBtnText, { color: COLORS.danger }]}>Remove</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
+
+      <View style={styles.card}>
         <Text style={styles.cardTitle}>Signature</Text>
         <Text style={styles.hint}>
           Draw your signature once. It's stamped on every inspection's "Qualified
@@ -315,7 +408,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarText: { color: "#0b1014", fontSize: 24, fontWeight: "800" },
+  avatarText: { color: "#ffffff", fontSize: 24, fontWeight: "800" },
   heroName: { color: COLORS.text, fontSize: 18, fontWeight: "700" },
   heroSub: { color: COLORS.textDim, fontSize: 13, marginTop: 2 },
   providerBadge: {
@@ -373,7 +466,7 @@ const styles = StyleSheet.create({
   },
   licenseRowOn: {
     borderColor: COLORS.accent,
-    backgroundColor: "#163a30",
+    backgroundColor: COLORS.accentSoft,
   },
   licenseDot: {
     width: 20,
@@ -419,6 +512,30 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   sigPreviewImg: { width: "100%", height: "100%" },
+  logoPreviewWrap: {
+    backgroundColor: "#ffffff",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    height: 140,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoPreviewImg: { width: "100%", height: "100%" },
+  logoEmpty: {
+    marginTop: 10,
+    height: 140,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: COLORS.bgRow,
+  },
   sigEmpty: {
     marginTop: 10,
     height: 110,
@@ -451,7 +568,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
   },
-  saveBtnText: { color: "#0b1014", fontWeight: "800", fontSize: 14 },
+  saveBtnText: { color: "#ffffff", fontWeight: "800", fontSize: 14 },
 
   signOutBtn: {
     flexDirection: "row",

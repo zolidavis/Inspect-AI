@@ -103,6 +103,12 @@ export const InspectionSchema = z.object({
    */
   inspectorSignaturePng: z.string().optional(),
   /**
+   * Optional inspector business logo as a base64 data URI (PNG/JPEG,
+   * usually 20-200 KB). When set, the PDF gets a cover page with the
+   * logo + inspection address + owner + date.
+   */
+  businessLogoPng: z.string().optional(),
+  /**
    * Homeowner signature as a data URI. Captured per-inspection from
    * the /sign screen (inspector hands the phone to the homeowner).
    */
