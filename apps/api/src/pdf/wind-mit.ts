@@ -248,6 +248,199 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
     checkBox(out, 0, ROOF_SLOPE_X[wm.roofSlope]!, 492);
   }
 
+  // ── PAGE 2 — Q4 WEAKEST overall roof-covering compliance ──────────────
+  // Four boxes A/B/C/D at top of page 2.
+  const Q4_WEAKEST_Y: Record<string, number> = {
+    a_compliant:     73,   // A. All meet 2007 FBC product approval reqs
+    // No exact b_compliant_mdc match in schema; legacy bug:
+    b_non_compliant: 119,  // C. One or more do not meet
+    // c_unknown has no checkbox — D = "no roof coverings meet" doesn't fit.
+  };
+  const meetsCode = rc.meetsCode;
+  if (meetsCode && Q4_WEAKEST_Y[meetsCode] !== undefined) {
+    checkBox(out, 1, 36, Q4_WEAKEST_Y[meetsCode]!);
+  }
+
+  // ── PAGE 2 — Q5 Roof Deck Attachment ──────────────────────────────────
+  const Q5_Y: Record<string, number> = {
+    a_plywood_osb_6d_nails_6_12: 165,
+    b_plywood_osb_8d_nails_6_12: 234,
+    c_plywood_osb_8d_nails_6_6:  280,
+    d_reinforced_concrete:       337,
+    e_other:                     372,  // F. Other on the form
+    f_unknown:                   383,  // G. Unknown on the form
+  };
+  if (wm.roofDeckAttachment && Q5_Y[wm.roofDeckAttachment] !== undefined) {
+    checkBox(out, 1, 36, Q5_Y[wm.roofDeckAttachment]!);
+  }
+
+  // ── PAGE 2/3 — Q6 Roof-to-Wall Attachment ─────────────────────────────
+  // Main category boxes A (toenails) on p2, B-I on p3.
+  type RtwBox = { page: number; y: number };
+  const Q6_MAIN: Record<string, RtwBox> = {
+    a_toe_nails:      { page: 1, y: 464 },  // page 2
+    b_clips:          { page: 2, y:  62 },  // page 3
+    c_single_wraps:   { page: 2, y: 154 },
+    d_double_wraps:   { page: 2, y: 223 },
+    e_structural:     { page: 2, y: 315 },
+    f_other:          { page: 2, y: 326 },
+    g_unknown:        { page: 2, y: 338 },
+    h_not_installed:  { page: 2, y: 361 },  // I. Connection(s) not installed
+  };
+  const rtw = wm.roofToWallAttachment;
+  if (rtw && Q6_MAIN[rtw]) {
+    const m = Q6_MAIN[rtw]!;
+    checkBox(out, m.page, 36, m.y);
+
+    // A.Toenails sub-qualifier (A.1 / A.2 / A.3) — page 2, x=72
+    if (rtw === "a_toe_nails" && wm.roofToWallAQualifier) {
+      const A_SUB_Y: Record<string, number> = { a1: 476, a2: 499, a3: 522 };
+      const y = A_SUB_Y[wm.roofToWallAQualifier];
+      if (y !== undefined) checkBox(out, 1, 72, y);
+    }
+
+    // B/C/D minimal-condition sub-pickers — page 3, x=72
+    // Each category has its own m1/m2/m3 rows.
+    if (wm.roofToWallMinimalCondition) {
+      const M_SUB_Y: Record<string, Record<string, number>> = {
+        b_clips:        { m1:  85, m2:  96, m3: 120 },
+        c_single_wraps: { m1: 165, m2: 189 },        // C only has 2 sub-options on form
+        d_double_wraps: { m1: 234, m2: 269, m3: 292 },
+      };
+      const subs = M_SUB_Y[rtw];
+      if (subs) {
+        const y = subs[wm.roofToWallMinimalCondition];
+        if (y !== undefined) checkBox(out, 2, 72, y);
+      }
+    }
+  }
+
+  // ── PAGE 3 — Q7 Roof Geometry ─────────────────────────────────────────
+  const Q7_Y: Record<string, number> = {
+    a_hip:   418,
+    b_flat:  441,
+    c_other: 464,
+  };
+  if (wm.roofGeometry && Q7_Y[wm.roofGeometry] !== undefined) {
+    checkBox(out, 2, 36, Q7_Y[wm.roofGeometry]!);
+  }
+  // Perimeter/area blanks — Hip option needs total perimeter + non-hip
+  // perimeter; Flat option needs flat area + total area.
+  // These print on a 2nd-pass line under the geometry section. Positions
+  // estimated; tune from a generated sample if needed.
+  if (wm.roofGeometry === "a_hip") {
+    push({ page: 2, x: 420, y: yFromTop(418), size: 9, value: wm.roofGeometryNonHipPerimeter });
+    push({ page: 2, x: 420, y: yFromTop(430), size: 9, value: wm.roofGeometryTotalPerimeter });
+  } else if (wm.roofGeometry === "b_flat") {
+    push({ page: 2, x: 420, y: yFromTop(441), size: 9, value: wm.roofGeometryFlatAreaLt2_12 });
+    push({ page: 2, x: 420, y: yFromTop(453), size: 9, value: wm.roofGeometryTotalArea });
+  }
+
+  // ── PAGE 3 — Q8 Sealed Roof Deck (SWR) ────────────────────────────────
+  const Q8_Y: Record<string, number> = {
+    a_yes:     522,  // A. Sealed Roof Deck
+    b_no:      625,  // B. No SWR
+    c_unknown: 637,  // C. Unknown
+  };
+  if (wm.secondaryWaterResistance && Q8_Y[wm.secondaryWaterResistance] !== undefined) {
+    checkBox(out, 2, 36, Q8_Y[wm.secondaryWaterResistance]!);
+  }
+  // Sub-method only applies under A.
+  if (wm.secondaryWaterResistance === "a_yes" && wm.swrSubMethod) {
+    const SWR_SUB_Y: Record<string, number> = {
+      m1_astm_d1970:  533,
+      m2_taped_seams: 545,
+      m3_double_layer: 579,
+      m4_spray_foam:  602,
+    };
+    const y = SWR_SUB_Y[wm.swrSubMethod];
+    if (y !== undefined) checkBox(out, 2, 72, y);
+    // "entire roof deck underside covered" — sub-checkbox under m4_spray_foam
+    if (wm.swrSubMethod === "m4_spray_foam" && wm.swrEntireDeckCovered) {
+      checkBox(out, 2, 108, 614);
+    }
+  }
+
+  // ── PAGE 4-5 — Q9b Secondary Classification ───────────────────────────
+  // Primary picker (A/B/C/N/X/Z) + per-primary sub picker (a1..3, b1..3, c1..3, n1..3).
+  type Q9bBox = { page: number; y: number };
+  const Q9B_PRIMARY: Record<string, Q9bBox> = {
+    a: { page: 3, y: 403 },  // page 4
+    b: { page: 3, y: 592 },
+    c: { page: 4, y:  94 },  // page 5
+    n: { page: 4, y: 184 },
+    x: { page: 4, y: 273 },
+    z: { page: 4, y: 308 },
+  };
+  if (wm.q9bPrimary && Q9B_PRIMARY[wm.q9bPrimary]) {
+    const p = Q9B_PRIMARY[wm.q9bPrimary]!;
+    checkBox(out, p.page, 36, p.y);
+  }
+  // A sub (A.1/A.2/A.3) — all on page 4, x=66
+  if (wm.q9bPrimary === "a" && wm.q9bSubA) {
+    const A_SUB_Y: Record<string, number> = { a1: 537, a2: 549, a3: 571 };
+    const y = A_SUB_Y[wm.q9bSubA];
+    if (y !== undefined) checkBox(out, 3, 66, y);
+  }
+  // B sub (B.1 on p4, B.2/B.3 on p5)
+  if (wm.q9bPrimary === "b" && wm.q9bSubB) {
+    const B_SUB: Record<string, { page: number; y: number }> = {
+      b1: { page: 3, y: 693 },
+      b2: { page: 4, y:  50 },
+      b3: { page: 4, y:  72 },
+    };
+    const b = B_SUB[wm.q9bSubB];
+    if (b) checkBox(out, b.page, 66, b.y);
+  }
+  // C sub — all on page 5, x=84
+  if (wm.q9bPrimary === "c" && wm.q9bSubC) {
+    const C_SUB_Y: Record<string, number> = { c1: 129, c2: 140, c3: 162 };
+    const y = C_SUB_Y[wm.q9bSubC];
+    if (y !== undefined) checkBox(out, 4, 84, y);
+  }
+  // N sub — all on page 5, x=84
+  if (wm.q9bPrimary === "n" && wm.q9bSubN) {
+    const N_SUB_Y: Record<string, number> = { n1: 218, n2: 230, n3: 252 };
+    const y = N_SUB_Y[wm.q9bSubN];
+    if (y !== undefined) checkBox(out, 4, 84, y);
+  }
+
+  // ── PAGE 5 — Qualified Inspector certification ────────────────────────
+  // Row 1 (y=380): Qualified Inspector Name | License Type | License or Cert #
+  // Row 2 (y=399): Inspection Company | Phone
+  const inspectorName = inspection.inspectorName ?? "";
+  const licenseType = (inspection as any).inspectorLicenseType as string | undefined;
+  const company = (inspection as any).inspectorCompany as string | undefined;
+  const phone = (inspection as any).inspectorPhone as string | undefined;
+  const licenseNum = inspection.inspectorLicense ?? "";
+
+  // Labels at y=380-391 top-down; baseline ≈ 391 (yMax). Use yMax for value baselines.
+  push({ page: 4, x: 130, y: yFromTop(391), size: 9, value: inspectorName });
+  push({ page: 4, x: 270, y: yFromTop(391), size: 9, value: licenseTypeLabelShort(licenseType) });
+  push({ page: 4, x: 482, y: yFromTop(391), size: 9, value: licenseNum });
+  push({ page: 4, x: 114, y: yFromTop(410), size: 9, value: company });
+  push({ page: 4, x: 426, y: yFromTop(410), size: 9, value: phone });
+
+  // "I hold an active license as a:" — six radio-style checkboxes on page 5
+  const LICENSE_TYPE_Y: Record<string, number> = {
+    home_inspector:            446,
+    building_code_inspector:   467,
+    contractor:                479,
+    engineer:                  490,
+    architect:                 502,
+    other_authorized:          513,
+  };
+  if (licenseType && LICENSE_TYPE_Y[licenseType] !== undefined) {
+    checkBox(out, 4, 36, LICENSE_TYPE_Y[licenseType]!);
+  }
+
+  // ── PAGE 6 — "I, <print name>" + Signature Date ──────────────────────
+  // "I, ____________, am a qualified inspector" — label baseline at top-down y≈134.
+  push({ page: 5, x: 60, y: yFromTop(134), size: 9, value: inspectorName });
+  // Signature date — label "Date:" yMin=189 yMax=203, x ~380 (after "Date:" at x=347).
+  const dateStr = (inspection.inspectedOn ?? new Date().toISOString()).slice(0, 10);
+  push({ page: 5, x: 380, y: yFromTop(200), size: 9, value: dateStr });
+
   // ── Per-page footers (Inspectors Initials + Property Address × 6) ─────
   const fullAddr = fmtAddress(inspection);
   const initials = initialsOf(inspection.inspectorName);
@@ -257,11 +450,25 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
     push({ page: p, x: 220, y: yFromTop(725), value: fullAddr });
   }
 
-  // TODO(v2): Q4 Roof Covering (rows of dates + product approval),
-  // Q5 Roof Geometry, Q6 SWR, Q7 Opening Protection, Q8/Q9 new questions,
-  // inspector signature block on page 5/6.
+  // TODO(v3): Q9a Opening Protection chart cells (6 rows × 7 columns —
+  // label-letter fills like "A"/"B"/"C"/"D"/"N"/"X"/"Z" rather than
+  // glyph checkboxes; needs separate position table).
 
   return out;
+}
+
+/** Short label for the inspector license-type enum, printed in the
+ *  "License Type:" blank on page 5 row 1. */
+function licenseTypeLabelShort(v: string | undefined): string {
+  switch (v) {
+    case "home_inspector": return "Home Inspector";
+    case "building_code_inspector": return "Bldg Code Insp.";
+    case "contractor": return "Contractor";
+    case "engineer": return "Professional Eng.";
+    case "architect": return "Professional Arch.";
+    case "other_authorized": return "Other";
+    default: return "";
+  }
 }
 
 function drawAll(
