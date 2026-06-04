@@ -9,13 +9,40 @@ import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { api } from "../../../lib/api";
 
+/**
+ * Two modes — driven by whether the URL carries a `tag` query param:
+ *
+ *   `?tag=wm.roof_covering`  → tagged mode. Inspector picked the section
+ *      in advance, every photo gets that tag, AI runs the tag-constrained
+ *      analyze pass.
+ *
+ *   no `tag`                 → AUTO mode. Photo uploads with placeholder
+ *      tag "auto" and the server runs classify + analyze in one call,
+ *      returning the inferred section name back to the UI.
+ */
+
+const AUTO_PLACEHOLDER_TAG = "auto";
+
+/** Human label for the classifier's inferred tag (mirrors PDF formatter). */
+function prettyTag(tag: string): string {
+  return tag
+    .replace(/^wm\./, "Wind Mit · ")
+    .replace(/^roof\./, "Roof · ")
+    .replace(/^electrical\./, "Electrical · ")
+    .replace(/^plumbing\./, "Plumbing · ")
+    .replace(/^hvac\./, "HVAC · ")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (m) => m.toUpperCase());
+}
+
 export default function Camera() {
-  const { id, tag } = useLocalSearchParams<{ id: string; tag: string }>();
+  const { id, tag } = useLocalSearchParams<{ id: string; tag?: string }>();
+  const isAuto = !tag;
   const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
   const camRef = useRef<CameraView>(null);
   const [busy, setBusy] = useState(false);
-  const [aiSummary, setAiSummary] = useState<string | null>(null);
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
   if (!permission) return <View style={styles.center}><ActivityIndicator /></View>;
   if (!permission.granted) {
@@ -29,25 +56,40 @@ export default function Camera() {
     );
   }
 
-  /** Shared upload + AI analyze tail. Works for either capture or gallery pick. */
-  const uploadAndAnalyze = async (uri: string) => {
-    const uploaded = await api.uploadPhoto({ inspectionId: id!, tag: tag!, uri });
+  /**
+   * Shared upload + AI tail. In auto mode we upload with a placeholder
+   * tag then ask the server to classify + analyze in a single call.
+   */
+  const uploadAndAnalyze = async (uri: string): Promise<string | null> => {
+    const uploadTag = isAuto ? AUTO_PLACEHOLDER_TAG : tag!;
+    const uploaded = await api.uploadPhoto({
+      inspectionId: id!,
+      tag: uploadTag,
+      uri,
+    });
     try {
+      if (isAuto) {
+        const r = await api.autoAnalyzePhoto(uploaded.id);
+        const label = prettyTag(r.classifiedAs);
+        return `Classified as ${label}. ${r.summary ?? ""}`.trim();
+      }
       const analysis = await api.analyzePhoto(uploaded.id);
-      setAiSummary(analysis.summary);
+      return analysis.summary;
     } catch {
-      // Photo uploaded fine; AI analysis can fail without blocking the user.
-      setAiSummary("Photo uploaded (AI analysis unavailable).");
+      // Photo uploaded fine; AI analysis can fail without blocking.
+      return "Photo uploaded (AI analysis unavailable).";
     }
   };
 
   const capture = async () => {
     if (!camRef.current || busy) return;
-    setBusy(true); setAiSummary(null);
+    setBusy(true); setStatusMsg(null);
     try {
       const photo = await camRef.current.takePictureAsync({ quality: 0.85 });
       if (!photo?.uri) throw new Error("no photo");
-      await uploadAndAnalyze(photo.uri);
+      setStatusMsg(isAuto ? "Classifying with AI…" : "Analyzing with AI…");
+      const summary = await uploadAndAnalyze(photo.uri);
+      setStatusMsg(summary);
     } catch (e: any) {
       Alert.alert("Capture failed", e.message);
     } finally {
@@ -57,11 +99,8 @@ export default function Camera() {
 
   const pickFromGallery = async () => {
     if (busy) return;
-    setBusy(true); setAiSummary(null);
+    setBusy(true); setStatusMsg(null);
     try {
-      // expo-image-picker uses the system picker on Android 13+ (no
-      // runtime permission), and prompts NSPhotoLibraryUsageDescription
-      // on iOS the first time.
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.85,
@@ -76,21 +115,16 @@ export default function Camera() {
       let lastSummary: string | null = null;
       for (let i = 0; i < assets.length; i++) {
         const uri = assets[i]!.uri;
-        setAiSummary(`Uploading ${i + 1} of ${assets.length}…`);
+        setStatusMsg(`Uploading ${i + 1} of ${assets.length}…`);
         try {
-          const uploaded = await api.uploadPhoto({ inspectionId: id!, tag: tag!, uri });
+          const summary = await uploadAndAnalyze(uri);
           okCount++;
-          // AI analysis is best-effort per photo — don't let one failure
-          // (rate-limit, blurry image, etc.) abort the rest of the batch.
-          try {
-            const analysis = await api.analyzePhoto(uploaded.id);
-            lastSummary = analysis.summary;
-          } catch {}
+          if (summary) lastSummary = summary;
         } catch (err) {
           console.warn(`photo ${i + 1} upload failed:`, err);
         }
       }
-      setAiSummary(
+      setStatusMsg(
         assets.length === 1
           ? (lastSummary ?? "Photo uploaded.")
           : `${okCount} of ${assets.length} uploaded. ${lastSummary ? "Last: " + lastSummary : ""}`,
@@ -106,8 +140,17 @@ export default function Camera() {
     <View style={{ flex: 1, backgroundColor: "black" }}>
       <CameraView ref={camRef} style={{ flex: 1 }} facing="back" />
       <View style={styles.overlay}>
-        <Text style={styles.tag}>{tag}</Text>
-        {aiSummary && <Text style={styles.aiText} numberOfLines={3}>{aiSummary}</Text>}
+        <View style={styles.tagRow}>
+          {isAuto ? (
+            <>
+              <Ionicons name="sparkles-outline" size={14} color="#9be9a8" />
+              <Text style={styles.tag}>AI auto-tag</Text>
+            </>
+          ) : (
+            <Text style={styles.tag}>{tag}</Text>
+          )}
+        </View>
+        {statusMsg && <Text style={styles.aiText} numberOfLines={3}>{statusMsg}</Text>}
         <View style={styles.controls}>
           <Pressable style={styles.secondary} onPress={() => router.back()}>
             <Text style={styles.secondaryText}>Done</Text>
@@ -140,7 +183,10 @@ const styles = StyleSheet.create({
     position: "absolute", left: 0, right: 0, bottom: 0,
     padding: 16, backgroundColor: "rgba(0,0,0,0.45)",
   },
-  tag: { color: "#fff", fontWeight: "600", marginBottom: 8 },
+  tagRow: {
+    flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8,
+  },
+  tag: { color: "#fff", fontWeight: "600" },
   aiText: { color: "#fff", marginBottom: 12, fontSize: 12 },
   controls: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   shutter: {

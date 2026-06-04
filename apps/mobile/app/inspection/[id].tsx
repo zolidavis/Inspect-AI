@@ -169,7 +169,24 @@ export default function InspectionDetail() {
       )}
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Photos by section</Text>
+        <Text style={styles.cardTitle}>Photos</Text>
+
+        {/* Primary CTA — AI auto-tag mode. Inspector shoots anything,
+            server classifies each photo into the right section. */}
+        <Link href={`/inspection/${insp.id}/camera`} asChild>
+          <Pressable style={styles.autoBtn}>
+            <Text style={styles.autoBtnEmoji}>✨</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.autoBtnText}>Add Photos (AI auto-tag)</Text>
+              <Text style={styles.autoBtnHint}>
+                Just shoot — AI sorts each photo into the right section
+              </Text>
+            </View>
+            <Text style={styles.autoBtnArrow}>›</Text>
+          </Pressable>
+        </Link>
+
+        <Text style={styles.sectionSubLabel}>Or pick a section to shoot manually:</Text>
         {tags.map((tag) => {
           const count = insp.photos.filter((p) => p.tag === tag).length;
           return (
@@ -267,6 +284,21 @@ const styles = StyleSheet.create({
   },
   tagName: { textTransform: "capitalize" },
   tagCount: { color: "#888" },
+  autoBtn: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    backgroundColor: "#eef9f1",
+    borderColor: "#2dd4a3", borderWidth: 1,
+    paddingHorizontal: 12, paddingVertical: 12, borderRadius: 10,
+    marginTop: 6, marginBottom: 4,
+  },
+  autoBtnEmoji: { fontSize: 22 },
+  autoBtnText: { fontSize: 15, fontWeight: "700", color: "#0a3d2c" },
+  autoBtnHint: { fontSize: 11, color: "#3a6b56", marginTop: 1 },
+  autoBtnArrow: { fontSize: 24, color: "#0a3d2c" },
+  sectionSubLabel: {
+    fontSize: 11, color: "#888", marginTop: 12, marginBottom: 2,
+    textTransform: "uppercase", letterSpacing: 0.5,
+  },
   cta: { backgroundColor: "#0a66ff", padding: 14, borderRadius: 10, alignItems: "center", marginTop: 8 },
   ctaText: { color: "#fff", fontWeight: "600", fontSize: 16 },
   completeBtn: { backgroundColor: "#1f9d3b", padding: 14, borderRadius: 10, alignItems: "center" },

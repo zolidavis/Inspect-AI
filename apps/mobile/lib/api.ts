@@ -65,6 +65,24 @@ export const api = {
       body: JSON.stringify({ photoId }),
     }),
 
+  /**
+   * Auto-tag + analyze a photo in a single server-side call. Used by the
+   * "shoot anything, AI figures it out" camera flow. The server runs a
+   * cheap classification pass to pick the best tag for the photo, re-
+   * tags the stored Photo, then runs the existing field-extraction
+   * analyze with the new tag.
+   */
+  autoAnalyzePhoto: (photoId: string) =>
+    req<{
+      classifiedAs: string;
+      classifyConfidence: number;
+      summary: string;
+      findings: any[];
+    }>("/ai/auto-analyze", {
+      method: "POST",
+      body: JSON.stringify({ photoId }),
+    }),
+
   uploadPhoto: async (params: {
     inspectionId: string;
     tag: string;
