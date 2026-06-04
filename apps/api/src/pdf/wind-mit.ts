@@ -78,12 +78,19 @@ function fmtAddress(insp: Inspection): string {
   return `${a.line1}, ${a.city}, ${a.state} ${a.zip}`;
 }
 
-/** "X" mark inside a checkbox printed at top-down (xBox, yBox). */
+/**
+ * "X" mark inside a checkbox printed at top-down (xBox, yBox).
+ *
+ * Form checkboxes are ~14pt tall starting at top-down y=yBox. To center
+ * an "X" (size 10 bold, cap height ~7pt) inside, the baseline should sit
+ * at yBox + box_height/2 + cap_height/2 ≈ yBox + 11 in top-down PDF
+ * coords. Tuned empirically against the rendered PDF.
+ */
 function checkBox(out: FieldDraw[], page: number, xBox: number, yBox: number) {
   out.push({
     page,
     x: xBox + 0.5,
-    y: yFromTop(yBox + 7),
+    y: yFromTop(yBox + 12),
     size: 10,
     value: "X",
     bold: true,
@@ -484,12 +491,18 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
   push({ page: 5, x: 380, y: yFromTop(200), size: 9, value: dateStr });
 
   // ── Per-page footers (Inspectors Initials + Property Address × 6) ─────
+  // Footer label bbox: yMin=712, yMax=725. Label baseline ≈ yMax - 2 = 723.
+  // X positions:
+  //   "Inspectors Initials" label ends at x=113; underscores 115-171, so
+  //     the initials sit at x≈122 (inside the underscore range).
+  //   "Property" word ends at x=211, "Address" word starts at x=214 and
+  //     itself is ~50pt wide (text "Address"), so the address value must
+  //     start at x ≈ 270 to clear the label.
   const fullAddr = fmtAddress(inspection);
   const initials = initialsOf(inspection.inspectorName);
-  // Footer y is consistent across pages — label bbox yMax ≈ 725.
   for (let p = 0; p < 6; p++) {
-    push({ page: p, x: 122, y: yFromTop(725), value: initials });
-    push({ page: p, x: 220, y: yFromTop(725), value: fullAddr });
+    push({ page: p, x: 122, y: yFromTop(723), value: initials });
+    push({ page: p, x: 270, y: yFromTop(723), value: fullAddr });
   }
 
   // TODO(v3): Q9a Opening Protection chart cells (6 rows × 7 columns —
