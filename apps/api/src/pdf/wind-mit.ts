@@ -486,9 +486,19 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
   // ── PAGE 6 — "I, <print name>" + Signature Date ──────────────────────
   // "I, ____________, am a qualified inspector" — label baseline at top-down y≈134.
   push({ page: 5, x: 60, y: yFromTop(134), size: 9, value: inspectorName });
-  // Signature date — label "Date:" yMin=189 yMax=203, x ~380 (after "Date:" at x=347).
+  // Inspector signature date — label "Date:" yMin=189 yMax=203, x ~380.
   const dateStr = (inspection.inspectedOn ?? new Date().toISOString()).slice(0, 10);
   push({ page: 5, x: 380, y: yFromTop(200), size: 9, value: dateStr });
+  // Homeowner date — label "Date:" on the homeowner row (top-down y≈332).
+  if (inspection.homeownerSignedAt) {
+    push({
+      page: 5,
+      x: 380,
+      y: yFromTop(343),
+      size: 9,
+      value: inspection.homeownerSignedAt.slice(0, 10),
+    });
+  }
 
   // ── Per-page footers (Inspectors Initials + Property Address × 6) ─────
   // Footer label bbox: yMin=712, yMax=725. Label baseline ≈ yMax - 2 = 723.
@@ -544,6 +554,69 @@ function drawAll(
   }
 }
 
+/**
+ * Decode a "data:image/png;base64,…" URI into raw PNG bytes for pdf-lib.
+ * Returns null if the URI is missing, malformed, or not a PNG.
+ */
+function decodePngDataUri(uri: string | undefined | null): Uint8Array | null {
+  if (!uri) return null;
+  const m = uri.match(/^data:image\/png;base64,(.+)$/);
+  if (!m) return null;
+  try {
+    const bin = atob(m[1]!);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Embed the inspector + homeowner signature images on page 6 over the
+ * "Qualified Inspector Signature: ___" and "Signature: ___" lines.
+ *
+ * The lines run from x≈208 to x≈340 on the inspector row (top-down
+ * y≈189-203) and from x≈122 to x≈300 on the homeowner row
+ * (top-down y≈332-348). We scale signatures to fit within those boxes
+ * and anchor them above the line (signed-into-the-line look).
+ */
+async function embedSignatures(doc: PDFDocument, inspection: Inspection) {
+  const page = doc.getPages()[5];
+  if (!page) return;
+
+  // Inspector signature box on page 6 — top-down coords from the form.
+  const INSPECTOR_BOX = { xLeft: 208, xRight: 340, yTop: 175, yBottom: 200 };
+  // Homeowner signature box.
+  const HOMEOWNER_BOX = { xLeft: 122, xRight: 300, yTop: 318, yBottom: 345 };
+
+  const drawSig = async (dataUri: string, box: typeof INSPECTOR_BOX) => {
+    const bytes = decodePngDataUri(dataUri);
+    if (!bytes) return;
+    const img = await doc.embedPng(bytes);
+    const boxW = box.xRight - box.xLeft;
+    const boxH = box.yBottom - box.yTop;
+    const scale = Math.min(boxW / img.width, boxH / img.height);
+    const drawnW = img.width * scale;
+    const drawnH = img.height * scale;
+    // Center inside the box.
+    const x = box.xLeft + (boxW - drawnW) / 2;
+    // pdf-lib y is bottom-up; we know the box top in top-down coords.
+    // bottom-left of drawn image in pdf-lib coords:
+    const y = (792 - box.yBottom) + (boxH - drawnH) / 2;
+    page.drawImage(img, { x, y, width: drawnW, height: drawnH });
+  };
+
+  if (inspection.inspectorSignaturePng) {
+    try { await drawSig(inspection.inspectorSignaturePng, INSPECTOR_BOX); }
+    catch (err) { console.warn("[pdf] inspector sig embed failed", err); }
+  }
+  if (inspection.homeownerSignaturePng) {
+    try { await drawSig(inspection.homeownerSignaturePng, HOMEOWNER_BOX); }
+    catch (err) { console.warn("[pdf] homeowner sig embed failed", err); }
+  }
+}
+
 export async function fillWindMit(inspection: Inspection): Promise<Uint8Array> {
   const doc = await PDFDocument.load(templateBytes());
   const font = await doc.embedFont(StandardFonts.Helvetica);
@@ -552,6 +625,9 @@ export async function fillWindMit(inspection: Inspection): Promise<Uint8Array> {
   const pages = doc.getPages();
   const fields = fieldsFor(inspection);
   drawAll(pages, font, fontBold, fields);
+
+  // Embed PNG signature images on top of the printed signature lines.
+  await embedSignatures(doc, inspection);
 
   return await doc.save();
 }

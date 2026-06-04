@@ -58,6 +58,12 @@ export interface Profile {
   inspectorCompany: string;
   /** Inspector phone number. */
   inspectorPhone: string;
+  /**
+   * Inspector's drawn signature as a base64 data URI ("data:image/png;base64,...")
+   * captured via the signature pad on the Profile screen. Stamped on every
+   * inspection's signature line.
+   */
+  inspectorSignaturePng: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -76,6 +82,7 @@ interface ProfileStore {
     inspectorLicenseType?: InspectorLicenseType | "";
     inspectorCompany?: string;
     inspectorPhone?: string;
+    inspectorSignaturePng?: string;
   }) => Promise<void>;
   signOut: () => Promise<void>;
   hydrate: () => Promise<void>;
@@ -102,6 +109,7 @@ export const useProfile = create<ProfileStore>((set, get) => ({
         patch.inspectorLicenseType ?? existing?.inspectorLicenseType ?? "",
       inspectorCompany: (patch.inspectorCompany ?? existing?.inspectorCompany ?? "").trim(),
       inspectorPhone: (patch.inspectorPhone ?? existing?.inspectorPhone ?? "").trim(),
+      inspectorSignaturePng: patch.inspectorSignaturePng ?? existing?.inspectorSignaturePng ?? "",
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
     };
@@ -135,6 +143,7 @@ export const useProfile = create<ProfileStore>((set, get) => ({
             (saved.inspectorLicenseType as InspectorLicenseType | "") ?? "",
           inspectorCompany: saved.inspectorCompany ?? "",
           inspectorPhone: saved.inspectorPhone ?? "",
+          inspectorSignaturePng: saved.inspectorSignaturePng ?? "",
           createdAt: saved.createdAt ?? new Date().toISOString(),
           updatedAt: saved.updatedAt ?? new Date().toISOString(),
         };

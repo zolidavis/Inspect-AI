@@ -96,6 +96,19 @@ export const InspectionSchema = z.object({
   /** Customer / property-owner contact, captured at inspection creation. */
   ownerEmail: z.string().optional(),
   ownerPhone: z.string().optional(),
+  /**
+   * Inspector signature as a data URI (base64 PNG, ~5-30 KB). Copied
+   * from the Profile signature at inspection-create time, stamped on
+   * the page-6 inspector signature line.
+   */
+  inspectorSignaturePng: z.string().optional(),
+  /**
+   * Homeowner signature as a data URI. Captured per-inspection from
+   * the /sign screen (inspector hands the phone to the homeowner).
+   */
+  homeownerSignaturePng: z.string().optional(),
+  /** ISO timestamp the homeowner signed. */
+  homeownerSignedAt: z.string().optional(),
   inspectedOn: z.string().optional(),
   status: z.enum(["draft", "in_progress", "complete"]).default("draft"),
   createdAt: z.string(),

@@ -7,6 +7,7 @@
 import { useState } from "react";
 import {
   Alert,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,6 +17,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { SignaturePad } from "../components/SignaturePad";
 import {
   INSPECTOR_LICENSE_TYPES,
   initialsFor,
@@ -50,6 +52,10 @@ export default function ProfileScreen() {
   );
   const [inspectorCompany, setInspectorCompany] = useState(profile?.inspectorCompany ?? "");
   const [inspectorPhone, setInspectorPhone] = useState(profile?.inspectorPhone ?? "");
+  const [inspectorSignaturePng, setInspectorSignaturePng] = useState(
+    profile?.inspectorSignaturePng ?? "",
+  );
+  const [sigPadOpen, setSigPadOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const isGoogleAccount = profile?.provider === "google";
@@ -68,6 +74,7 @@ export default function ProfileScreen() {
       inspectorLicenseType,
       inspectorCompany,
       inspectorPhone,
+      inspectorSignaturePng,
     });
     setSaving(false);
   };
@@ -237,6 +244,39 @@ export default function ProfileScreen() {
         </View>
       </View>
 
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Signature</Text>
+        <Text style={styles.hint}>
+          Draw your signature once. It's stamped on every inspection's "Qualified
+          Inspector Signature" line.
+        </Text>
+
+        {inspectorSignaturePng ? (
+          <View style={styles.sigPreviewWrap}>
+            <Image
+              source={{ uri: inspectorSignaturePng }}
+              style={styles.sigPreviewImg}
+              resizeMode="contain"
+            />
+          </View>
+        ) : (
+          <View style={styles.sigEmpty}>
+            <Ionicons name="create-outline" size={26} color={COLORS.textFaint} />
+            <Text style={styles.sigEmptyText}>No signature on file</Text>
+          </View>
+        )}
+
+        <Pressable
+          onPress={() => setSigPadOpen(true)}
+          style={styles.sigEditBtn}
+        >
+          <Ionicons name="create-outline" size={16} color={COLORS.accent} />
+          <Text style={styles.sigEditBtnText}>
+            {inspectorSignaturePng ? "Redraw signature" : "Tap to sign"}
+          </Text>
+        </Pressable>
+      </View>
+
       <Pressable
         style={[styles.saveBtn, saving && { opacity: 0.5 }]}
         disabled={saving}
@@ -244,6 +284,15 @@ export default function ProfileScreen() {
       >
         <Text style={styles.saveBtnText}>{saving ? "Saving…" : "Save"}</Text>
       </Pressable>
+
+      <SignaturePad
+        visible={sigPadOpen}
+        title="Inspector signature"
+        hint="Draw your signature in the white area, then tap Save."
+        initialDataUri={inspectorSignaturePng || undefined}
+        onClose={() => setSigPadOpen(false)}
+        onSave={(dataUri) => setInspectorSignaturePng(dataUri)}
+      />
 
       <Pressable onPress={doSignOut} style={styles.signOutBtn}>
         <Ionicons name="log-out-outline" size={18} color={COLORS.danger} />
@@ -357,6 +406,44 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
   },
+
+  sigPreviewWrap: {
+    backgroundColor: "#ffffff",
+    borderRadius: 10,
+    padding: 8,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    height: 110,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sigPreviewImg: { width: "100%", height: "100%" },
+  sigEmpty: {
+    marginTop: 10,
+    height: 110,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderStyle: "dashed",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: COLORS.bgRow,
+  },
+  sigEmptyText: { color: COLORS.textFaint, fontSize: 12 },
+  sigEditBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    marginTop: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+  },
+  sigEditBtnText: { color: COLORS.accent, fontWeight: "700", fontSize: 13 },
 
   saveBtn: {
     backgroundColor: COLORS.accent,

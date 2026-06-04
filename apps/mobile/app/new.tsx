@@ -84,6 +84,7 @@ export default function NewInspection() {
         inspectorLicenseType: profile?.inspectorLicenseType || undefined,
         inspectorCompany: profile?.inspectorCompany || undefined,
         inspectorPhone: profile?.inspectorPhone || undefined,
+        inspectorSignaturePng: profile?.inspectorSignaturePng || undefined,
         ownerEmail: ownerEmail.trim() || undefined,
         ownerPhone: ownerPhone.trim() || undefined,
       });

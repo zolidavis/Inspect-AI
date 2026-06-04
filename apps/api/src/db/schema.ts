@@ -33,6 +33,13 @@ export const inspections = pgTable(
     ownerEmail: text("owner_email"),
     ownerPhone: text("owner_phone"),
 
+    // Signatures — base64 data URIs (~5-30 KB each). Inspector signature
+    // comes from the Profile screen and is auto-stamped at create time;
+    // homeowner signature is captured per-job on the /sign screen.
+    inspectorSignaturePng: text("inspector_signature_png"),
+    homeownerSignaturePng: text("homeowner_signature_png"),
+    homeownerSignedAt: text("homeowner_signed_at"),
+
     // Nested objects stored as JSONB. Shapes are validated by Zod schemas
     // in @inspect-ai/shared/forms/* before write.
     property: jsonb("property"),

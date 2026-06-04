@@ -4,16 +4,20 @@ import {
   StyleSheet, Text, View,
 } from "react-native";
 import { Link, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { FourPoint, WindMit, type Inspection } from "@inspect-ai/shared";
 import { api, CompleteError } from "../../lib/api";
+import { inspectorNameOf, useProfile } from "../../store/profile";
 
 export default function InspectionDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const profile = useProfile((s) => s.profile);
   const [insp, setInsp] = useState<Inspection | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [completeErrors, setCompleteErrors] = useState<{
     fourPoint?: string[]; windMit?: string[];
   }>({});
@@ -41,6 +45,45 @@ export default function InspectionDetail() {
   const wm = (insp.windMit ?? {}) as any;
   const showFp = insp.type === "four_point" || insp.type === "both";
   const showWm = insp.type === "wind_mitigation" || insp.type === "both";
+
+  /**
+   * True if the profile has inspector info that this inspection lacks
+   * — most often: an old inspection created before the License Type /
+   * Company / Phone / Signature fields existed.
+   */
+  const profileHas = (v: string | undefined) => !!v && v.length > 0;
+  const inspMissingFromProfile =
+    (profileHas(profile?.inspectorName) && !insp.inspectorName) ||
+    (profileHas(profile?.inspectorLicense) && !insp.inspectorLicense) ||
+    (profileHas(profile?.inspectorLicenseType) && !insp.inspectorLicenseType) ||
+    (profileHas(profile?.inspectorCompany) && !insp.inspectorCompany) ||
+    (profileHas(profile?.inspectorPhone) && !insp.inspectorPhone) ||
+    (profileHas(profile?.inspectorSignaturePng) && !insp.inspectorSignaturePng);
+
+  /** PATCH the inspection with any profile-derived inspector fields it lacks. */
+  const syncFromProfile = async () => {
+    if (!profile) return;
+    setSyncing(true);
+    try {
+      const patch: Partial<Inspection> = {};
+      if (!insp.inspectorName) patch.inspectorName = inspectorNameOf(profile);
+      if (!insp.inspectorLicense && profile.inspectorLicense) patch.inspectorLicense = profile.inspectorLicense;
+      if (!insp.inspectorLicenseType && profile.inspectorLicenseType) {
+        patch.inspectorLicenseType = profile.inspectorLicenseType as any;
+      }
+      if (!insp.inspectorCompany && profile.inspectorCompany) patch.inspectorCompany = profile.inspectorCompany;
+      if (!insp.inspectorPhone && profile.inspectorPhone) patch.inspectorPhone = profile.inspectorPhone;
+      if (!insp.inspectorSignaturePng && profile.inspectorSignaturePng) {
+        patch.inspectorSignaturePng = profile.inspectorSignaturePng;
+      }
+      const updated = await api.patchInspection(insp.id, patch);
+      setInsp(updated);
+    } catch (e: any) {
+      Alert.alert("Sync failed", e.message);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const complete = async () => {
     setCompleting(true); setCompleteErrors({});
@@ -100,6 +143,26 @@ export default function InspectionDetail() {
             <Text style={styles.suggestArrow}>›</Text>
           </Pressable>
         </Link>
+      )}
+
+      {inspMissingFromProfile && (
+        <Pressable
+          style={[styles.syncBanner, syncing && { opacity: 0.5 }]}
+          disabled={syncing}
+          onPress={syncFromProfile}
+        >
+          <Ionicons name="sync-outline" size={18} color="#0a3d2c" />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.syncTitle}>Update inspector info</Text>
+            <Text style={styles.syncHint}>
+              Tap to apply your profile (license type, company, phone, signature)
+              to this inspection.
+            </Text>
+          </View>
+          {syncing ? <ActivityIndicator color="#0a3d2c" /> : (
+            <Text style={styles.syncArrow}>›</Text>
+          )}
+        </Pressable>
       )}
 
       {showFp && (
@@ -200,6 +263,41 @@ export default function InspectionDetail() {
         })}
       </View>
 
+      {/* Signatures card — visible inline status, with shortcut to /sign for the homeowner. */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Signatures</Text>
+        <View style={styles.sigRow}>
+          <Ionicons
+            name={insp.inspectorSignaturePng ? "checkmark-circle" : "ellipse-outline"}
+            size={20}
+            color={insp.inspectorSignaturePng ? "#1f9d3b" : "#bbb"}
+          />
+          <Text style={styles.sigLabel}>Inspector</Text>
+          <Text style={[
+            styles.sigStatus,
+            insp.inspectorSignaturePng && styles.sigStatusDone,
+          ]}>
+            {insp.inspectorSignaturePng ? "on file" : "set up in Profile"}
+          </Text>
+        </View>
+        <Link href={`/inspection/${insp.id}/sign`} asChild>
+          <Pressable style={styles.sigRow}>
+            <Ionicons
+              name={insp.homeownerSignaturePng ? "checkmark-circle" : "ellipse-outline"}
+              size={20}
+              color={insp.homeownerSignaturePng ? "#1f9d3b" : "#bbb"}
+            />
+            <Text style={styles.sigLabel}>Homeowner</Text>
+            <Text style={[
+              styles.sigStatus,
+              insp.homeownerSignaturePng && styles.sigStatusDone,
+            ]}>
+              {insp.homeownerSignaturePng ? "signed" : "Tap to sign  ›"}
+            </Text>
+          </Pressable>
+        </Link>
+      </View>
+
       {insp.status !== "complete" && (
         <Pressable
           style={[styles.completeBtn, completing && { opacity: 0.5 }]}
@@ -284,6 +382,24 @@ const styles = StyleSheet.create({
   },
   tagName: { textTransform: "capitalize" },
   tagCount: { color: "#888" },
+  syncBanner: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    backgroundColor: "#eef9f1",
+    borderColor: "#2dd4a3", borderWidth: 1,
+    padding: 12, borderRadius: 10,
+  },
+  syncTitle: { fontWeight: "700", color: "#0a3d2c", fontSize: 13 },
+  syncHint: { color: "#3a6b56", fontSize: 11, marginTop: 1, lineHeight: 14 },
+  syncArrow: { fontSize: 22, color: "#0a3d2c" },
+
+  sigRow: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    paddingVertical: 8,
+  },
+  sigLabel: { flex: 1, fontWeight: "600", color: "#333" },
+  sigStatus: { color: "#888", fontSize: 13 },
+  sigStatusDone: { color: "#1f9d3b", fontWeight: "600" },
+
   autoBtn: {
     flexDirection: "row", alignItems: "center", gap: 12,
     backgroundColor: "#eef9f1",
