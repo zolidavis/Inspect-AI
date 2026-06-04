@@ -2,9 +2,9 @@
  * Photo-pages appender for the inspection PDF.
  *
  * Fetches every photo for an inspection through the storage adapter
- * (R2 in prod, local on dev), embeds each one onto a new US-Letter PDF
- * page (one per photo) with a tag caption + capture timestamp, and
- * returns the resulting PDF as Uint8Array.
+ * (R2 in prod, local on dev), embeds them in a 2×2 grid (4 photos
+ * per US-Letter page) with each cell captioned by tag + capture date,
+ * and returns the resulting PDF as Uint8Array.
  *
  * The route handler merges this with the form-fill PDFs (wind-mit /
  * 4-Point) via pdf-lib's copyPages flow.
@@ -14,16 +14,26 @@
  *   - Uint8Array everywhere (no Buffer)
  *   - storage.get() returns { bytes, contentType }
  */
-import { PDFDocument, StandardFonts } from "pdf-lib";
+import {
+  PDFDocument,
+  StandardFonts,
+  type PDFImage,
+  type PDFFont,
+  type PDFPage,
+} from "pdf-lib";
 import type { Inspection, Photo } from "@inspect-ai/shared";
 import { storage } from "../storage.js";
 
 const PAGE_W = 612; // US Letter in PDF points
 const PAGE_H = 792;
-const MARGIN_X = 36;
-const CAPTION_HEIGHT = 56;   // reserved at top of page for the caption
-const IMAGE_MARGIN_TOP = 16; // space between caption and image
-const IMAGE_MARGIN_BOTTOM = 36; // bottom margin under image
+const MARGIN = 32;
+const GUTTER = 16;     // space between cells (horizontal + vertical)
+const CAPTION_H = 30;  // reserved at bottom of each cell for tag + date
+
+/** 2×2 grid → 4 photos per page. */
+const COLS = 2;
+const ROWS = 2;
+const PER_PAGE = COLS * ROWS;
 
 /** Human-friendly label for a stored photo tag. */
 function prettyTag(tag: string): string {
@@ -57,7 +67,7 @@ async function embedImageSmart(
   doc: PDFDocument,
   bytes: Uint8Array,
   contentType: string,
-) {
+): Promise<PDFImage> {
   // PNG signature: 89 50 4E 47
   const isPng =
     contentType.includes("png") ||
@@ -70,10 +80,116 @@ async function embedImageSmart(
   return await doc.embedJpg(bytes);
 }
 
+interface Loaded {
+  photo: Photo;
+  // null => fetch/embed failed; render placeholder cell.
+  img: PDFImage | null;
+  errorMsg?: string;
+}
+
+/** Pull and embed a single photo; never throws. */
+async function loadPhoto(doc: PDFDocument, photo: Photo): Promise<Loaded> {
+  try {
+    const fetched = await storage.get(photo.storageKey);
+    try {
+      const img = await embedImageSmart(doc, fetched.bytes, fetched.contentType);
+      return { photo, img };
+    } catch {
+      return { photo, img: null, errorMsg: "image could not be embedded" };
+    }
+  } catch (err) {
+    return {
+      photo,
+      img: null,
+      errorMsg: (err as Error).message ?? "fetch failed",
+    };
+  }
+}
+
+/** Truncate a string to fit within `maxWidth` PDF points at the given font/size. */
+function ellipsize(s: string, font: PDFFont, size: number, maxWidth: number): string {
+  if (font.widthOfTextAtSize(s, size) <= maxWidth) return s;
+  const ELL = "…";
+  let lo = 0, hi = s.length;
+  while (lo < hi) {
+    const mid = ((lo + hi + 1) / 2) | 0;
+    if (font.widthOfTextAtSize(s.slice(0, mid) + ELL, size) <= maxWidth) lo = mid;
+    else hi = mid - 1;
+  }
+  return s.slice(0, lo) + ELL;
+}
+
+/** Render one cell (image + caption) into the page at top-left (cellX, cellY). */
+function drawCell(
+  page: PDFPage,
+  font: PDFFont,
+  fontBold: PDFFont,
+  cellX: number,
+  cellY: number,       // top of the cell in pdf-lib bottom-up coords
+  cellW: number,
+  cellH: number,
+  loaded: Loaded,
+  globalIdx: number,
+  total: number,
+) {
+  const imageBoxH = cellH - CAPTION_H;
+  const imageBoxBottom = cellY - cellH + CAPTION_H; // pdf-lib y of image-box bottom edge
+
+  if (loaded.img) {
+    // Scale-to-fit inside the image box, centered.
+    const scale = Math.min(cellW / loaded.img.width, imageBoxH / loaded.img.height);
+    const drawnW = loaded.img.width * scale;
+    const drawnH = loaded.img.height * scale;
+    const x = cellX + (cellW - drawnW) / 2;
+    const y = imageBoxBottom + (imageBoxH - drawnH) / 2;
+    page.drawImage(loaded.img, { x, y, width: drawnW, height: drawnH });
+  } else {
+    // Placeholder rectangle + "image unavailable" line.
+    page.drawRectangle({
+      x: cellX,
+      y: imageBoxBottom,
+      width: cellW,
+      height: imageBoxH,
+      borderColor: undefined,
+      // light gray fill — no rgb import; use pdf-lib's default opacity-less black? Skip fill; just text.
+    });
+    page.drawText(`[ ${loaded.errorMsg ?? "photo unavailable"} ]`, {
+      x: cellX + 8,
+      y: imageBoxBottom + imageBoxH / 2 - 4,
+      size: 9,
+      font,
+    });
+  }
+
+  // ── Caption (under the image) ─────────────────────────────────────────
+  // Line 1: "Photo N of M  ·  Pretty Tag" (bold tag), ellipsized to fit
+  const captionTop = imageBoxBottom - 4; // a hair of breathing room
+  const prefix = `Photo ${globalIdx} of ${total}  ·  `;
+  const tagLabel = prettyTag(loaded.photo.tag);
+  const prefixWidth = fontBold.widthOfTextAtSize(prefix, 9);
+  const tagMax = cellW - prefixWidth - 4;
+  const tagFitted = ellipsize(tagLabel, fontBold, 9, Math.max(20, tagMax));
+  page.drawText(prefix, { x: cellX, y: captionTop - 8, size: 9, font });
+  page.drawText(tagFitted, {
+    x: cellX + prefixWidth,
+    y: captionTop - 8,
+    size: 9,
+    font: fontBold,
+  });
+  // Line 2: capture date, smaller
+  page.drawText(`Captured ${fmtCaptured(loaded.photo.capturedAt)}`, {
+    x: cellX,
+    y: captionTop - 20,
+    size: 8,
+    font,
+  });
+}
+
 /**
- * Build a multi-page PDF containing every inspection photo, one per
- * page, captioned with the tag + capture date. Returns an empty PDF
- * (zero pages) when the inspection has no photos.
+ * Build a multi-page PDF containing every inspection photo laid out
+ * 4-up (2×2 grid) per US-Letter page, each captioned with the tag +
+ * capture date. Returns an empty PDF (zero pages) when the inspection
+ * has no photos.
  */
 export async function buildPhotoPagesPdf(
   inspection: Inspection,
@@ -104,103 +220,47 @@ export async function buildPhotoPagesPdf(
     for (const p of groups.get(tag)!) ordered.push(p);
   }
 
-  // Section divider on first page so the photo block is obvious in the
-  // merged report. Standalone page with the inspection address + photo
-  // count + a "Photo documentation" banner.
+  // ── Cover page ────────────────────────────────────────────────────────
   const cover = doc.addPage([PAGE_W, PAGE_H]);
   cover.drawText("Photo Documentation", {
-    x: MARGIN_X,
-    y: PAGE_H - 120,
-    size: 22,
-    font: fontBold,
+    x: MARGIN, y: PAGE_H - 120, size: 22, font: fontBold,
   });
   cover.drawText(headerLine, {
-    x: MARGIN_X,
-    y: PAGE_H - 150,
-    size: 12,
-    font,
+    x: MARGIN, y: PAGE_H - 150, size: 12, font,
   });
   cover.drawText(
     `${ordered.length} photo${ordered.length === 1 ? "" : "s"} attached.`,
-    { x: MARGIN_X, y: PAGE_H - 170, size: 11, font },
+    { x: MARGIN, y: PAGE_H - 170, size: 11, font },
   );
 
-  let pageIdx = 1; // 1-based for caption "Photo N of M"
-  for (const photo of ordered) {
-    let fetched: { bytes: Uint8Array; contentType: string };
-    try {
-      fetched = await storage.get(photo.storageKey);
-    } catch (err) {
-      // If a single photo fails to load, emit a placeholder page so the
-      // report still ships rather than 500-ing.
-      const failPage = doc.addPage([PAGE_W, PAGE_H]);
-      failPage.drawText(`Photo ${pageIdx} of ${ordered.length}`, {
-        x: MARGIN_X, y: PAGE_H - 36, size: 9, font,
-      });
-      failPage.drawText(`Tag: ${prettyTag(photo.tag)}`, {
-        x: MARGIN_X, y: PAGE_H - 52, size: 12, font: fontBold,
-      });
-      failPage.drawText(
-        `[ photo unavailable — ${(err as Error).message ?? "fetch failed"} ]`,
-        { x: MARGIN_X, y: PAGE_H - 84, size: 10, font },
-      );
-      pageIdx++;
-      continue;
-    }
+  // ── 4-up grid pages ───────────────────────────────────────────────────
+  // Cell geometry (top-left origin per cell, in pdf-lib bottom-up coords)
+  const gridTopY = PAGE_H - MARGIN;
+  const gridBottomY = MARGIN;
+  const gridH = gridTopY - gridBottomY;
+  const gridW = PAGE_W - 2 * MARGIN;
+  const cellW = (gridW - GUTTER * (COLS - 1)) / COLS;
+  const cellH = (gridH - GUTTER * (ROWS - 1)) / ROWS;
 
-    let img: Awaited<ReturnType<typeof embedImageSmart>>;
-    try {
-      img = await embedImageSmart(doc, fetched.bytes, fetched.contentType);
-    } catch {
-      // Couldn't embed (corrupt? unknown format?) — skip with a stub.
-      const failPage = doc.addPage([PAGE_W, PAGE_H]);
-      failPage.drawText(`Photo ${pageIdx} of ${ordered.length}`, {
-        x: MARGIN_X, y: PAGE_H - 36, size: 9, font,
-      });
-      failPage.drawText(`Tag: ${prettyTag(photo.tag)}`, {
-        x: MARGIN_X, y: PAGE_H - 52, size: 12, font: fontBold,
-      });
-      failPage.drawText("[ image could not be embedded ]", {
-        x: MARGIN_X, y: PAGE_H - 84, size: 10, font,
-      });
-      pageIdx++;
-      continue;
-    }
+  for (let i = 0; i < ordered.length; i += PER_PAGE) {
+    const batch = ordered.slice(i, i + PER_PAGE);
+    // Load all 4 in parallel so the per-page wall-clock is dominated by
+    // the slowest R2 fetch, not the sum.
+    const loaded = await Promise.all(batch.map((p) => loadPhoto(doc, p)));
 
     const page = doc.addPage([PAGE_W, PAGE_H]);
 
-    // ─── Caption block (top) ────────────────────────────────────────────
-    page.drawText(`Photo ${pageIdx} of ${ordered.length}`, {
-      x: MARGIN_X,
-      y: PAGE_H - 36,
-      size: 9,
-      font,
+    loaded.forEach((l, j) => {
+      const col = j % COLS;
+      const row = (j / COLS) | 0;
+      const cellX = MARGIN + col * (cellW + GUTTER);
+      const cellY = gridTopY - row * (cellH + GUTTER); // top of this cell
+      drawCell(
+        page, font, fontBold,
+        cellX, cellY, cellW, cellH,
+        l, i + j + 1, ordered.length,
+      );
     });
-    page.drawText(prettyTag(photo.tag), {
-      x: MARGIN_X,
-      y: PAGE_H - 52,
-      size: 14,
-      font: fontBold,
-    });
-    page.drawText(`Captured ${fmtCaptured(photo.capturedAt)}`, {
-      x: MARGIN_X,
-      y: PAGE_H - 70,
-      size: 9,
-      font,
-    });
-
-    // ─── Image — scale-to-fit inside available space, centered ─────────
-    const avail_w = PAGE_W - 2 * MARGIN_X;
-    const avail_h =
-      PAGE_H - CAPTION_HEIGHT - IMAGE_MARGIN_TOP - IMAGE_MARGIN_BOTTOM;
-    const scale = Math.min(avail_w / img.width, avail_h / img.height);
-    const drawn_w = img.width * scale;
-    const drawn_h = img.height * scale;
-    const x = (PAGE_W - drawn_w) / 2;
-    const y = IMAGE_MARGIN_BOTTOM + (avail_h - drawn_h) / 2;
-    page.drawImage(img, { x, y, width: drawn_w, height: drawn_h });
-
-    pageIdx++;
   }
 
   return await doc.save();
