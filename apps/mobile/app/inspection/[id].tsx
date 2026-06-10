@@ -189,26 +189,34 @@ export default function InspectionDetail() {
               <Text style={styles.editLink}>Edit</Text>
             </Pressable>
           </View>
-          <Section title="Roof">
-            <Row k="Covering" v={fmt(fp.roof?.coveringType)} />
-            <Row k="Age (yrs)" v={fmt(fp.roof?.ageYears)} />
-            <Row k="Condition" v={fmt(fp.roof?.condition)} />
-            <Row k="Visible damage" v={fmt(fp.roof?.visibleDamage)} />
-          </Section>
           <Section title="Electrical">
             <Row k="Panel" v={`${fmt(fp.electrical?.panelBrand)} @ ${fmt(fp.electrical?.panelAmps)}A`} />
             <Row k="Wiring" v={fmt(fp.electrical?.wiringType)} />
             <Row k="Hazards" v={fmt(fp.electrical?.hazardsPresent)} />
-          </Section>
-          <Section title="Plumbing">
-            <Row k="Supply" v={fmt(fp.plumbing?.supplyMaterial)} />
-            <Row k="Water heater age" v={fmt(fp.plumbing?.waterHeaterAgeYears)} />
           </Section>
           <Section title="HVAC">
             <Row k="System" v={fmt(fp.hvac?.systemType)} />
             <Row k="Age (yrs)" v={fmt(fp.hvac?.ageYears)} />
             <Row k="Condition" v={fmt(fp.hvac?.condition)} />
           </Section>
+          <Section title="Plumbing">
+            <Row k="Supply" v={fmt(fp.plumbing?.supplyMaterial)} />
+            <Row k="Water heater age" v={fmt(fp.plumbing?.waterHeaterAgeYears)} />
+          </Section>
+          <Section title="Roof — Predominant">
+            <Row k="Covering" v={fmt(fp.roof?.predominant?.coveringMaterial)} />
+            <Row k="Age (yrs)" v={fmt(fp.roof?.predominant?.ageYears)} />
+            <Row k="Condition" v={fmt(fp.roof?.predominant?.condition)} />
+            <Row k="Visible damage" v={fmt(fp.roof?.predominant?.visibleDamage)} />
+          </Section>
+          {fp.roof?.secondary && Object.keys(fp.roof.secondary).length > 0 && (
+            <Section title="Roof — Secondary">
+              <Row k="Covering" v={fmt(fp.roof?.secondary?.coveringMaterial)} />
+              <Row k="Age (yrs)" v={fmt(fp.roof?.secondary?.ageYears)} />
+              <Row k="Condition" v={fmt(fp.roof?.secondary?.condition)} />
+              <Row k="Visible damage" v={fmt(fp.roof?.secondary?.visibleDamage)} />
+            </Section>
+          )}
           {completeErrors.fourPoint && completeErrors.fourPoint.length > 0 && (
             <View style={styles.errorBlock}>
               <Text style={styles.errorTitle}>Missing/invalid:</Text>
