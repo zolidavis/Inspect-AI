@@ -54,21 +54,97 @@ function prettyLabel(v: string): string {
 }
 
 export const FOUR_POINT_SECTIONS: SectionMeta[] = [
-  // 1. Electrical
+  // 1a. Electrical — Main Panel
   {
-    title: "Electrical System",
+    title: "Electrical — Main Panel",
     fields: [
-      { kind: "string", path: "electrical.panelBrand", label: "Main panel brand", placeholder: "Square D, Eaton, …" },
-      { kind: "integer", path: "electrical.panelAmps", label: "Total system amps", min: 0, max: 1000 },
       {
-        kind: "enum", path: "electrical.wiringType", label: "Predominant wiring",
-        options: enumOptions(["copper_romex", "aluminum", "knob_tube", "mixed", "other"]),
+        kind: "enum", path: "electrical.mainPanel.type", label: "Type",
+        options: [
+          { value: "circuit_breaker", label: "Circuit breaker" },
+          { value: "fuse",            label: "Fuse" },
+        ],
       },
-      { kind: "boolean", path: "electrical.hazardsPresent", label: "Hazards present" },
-      { kind: "string", path: "electrical.hazardsDescription", label: "Hazards description", placeholder: "If hazards present" },
-      { kind: "boolean", path: "electrical.gfciPresent", label: "GFCI present" },
-      { kind: "boolean", path: "electrical.inGoodWorkingOrder", label: "In good working order" },
-      { kind: "string", path: "electrical.notes", label: "Notes", placeholder: "Optional" },
+      { kind: "integer", path: "electrical.mainPanel.totalAmps", label: "Total amps", min: 0, max: 1000 },
+      { kind: "boolean", path: "electrical.mainPanel.amperageSufficient", label: "Is amperage sufficient for current usage?" },
+      { kind: "string",  path: "electrical.mainPanel.amperageSufficientExplain", label: "If no, explain", placeholder: "Optional" },
+    ],
+  },
+  // 1b. Electrical — Second Panel (optional)
+  {
+    title: "Electrical — Second Panel (if present)",
+    fields: [
+      {
+        kind: "enum", path: "electrical.secondPanel.type", label: "Type",
+        options: [
+          { value: "circuit_breaker", label: "Circuit breaker" },
+          { value: "fuse",            label: "Fuse" },
+        ],
+      },
+      { kind: "integer", path: "electrical.secondPanel.totalAmps", label: "Total amps", min: 0, max: 1000 },
+      { kind: "boolean", path: "electrical.secondPanel.amperageSufficient", label: "Is amperage sufficient for current usage?" },
+      { kind: "string",  path: "electrical.secondPanel.amperageSufficientExplain", label: "If no, explain", placeholder: "Optional" },
+    ],
+  },
+  // 1c. Indicate presence of any of the following
+  {
+    title: "Electrical — Indicate presence of any of the following",
+    fields: [
+      { kind: "boolean", path: "electrical.presence.clothWiring",                     label: "Cloth wiring" },
+      { kind: "boolean", path: "electrical.presence.activeKnobAndTube",               label: "Active knob and tube" },
+      { kind: "boolean", path: "electrical.presence.branchCircuitAluminumWiring",     label: "Branch circuit aluminum wiring" },
+      { kind: "string",  path: "electrical.presence.aluminumWiringDescription",       label: "If present, describe usage of all aluminum wiring", placeholder: "Optional" },
+      { kind: "boolean", path: "electrical.presence.connectionsRepairedCopalumCrimp", label: "Connections repaired via COPALUM crimp" },
+      { kind: "boolean", path: "electrical.presence.connectionsRepairedAlumiConn",    label: "Connections repaired via AlumiConn" },
+    ],
+  },
+  // 1d. Hazards Present (all 13 boxes)
+  {
+    title: "Electrical — Hazards Present",
+    fields: [
+      { kind: "boolean", path: "electrical.hazards.blowingFuses",        label: "Blowing fuses" },
+      { kind: "boolean", path: "electrical.hazards.trippingBreakers",    label: "Tripping breakers" },
+      { kind: "boolean", path: "electrical.hazards.emptySockets",        label: "Empty sockets" },
+      { kind: "boolean", path: "electrical.hazards.looseWiring",         label: "Loose wiring" },
+      { kind: "boolean", path: "electrical.hazards.improperGrounding",   label: "Improper grounding" },
+      { kind: "boolean", path: "electrical.hazards.corrosion",           label: "Corrosion" },
+      { kind: "boolean", path: "electrical.hazards.overFusing",          label: "Over fusing" },
+      { kind: "boolean", path: "electrical.hazards.doubleTaps",          label: "Double taps" },
+      { kind: "boolean", path: "electrical.hazards.exposedWiring",       label: "Exposed wiring" },
+      { kind: "boolean", path: "electrical.hazards.unsafeWiring",        label: "Unsafe wiring" },
+      { kind: "boolean", path: "electrical.hazards.improperBreakerSize", label: "Improper breaker size" },
+      { kind: "boolean", path: "electrical.hazards.scorching",           label: "Scorching" },
+      { kind: "boolean", path: "electrical.hazards.other",               label: "Other" },
+      { kind: "string",  path: "electrical.hazards.otherExplain",        label: "If other, explain", placeholder: "Optional" },
+    ],
+  },
+  // 1e. General condition + supplemental
+  {
+    title: "Electrical — General condition & supplemental",
+    fields: [
+      {
+        kind: "enum", path: "electrical.generalCondition", label: "General condition of electrical system",
+        options: enumOptions(["satisfactory", "unsatisfactory"]),
+      },
+      { kind: "string", path: "electrical.generalConditionExplain", label: "If unsatisfactory, explain", placeholder: "Optional" },
+      // Main panel supplemental
+      { kind: "integer", path: "electrical.mainPanel.panelAge",        label: "Main panel age (years)", min: 0, max: 150 },
+      { kind: "integer", path: "electrical.mainPanel.yearLastUpdated", label: "Main panel year last updated", min: 1900, max: 2100 },
+      { kind: "string",  path: "electrical.mainPanel.brandModel",      label: "Main panel brand/model", placeholder: "Square D, Eaton, …" },
+      // Second panel supplemental
+      { kind: "integer", path: "electrical.secondPanel.panelAge",        label: "Second panel age (years)", min: 0, max: 150 },
+      { kind: "integer", path: "electrical.secondPanel.yearLastUpdated", label: "Second panel year last updated", min: 1900, max: 2100 },
+      { kind: "string",  path: "electrical.secondPanel.brandModel",      label: "Second panel brand/model", placeholder: "Optional" },
+      // Wiring Type(s) — check all that apply
+      { kind: "boolean", path: "electrical.wiringTypes.copper",                     label: "Wiring: Copper" },
+      { kind: "boolean", path: "electrical.wiringTypes.copperCladAl",               label: "Wiring: Copper Clad AL" },
+      { kind: "boolean", path: "electrical.wiringTypes.nmBxOrConduit",              label: "Wiring: NM, BX or Conduit" },
+      { kind: "boolean", path: "electrical.wiringTypes.singleStrandAl",             label: "Wiring: Single Strand AL" },
+      { kind: "boolean", path: "electrical.wiringTypes.clothKnobAndTube",           label: "Wiring: Cloth (Knob & Tube)" },
+      { kind: "boolean", path: "electrical.wiringTypes.multistrandAl",              label: "Wiring: Multistrand AL" },
+      { kind: "boolean", path: "electrical.wiringTypes.clothJacketRubberInsulated", label: "Wiring: Cloth Jacket Rubber Insulated" },
+      { kind: "boolean", path: "electrical.wiringTypes.other",                      label: "Wiring: Other" },
+      { kind: "string",  path: "electrical.notes", label: "Notes", placeholder: "Optional" },
     ],
   },
   // 2. HVAC

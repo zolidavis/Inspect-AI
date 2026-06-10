@@ -190,9 +190,36 @@ export default function InspectionDetail() {
             </Pressable>
           </View>
           <Section title="Electrical">
-            <Row k="Panel" v={`${fmt(fp.electrical?.panelBrand)} @ ${fmt(fp.electrical?.panelAmps)}A`} />
-            <Row k="Wiring" v={fmt(fp.electrical?.wiringType)} />
-            <Row k="Hazards" v={fmt(fp.electrical?.hazardsPresent)} />
+            <Row
+              k="Main panel"
+              v={`${fmt(fp.electrical?.mainPanel?.brandModel)} @ ${fmt(fp.electrical?.mainPanel?.totalAmps)}A`}
+            />
+            <Row
+              k="Wiring"
+              v={fmt(
+                Object.entries(fp.electrical?.wiringTypes ?? {})
+                  .filter(([, v]) => v === true)
+                  .map(([k]) =>
+                    k === "nmBxOrConduit" ? "NM/BX/Conduit"
+                    : k === "copperCladAl" ? "Copper Clad AL"
+                    : k === "singleStrandAl" ? "Single Strand AL"
+                    : k === "multistrandAl" ? "Multistrand AL"
+                    : k === "clothKnobAndTube" ? "Cloth (Knob & Tube)"
+                    : k === "clothJacketRubberInsulated" ? "Cloth Jacket Rubber"
+                    : k.charAt(0).toUpperCase() + k.slice(1)
+                  )
+                  .join(", ") || undefined,
+              )}
+            />
+            <Row
+              k="Hazards"
+              v={fmt(
+                Object.entries(fp.electrical?.hazards ?? {})
+                  .filter(([k, v]) => v === true && k !== "otherExplain")
+                  .length || undefined,
+              )}
+            />
+            <Row k="Condition" v={fmt(fp.electrical?.generalCondition)} />
           </Section>
           <Section title="HVAC">
             <Row k="System" v={fmt(fp.hvac?.systemType)} />

@@ -119,45 +119,97 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
   if (pr.hazardsOrDeficiencies)     checkBox(out, 0,  53, 178);
 
   // ── PAGE 1 — Electrical System ────────────────────────────────────────
-  // Position derivation: every checkbox ☐ glyph is ~10pt wide and sits to
-  // the LEFT of its label word — i.e. ckbx_x ≈ (label_word_xMin - 11).
-  // All y values are top-down yMin of the label word; the checkBox helper
-  // adds +12 for the X baseline.
-  //
-  // Total Amps — "Total Amps:" label ends at x≈85 (main) / x≈356 (second), y=334.
-  // Blank input starts ~3pt after the colon.
-  push({ page: 0, x: 88, y: yFromTop(341), value: electrical.panelAmps, size: 10 });
+  // Every ckbx ☐ glyph is ~10pt wide and sits to the LEFT of its label
+  // word: ckbx_x ≈ (label_word_xMin - 11). The checkBox helper adds +12
+  // to the top-down y for X baseline centering inside ~14pt-tall boxes.
+  const mainPanel: any = electrical.mainPanel ?? {};
+  const secondPanel: any = electrical.secondPanel ?? {};
+  const presence: any = electrical.presence ?? {};
+  const hazards: any = electrical.hazards ?? {};
+  const wiringTypes: any = electrical.wiringTypes ?? {};
 
-  // "General condition of the electrical system" — y=620.
-  // "Satisfactory" word at x=222 → ☐ at x≈211. "Unsatisfactory" at x=284 → ☐ at x≈273.
-  if (electrical.inGoodWorkingOrder === true) {
+  // ── Main Panel (left column, x≈42-260) ───────────────────────────────
+  // y=319: Type: Circuit breaker / Fuse — ckbx at x=65 (Circuit) / x=133 (Fuse)
+  if (mainPanel.type === "circuit_breaker") checkBox(out, 0, 65, 319);
+  if (mainPanel.type === "fuse")            checkBox(out, 0, 133, 319);
+  // y=334: Total Amps: ___ — value at x≈88 (after "Total Amps:" xMax≈85)
+  push({ page: 0, x: 88, y: yFromTop(341), value: mainPanel.totalAmps });
+  // y=347: amperage sufficient? Yes ckbx x=190 | No ckbx x=218
+  if (mainPanel.amperageSufficient === true)  checkBox(out, 0, 190, 347);
+  if (mainPanel.amperageSufficient === false) checkBox(out, 0, 218, 347);
+
+  // ── Second Panel (right column, x≈312-580) ───────────────────────────
+  // y=319: Circuit breaker x=335, Fuse x=401
+  if (secondPanel.type === "circuit_breaker") checkBox(out, 0, 335, 319);
+  if (secondPanel.type === "fuse")            checkBox(out, 0, 401, 319);
+  // y=334: Total Amps x≈358 (after "Total Amps:" xMax≈355)
+  push({ page: 0, x: 358, y: yFromTop(341), value: secondPanel.totalAmps });
+  // y=347: Yes x=460, No x=488
+  if (secondPanel.amperageSufficient === true)  checkBox(out, 0, 460, 347);
+  if (secondPanel.amperageSufficient === false) checkBox(out, 0, 488, 347);
+
+  // ── Indicate presence of any of the following (y=379 header) ─────────
+  // Left-col ckbx at x=51 for each row.
+  if (presence.clothWiring)                     checkBox(out, 0, 51, 395);
+  if (presence.activeKnobAndTube)               checkBox(out, 0, 51, 410);
+  if (presence.branchCircuitAluminumWiring)     checkBox(out, 0, 51, 425);
+  if (presence.connectionsRepairedCopalumCrimp) checkBox(out, 0, 51, 455);
+  if (presence.connectionsRepairedAlumiConn)    checkBox(out, 0, 51, 470);
+  // Aluminum wiring description — inline at end of y=425 label
+  push({ page: 0, x: 380, y: yFromTop(432), value: presence.aluminumWiringDescription, size: 8 });
+
+  // ── Hazards Present (y=492 header) ───────────────────────────────────
+  // Left column (ckbx at x=51) — Blowing fuses y=507, Tripping breakers y=523, etc.
+  // Right column (ckbx at x=321) — Double taps y=492, Exposed wiring y=507, etc.
+  if (hazards.blowingFuses)        checkBox(out, 0, 51, 507);
+  if (hazards.trippingBreakers)    checkBox(out, 0, 51, 523);
+  if (hazards.emptySockets)        checkBox(out, 0, 51, 538);
+  if (hazards.looseWiring)         checkBox(out, 0, 51, 553);
+  if (hazards.improperGrounding)   checkBox(out, 0, 51, 568);
+  if (hazards.corrosion)           checkBox(out, 0, 51, 583);
+  if (hazards.overFusing)          checkBox(out, 0, 51, 598);
+  if (hazards.doubleTaps)          checkBox(out, 0, 321, 492);
+  if (hazards.exposedWiring)       checkBox(out, 0, 321, 507);
+  if (hazards.unsafeWiring)        checkBox(out, 0, 321, 523);
+  if (hazards.improperBreakerSize) checkBox(out, 0, 321, 538);
+  if (hazards.scorching)           checkBox(out, 0, 321, 553);
+  if (hazards.other)               checkBox(out, 0, 321, 568);
+  // "Other (explain)" — inline note next to the label
+  push({ page: 0, x: 410, y: yFromTop(575), value: hazards.otherExplain, size: 8 });
+
+  // ── General condition (y=620) ────────────────────────────────────────
+  // "Satisfactory" x=222 → ☐ x≈211. "Unsatisfactory" x=284 → ☐ x≈273.
+  if (electrical.generalCondition === "satisfactory") {
     checkBox(out, 0, 211, 620);
-  } else if (electrical.inGoodWorkingOrder === false) {
+  } else if (electrical.generalCondition === "unsatisfactory") {
     checkBox(out, 0, 273, 620);
   }
+  // Inline explanation
+  push({ page: 0, x: 405, y: yFromTop(627), value: electrical.generalConditionExplain, size: 8 });
 
-  // Hazards Present — Blowing fuses ckbx at y=507, "Blowing" word x=62 → ☐ x≈51.
-  // (We don't model individual hazards yet — stamp one box as a flag.)
-  if (electrical.hazardsPresent === true) {
-    checkBox(out, 0, 51, 507);
-  }
+  // ── Supplemental Information (y=657 header) ──────────────────────────
+  // y=691: Main "Panel age:" xMax≈86 → value x≈92; Second xMax≈219 → value x≈225
+  push({ page: 0, x:  92, y: yFromTop(698), value: mainPanel.panelAge });
+  push({ page: 0, x: 225, y: yFromTop(698), value: secondPanel.panelAge });
+  // y=704: "Year last updated:" — Main xMax≈122, Second xMax≈252 → values at x≈128/258
+  push({ page: 0, x: 128, y: yFromTop(711), value: mainPanel.yearLastUpdated });
+  push({ page: 0, x: 258, y: yFromTop(711), value: secondPanel.yearLastUpdated });
+  // y=721 (Main) / y=718 (Second): "Brand/Model:" — Main xMax≈90 → value x≈96; Second xMax≈222 → value x≈228
+  push({ page: 0, x:  96, y: yFromTop(728), value: mainPanel.brandModel,   size: 9 });
+  push({ page: 0, x: 228, y: yFromTop(725), value: secondPanel.brandModel, size: 9 });
 
-  // Wiring Type(s) Supplemental Information — page 1 bottom.
-  //   y=691: "Copper" word x=320 → ☐ x≈309 | "Copper Clad AL" word x=411 → ☐ x≈400 | "NM," x=507 → ☐ x≈496
-  //   y=706: "Single Strand AL" x=320 → ☐ x≈309 | "Cloth (Knob & Tube)" x=412 → ☐ x≈401 | "Other" x=506 → ☐ x≈495
-  //   y=718: "Multistrand AL" x=320 → ☐ x≈309 | "Cloth Jacket..." x=412 → ☐ x≈401
-  const WIRING_BOX: Record<string, { x: number; y: number }> = {
-    copper_romex:  { x: 309, y: 691 }, // Copper
-    aluminum:      { x: 309, y: 706 }, // Single Strand AL
-    knob_tube:     { x: 401, y: 706 }, // Cloth (Knob & Tube)
-    mixed:         { x: 309, y: 718 }, // Multistrand AL
-    other:         { x: 495, y: 706 }, // Other
-  };
-  const wireBox = WIRING_BOX[electrical.wiringType];
-  if (wireBox) checkBox(out, 0, wireBox.x, wireBox.y);
-
-  // Brand/Model — Main panel "Brand/Model:" label ends at x≈90, y=721.
-  push({ page: 0, x: 94, y: yFromTop(728), value: electrical.panelBrand, size: 9 });
+  // ── Wiring Type(s) Supplemental — page 1 bottom right ────────────────
+  //   y=691: Copper x=309 | Copper Clad AL x=400 | NM, BX or Conduit x=496
+  //   y=704: Single Strand AL x=309 | Cloth (Knob & Tube) x=401 | Other x=495
+  //   y=718: Multistrand AL x=309 | Cloth Jacket Rubber Insulated x=401
+  if (wiringTypes.copper)                     checkBox(out, 0, 309, 691);
+  if (wiringTypes.copperCladAl)               checkBox(out, 0, 400, 691);
+  if (wiringTypes.nmBxOrConduit)              checkBox(out, 0, 496, 691);
+  if (wiringTypes.singleStrandAl)             checkBox(out, 0, 309, 704);
+  if (wiringTypes.clothKnobAndTube)           checkBox(out, 0, 401, 704);
+  if (wiringTypes.other)                      checkBox(out, 0, 495, 704);
+  if (wiringTypes.multistrandAl)              checkBox(out, 0, 309, 718);
+  if (wiringTypes.clothJacketRubberInsulated) checkBox(out, 0, 401, 718);
 
   // ── PAGE 2 — HVAC System ──────────────────────────────────────────────
   // Central AC — y=108. "Yes" word x=108 → ☐ x≈97. "No" word x=144 → ☐ x≈133.
