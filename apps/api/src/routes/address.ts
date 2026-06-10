@@ -29,6 +29,7 @@ address.post("/lookup", async (c) => {
       bedrooms: 3,
       bathrooms: 2,
       parcelId: null,
+      numberOfStories: 1,
       permits: [],
       source: "mock",
     };
@@ -56,6 +57,13 @@ address.post("/lookup", async (c) => {
     bathrooms: first?.bathrooms ?? null,
     parcelId: first?.assessorID ?? null,
     county: first?.county ?? null,
+    // RentCast may expose stories under features.floorCount or storyCount.
+    // Inspector can always override on the edit-info screen.
+    numberOfStories:
+      first?.features?.floorCount ??
+      first?.features?.storyCount ??
+      first?.features?.stories ??
+      null,
     permits: [], // TODO: county scrapers
     source: "rentcast",
   };

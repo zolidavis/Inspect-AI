@@ -145,6 +145,7 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
 
   // Row 6
   push({ page: 0, x: 118, y: yFromTop(224), value: property.yearBuilt });
+  push({ page: 0, x: 261, y: yFromTop(224), value: property.numberOfStories });
   push({ page: 0, x: 394, y: yFromTop(224), value: inspection.ownerEmail });
 
   // ── NOTE — FORTIFIED Home certificate checkboxes ───────────────────────

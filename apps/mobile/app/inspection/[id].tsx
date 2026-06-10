@@ -139,6 +139,7 @@ export default function InspectionDetail() {
           <>
             <Row k="Year Built" v={insp.property.yearBuilt ? String(insp.property.yearBuilt) : "—"} />
             <Row k="Sq Ft" v={insp.property.squareFootage ? String(insp.property.squareFootage) : "—"} />
+            <Row k="# of Stories" v={insp.property.numberOfStories ? String(insp.property.numberOfStories) : "—"} />
             <Row k="Source" v={insp.property.source} />
             {insp.property.permits.length === 0 && (
               <Text style={styles.dim}>Permit lookup is stubbed — county scrapers TBD.</Text>

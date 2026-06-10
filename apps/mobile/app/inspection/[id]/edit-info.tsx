@@ -52,6 +52,7 @@ export default function EditInfo() {
   const [ownerName, setOwnerName] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
   const [ownerPhone, setOwnerPhone] = useState("");
+  const [numberOfStories, setNumberOfStories] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -65,6 +66,9 @@ export default function EditInfo() {
         setOwnerName(i.property?.ownerName ?? "");
         setOwnerEmail(i.ownerEmail ?? "");
         setOwnerPhone(i.ownerPhone ?? "");
+        setNumberOfStories(
+          i.property?.numberOfStories != null ? String(i.property.numberOfStories) : "",
+        );
       } catch (e: any) {
         Alert.alert("Failed to load", e.message);
       } finally {
@@ -98,25 +102,32 @@ export default function EditInfo() {
         ownerEmail: ownerEmail.trim() || undefined,
         ownerPhone: ownerPhone.trim() || undefined,
       };
+      const storiesNum = numberOfStories.trim()
+        ? Number.parseInt(numberOfStories.trim(), 10)
+        : null;
+      const storiesValid =
+        storiesNum != null && Number.isFinite(storiesNum) && storiesNum > 0;
       // Only patch property.ownerName if we already had a property record
       // (don't fabricate one from a single override field).
       if (insp.property) {
         patch.property = {
           ...insp.property,
           ownerName: ownerName.trim() || null,
+          numberOfStories: storiesValid ? storiesNum : null,
         };
-      } else if (ownerName.trim()) {
+      } else if (ownerName.trim() || storiesValid) {
         // Property data wasn't fetched yet, but inspector wants to record
-        // the name — create a minimal mock-source property record.
+        // a name or stories override — create a minimal mock-source record.
         patch.property = {
           address: patch.address!,
-          ownerName: ownerName.trim(),
+          ownerName: ownerName.trim() || null,
           yearBuilt: null,
           squareFootage: null,
           lotSize: null,
           bedrooms: null,
           bathrooms: null,
           parcelId: null,
+          numberOfStories: storiesValid ? storiesNum : null,
           permits: [],
           source: "mock",
         };
@@ -187,6 +198,20 @@ export default function EditInfo() {
             />
           </View>
         </View>
+
+        <Text style={[styles.label, { marginTop: 14 }]}># of stories</Text>
+        <TextInput
+          style={[styles.input, { maxWidth: 120 }]}
+          value={numberOfStories}
+          onChangeText={(v) => setNumberOfStories(v.replace(/[^0-9]/g, ""))}
+          placeholder="1"
+          placeholderTextColor={COLORS.textFaint}
+          keyboardType="number-pad"
+          maxLength={2}
+        />
+        <Text style={styles.hint}>
+          Stamped on the OIR-B1-1802 wind mitigation form.
+        </Text>
       </View>
 
       <View style={styles.card}>
