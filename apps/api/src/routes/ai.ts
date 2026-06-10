@@ -31,21 +31,30 @@ type TagSpec = {
 };
 
 const TAG_SPECS: Record<string, TagSpec> = {
-  "roof.covering": {
+  "roof.predominant": {
     form: "fourPoint",
-    focus: "Roof covering material and condition.",
+    focus: "Main / largest roof covering material and condition.",
     fields: [
-      { path: "roof.coveringType", type: "enum: asphalt_shingle|metal|tile|built_up|membrane|wood_shake|other", description: "What the roof is covered with." },
-      { path: "roof.condition", type: "enum: good|fair|poor", description: "Overall condition rating." },
-      { path: "roof.visibleDamage", type: "boolean", description: "True if any damage is visible." },
+      { path: "roof.predominant.coveringMaterial", type: "enum: asphalt_shingle|metal|tile|built_up|membrane|wood_shake|other", description: "What the predominant roof is covered with." },
+      { path: "roof.predominant.condition", type: "enum: satisfactory|unsatisfactory", description: "Overall condition rating." },
+      { path: "roof.predominant.visibleDamage", type: "boolean", description: "True if any damage is visible." },
+    ],
+  },
+  "roof.secondary": {
+    form: "fourPoint",
+    focus: "Secondary / smaller roof section covering material (separate from predominant).",
+    fields: [
+      { path: "roof.secondary.coveringMaterial", type: "enum: asphalt_shingle|metal|tile|built_up|membrane|wood_shake|other", description: "What the secondary roof is covered with." },
+      { path: "roof.secondary.condition", type: "enum: satisfactory|unsatisfactory", description: "Overall condition rating." },
+      { path: "roof.secondary.visibleDamage", type: "boolean", description: "True if any damage is visible." },
     ],
   },
   "roof.condition": {
     form: "fourPoint",
-    focus: "Damage, granule loss, ponding, missing shingles, soft spots.",
+    focus: "Damage, granule loss, ponding, missing shingles, soft spots — usually on the predominant roof.",
     fields: [
-      { path: "roof.condition", type: "enum: good|fair|poor", description: "Overall condition rating." },
-      { path: "roof.visibleDamage", type: "boolean", description: "Any visible damage." },
+      { path: "roof.predominant.condition", type: "enum: satisfactory|unsatisfactory", description: "Overall condition rating of predominant roof." },
+      { path: "roof.predominant.visibleDamage", type: "boolean", description: "Any visible damage." },
       { path: "roof.notes", type: "string", description: "Brief description of damage if visible." },
     ],
   },
@@ -155,7 +164,8 @@ const TAG_SPECS: Record<string, TagSpec> = {
  */
 const TAG_DESCRIPTIONS: Record<string, string> = {
   // four-point
-  "roof.covering":          "Exterior roof shot showing the covering material (shingles, tile, metal, etc.).",
+  "roof.predominant":       "Exterior shot of the main / largest roof section showing the covering material (shingles, tile, metal, etc.).",
+  "roof.secondary":         "Exterior shot of a SEPARATE / smaller roof section — porch, addition, dormer — with a different covering than the main roof.",
   "roof.condition":         "Roof close-up showing damage, granule loss, ponding, soft spots, or missing material.",
   "electrical.panel":       "Open electrical panel box showing breakers, main breaker, label / data plate.",
   "electrical.wiring":      "Branch wiring close-up (Romex, aluminum, knob-and-tube).",

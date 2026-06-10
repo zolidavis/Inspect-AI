@@ -54,42 +54,48 @@ function prettyLabel(v: string): string {
 }
 
 export const FOUR_POINT_SECTIONS: SectionMeta[] = [
+  // 1. Electrical
   {
-    title: "Roof",
+    title: "Electrical System",
     fields: [
+      { kind: "string", path: "electrical.panelBrand", label: "Main panel brand", placeholder: "Square D, Eaton, …" },
+      { kind: "integer", path: "electrical.panelAmps", label: "Total system amps", min: 0, max: 1000 },
       {
-        kind: "enum", path: "roof.coveringType", label: "Covering",
-        options: enumOptions([
-          "asphalt_shingle", "metal", "tile", "built_up", "membrane", "wood_shake", "other",
-        ]),
-      },
-      { kind: "integer", path: "roof.ageYears", label: "Age (years)", min: 0, max: 200 },
-      { kind: "integer", path: "roof.remainingLifeYears", label: "Remaining life (years)", min: 0, max: 100 },
-      {
-        kind: "enum", path: "roof.condition", label: "Condition",
-        options: enumOptions(["good", "fair", "poor"]),
-      },
-      { kind: "boolean", path: "roof.visibleDamage", label: "Visible damage" },
-      { kind: "string", path: "roof.notes", label: "Notes", placeholder: "Optional" },
-    ],
-  },
-  {
-    title: "Electrical",
-    fields: [
-      { kind: "string", path: "electrical.panelBrand", label: "Panel brand", placeholder: "Square D, Eaton, ..." },
-      { kind: "integer", path: "electrical.panelAmps", label: "Panel amperage", min: 0, max: 1000 },
-      {
-        kind: "enum", path: "electrical.wiringType", label: "Wiring",
+        kind: "enum", path: "electrical.wiringType", label: "Predominant wiring",
         options: enumOptions(["copper_romex", "aluminum", "knob_tube", "mixed", "other"]),
       },
       { kind: "boolean", path: "electrical.hazardsPresent", label: "Hazards present" },
       { kind: "string", path: "electrical.hazardsDescription", label: "Hazards description", placeholder: "If hazards present" },
       { kind: "boolean", path: "electrical.gfciPresent", label: "GFCI present" },
+      { kind: "boolean", path: "electrical.inGoodWorkingOrder", label: "In good working order" },
+      { kind: "string", path: "electrical.notes", label: "Notes", placeholder: "Optional" },
     ],
   },
+  // 2. HVAC
   {
-    title: "Plumbing",
+    title: "HVAC System",
     fields: [
+      {
+        kind: "enum", path: "hvac.systemType", label: "System type",
+        options: enumOptions(["central_ac", "heat_pump", "window_units", "mini_split", "other"]),
+      },
+      { kind: "integer", path: "hvac.ageYears", label: "Age of system (years)", min: 0, max: 100 },
+      { kind: "integer", path: "hvac.yearLastUpdated", label: "Year last updated", min: 1900, max: 2100 },
+      {
+        kind: "enum", path: "hvac.condition", label: "Condition",
+        options: enumOptions(["good", "fair", "poor"]),
+      },
+      { kind: "boolean", path: "hvac.hazardsPresent", label: "Hazards present" },
+      { kind: "boolean", path: "hvac.inGoodWorkingOrder", label: "In good working order" },
+      { kind: "string", path: "hvac.notes", label: "Notes", placeholder: "Optional" },
+    ],
+  },
+  // 3. Plumbing
+  {
+    title: "Plumbing System",
+    fields: [
+      { kind: "integer", path: "plumbing.ageYears", label: "Age of system (years)", min: 0, max: 100 },
+      { kind: "integer", path: "plumbing.yearLastUpdated", label: "Year last updated", min: 1900, max: 2100 },
       {
         kind: "enum", path: "plumbing.supplyMaterial", label: "Supply material",
         options: enumOptions(["copper", "cpvc", "pex", "polybutylene", "galvanized", "mixed"]),
@@ -99,23 +105,70 @@ export const FOUR_POINT_SECTIONS: SectionMeta[] = [
         options: enumOptions(["pvc", "cast_iron", "abs", "mixed"]),
       },
       { kind: "integer", path: "plumbing.waterHeaterAgeYears", label: "Water heater age (years)", min: 0, max: 100 },
-      { kind: "boolean", path: "plumbing.leaksObserved", label: "Leaks observed" },
+      { kind: "boolean", path: "plumbing.inGoodWorkingOrder", label: "In good working order" },
+      { kind: "boolean", path: "plumbing.leaksObserved", label: "Active leaks observed" },
       { kind: "string", path: "plumbing.notes", label: "Notes", placeholder: "Optional" },
     ],
   },
+  // 4. Roof — Predominant covering
   {
-    title: "HVAC",
+    title: "Roof — Predominant covering",
     fields: [
       {
-        kind: "enum", path: "hvac.systemType", label: "System type",
-        options: enumOptions(["central_ac", "heat_pump", "window_units", "mini_split", "other"]),
+        kind: "enum", path: "roof.predominant.coveringMaterial", label: "Covering material",
+        options: enumOptions([
+          "asphalt_shingle", "metal", "tile", "built_up", "membrane", "wood_shake", "other",
+        ]),
       },
-      { kind: "integer", path: "hvac.ageYears", label: "Age (years)", min: 0, max: 100 },
+      { kind: "integer", path: "roof.predominant.ageYears", label: "Roof age (years)", min: 0, max: 200 },
+      { kind: "integer", path: "roof.predominant.remainingLifeYears", label: "Remaining useful life (years)", min: 0, max: 100 },
+      { kind: "string", path: "roof.predominant.lastPermitDate", label: "Date of last roofing permit", placeholder: "MM/DD/YYYY" },
+      { kind: "string", path: "roof.predominant.lastUpdateDate", label: "Date of last update", placeholder: "MM/DD/YYYY" },
       {
-        kind: "enum", path: "hvac.condition", label: "Condition",
-        options: enumOptions(["good", "fair", "poor"]),
+        kind: "enum", path: "roof.predominant.updateExtent", label: "If updated",
+        options: enumOptions(["full_replacement", "partial_replacement"]),
       },
-      { kind: "string", path: "hvac.notes", label: "Notes", placeholder: "Optional" },
+      {
+        kind: "integer", path: "roof.predominant.updatePercent", label: "% of replacement", min: 0, max: 100,
+        showIf: { path: "roof.predominant.updateExtent", equals: "partial_replacement" },
+      },
+      {
+        kind: "enum", path: "roof.predominant.condition", label: "Overall condition",
+        options: enumOptions(["satisfactory", "unsatisfactory"]),
+      },
+      { kind: "boolean", path: "roof.predominant.visibleDamage", label: "Visible damage / deterioration" },
+      { kind: "boolean", path: "roof.predominant.visibleLeaks", label: "Visible signs of leaks" },
+    ],
+  },
+  // 4b. Roof — Secondary covering (optional)
+  {
+    title: "Roof — Secondary covering (optional)",
+    fields: [
+      {
+        kind: "enum", path: "roof.secondary.coveringMaterial", label: "Covering material",
+        options: enumOptions([
+          "asphalt_shingle", "metal", "tile", "built_up", "membrane", "wood_shake", "other",
+        ]),
+      },
+      { kind: "integer", path: "roof.secondary.ageYears", label: "Roof age (years)", min: 0, max: 200 },
+      { kind: "integer", path: "roof.secondary.remainingLifeYears", label: "Remaining useful life (years)", min: 0, max: 100 },
+      { kind: "string", path: "roof.secondary.lastPermitDate", label: "Date of last roofing permit", placeholder: "MM/DD/YYYY" },
+      { kind: "string", path: "roof.secondary.lastUpdateDate", label: "Date of last update", placeholder: "MM/DD/YYYY" },
+      {
+        kind: "enum", path: "roof.secondary.updateExtent", label: "If updated",
+        options: enumOptions(["full_replacement", "partial_replacement"]),
+      },
+      {
+        kind: "integer", path: "roof.secondary.updatePercent", label: "% of replacement", min: 0, max: 100,
+        showIf: { path: "roof.secondary.updateExtent", equals: "partial_replacement" },
+      },
+      {
+        kind: "enum", path: "roof.secondary.condition", label: "Overall condition",
+        options: enumOptions(["satisfactory", "unsatisfactory"]),
+      },
+      { kind: "boolean", path: "roof.secondary.visibleDamage", label: "Visible damage / deterioration" },
+      { kind: "boolean", path: "roof.secondary.visibleLeaks", label: "Visible signs of leaks" },
+      { kind: "string", path: "roof.notes", label: "Roof notes (both coverings)", placeholder: "Optional" },
     ],
   },
 ];
