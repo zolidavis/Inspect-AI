@@ -43,6 +43,7 @@ export const api = {
     inspectorLicenseType?: InspectorLicenseType;
     inspectorCompany?: string;
     inspectorPhone?: string;
+    inspectorEmail?: string;
     inspectorSignaturePng?: string;
     businessLogoPng?: string;
     ownerEmail?: string;

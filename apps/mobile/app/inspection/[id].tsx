@@ -58,6 +58,7 @@ export default function InspectionDetail() {
     (profileHas(profile?.inspectorLicenseType) && !insp.inspectorLicenseType) ||
     (profileHas(profile?.inspectorCompany) && !insp.inspectorCompany) ||
     (profileHas(profile?.inspectorPhone) && !insp.inspectorPhone) ||
+    (profileHas(profile?.inspectorEmail) && !insp.inspectorEmail) ||
     (profileHas(profile?.inspectorSignaturePng) && !insp.inspectorSignaturePng) ||
     (profileHas(profile?.businessLogoPng) && !insp.businessLogoPng);
 
@@ -74,6 +75,7 @@ export default function InspectionDetail() {
       }
       if (!insp.inspectorCompany && profile.inspectorCompany) patch.inspectorCompany = profile.inspectorCompany;
       if (!insp.inspectorPhone && profile.inspectorPhone) patch.inspectorPhone = profile.inspectorPhone;
+      if (!insp.inspectorEmail && profile.inspectorEmail) patch.inspectorEmail = profile.inspectorEmail;
       if (!insp.inspectorSignaturePng && profile.inspectorSignaturePng) {
         patch.inspectorSignaturePng = profile.inspectorSignaturePng;
       }

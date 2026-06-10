@@ -370,29 +370,51 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
   }
 
   // ── PAGE 4 — Q9a Opening Protection Level Chart ───────────────────────
-  // 6 columns × 8 rows. The inspector marks an "X" in each row that
-  // applies for each opening type column. We render the picked level
-  // for each column as an X in that row's cell.
+  // 6 columns × 8 rows. Inspector marks an "X" in each row that applies
+  // for each opening type column. Positions derived from pdftotext bbox
+  // analysis of the actual column header words and row label letters.
   //
-  // Column centers (x positions for centered "X"):
+  // Column centers (from "Windows"/"Garage Doors"/"Skylights"/etc. header
+  // bboxes — center of the column header word group):
+  //   Windows:     xMin=283.44, xMax=319.58 → center 301
+  //   Garage glaz: xMin=337.08, xMax=365.68 → center 351
+  //   Skylights:   xMin=388.56, xMax=424.22 → center 406
+  //   Glass Block: xMin=448.81, xMax=470.85 → center 460
+  //   Entry non:   xMin=498.49, xMax=521.55 → center 510
+  //   Garage non:  xMin=547.45, xMax=576.04 → center 562
+  //
+  // For size-11 bold Helvetica, "X" is ~7.7pt wide. To horizontally center
+  // the glyph in the cell, drawText baseline-x = col_center - X_width/2 ≈ -4.
+  const X_HALF_WIDTH = 4;
   const Q9A_COL_X: Record<string, number> = {
-    windowsOrEntryDoorsGlazed: 305, // Windows or Entry Doors (glazed)
-    garageDoorsGlazed:         355, // Garage Doors (glazed)
-    skylightsGlazed:           405, // Skylights
-    glassBlockGlazed:          455, // Glass Block
-    entryDoorsNonGlazed:       505, // Entry Doors (non-glazed)
-    garageDoorsNonGlazed:      555, // Garage Doors (non-glazed)
+    windowsOrEntryDoorsGlazed: 301 - X_HALF_WIDTH,
+    garageDoorsGlazed:         351 - X_HALF_WIDTH,
+    skylightsGlazed:           406 - X_HALF_WIDTH,
+    glassBlockGlazed:          460 - X_HALF_WIDTH,
+    entryDoorsNonGlazed:       510 - X_HALF_WIDTH,
+    garageDoorsNonGlazed:      562 - X_HALF_WIDTH,
   };
-  // Row label y positions (top-down) — baseline of the level letter.
+  // Row baselines (yMax - 2 of each row's level-letter bbox). drawText's
+  // y is the baseline, so this puts the "X" on the same baseline as the
+  // printed "A"/"B"/etc. label in the leftmost column → vertically centered
+  // inside the row.
+  //   N/A: yMin=178.24, yMax=192.03 → baseline 190
+  //   A:   yMin=204.04, yMax=217.83 → baseline 216
+  //   B:   yMin=228.76, yMax=242.55 → baseline 241
+  //   C:   yMin=252.64, yMax=266.43 → baseline 264
+  //   D:   yMin=278.44, yMax=292.23 → baseline 290
+  //   N:   yMin=311.32, yMax=325.11 → baseline 323
+  //   X:   yMin=340.36, yMax=354.15 → baseline 352
+  //   Z:   yMin=361.48, yMax=375.27 → baseline 373
   const Q9A_ROW_Y: Record<string, number> = {
-    na: 178,  // N/A
-    a:  204,
-    b:  229,
-    c:  252,
-    d:  281,  // non-glazed only on form
-    n:  311,
-    x:  343,
-    z:  364,
+    na: 190,
+    a:  216,
+    b:  241,
+    c:  264,
+    d:  290,
+    n:  323,
+    x:  352,
+    z:  373,
   };
   const chart = wm.openingProtectionChart ?? {};
   for (const [colKey, level] of Object.entries(chart)) {

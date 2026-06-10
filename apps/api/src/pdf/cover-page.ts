@@ -7,13 +7,17 @@
  *
  *   ┌─────────────────────────────────────────┐
  *   │                                         │
- *   │                                         │
  *   │              [ LOGO ]                   │
  *   │                                         │
+ *   │       ─────────────────────────         │
+ *   │       Inspector  Jane A. Smith          │
+ *   │       License #  HI-12345               │
+ *   │       Company    Acme Home Inspections  │
+ *   │       Phone      (555) 555-5555         │
+ *   │       Email      jane@acme.com          │
+ *   │       ─────────────────────────         │
  *   │                                         │
- *   │       ─────────────────────────         │
  *   │           INSPECTION REPORT             │
- *   │       ─────────────────────────         │
  *   │                                         │
  *   │       Property                          │
  *   │       123 Main St                       │
@@ -22,9 +26,8 @@
  *   │       Owner                             │
  *   │       James Michael Doherty             │
  *   │                                         │
- *   │       Inspection date  2026-06-04       │
- *   │       Inspector        Jane A. Smith    │
- *   │       License          HI-12345         │
+ *   │       Inspection type   4-Point + WM    │
+ *   │       Inspection date   2026-06-04      │
  *   │                                         │
  *   └─────────────────────────────────────────┘
  */
@@ -83,50 +86,81 @@ export async function buildCoverPage(
 
   const page = doc.addPage([PAGE_W, PAGE_H]);
 
-  // ── Logo block (top half, ~300pt tall max) ──────────────────────────
+  // ── Logo block (top, ~220pt tall max — leaves room for inspector
+  //    block directly under it) ──────────────────────────────────────
   const logoMaxW = PAGE_W - 2 * MARGIN;
-  const logoMaxH = 300;
+  const logoMaxH = 220;
   const logoScale = Math.min(logoMaxW / img.width, logoMaxH / img.height);
   const logoW = img.width * logoScale;
   const logoH = img.height * logoScale;
   const logoX = (PAGE_W - logoW) / 2;
-  // Top of logo at y ≈ PAGE_H - 110, drawing downward
-  const logoTopY = PAGE_H - 110;
-  const logoY = logoTopY - logoH; // pdf-lib y of bottom-left
+  const logoTopY = PAGE_H - 80; // y in pdf-lib coords (origin bottom-left)
+  const logoY = logoTopY - logoH;
   page.drawImage(img, { x: logoX, y: logoY, width: logoW, height: logoH });
 
-  // ── Divider + title block ───────────────────────────────────────────
-  const titleBlockTop = logoY - 50;
+  // ── INSPECTOR / COMPANY block — DIRECTLY under the logo ────────────
+  // Label/value pairs, with a divider line above + below for visual
+  // separation from the logo and the "INSPECTION REPORT" title.
+  const LABEL_W = 140;
+  const ROW_H = 18;
+  const DIVIDER_INSET = 60;
+
+  const inspectorRows: { label: string; value: string }[] = [];
+  const push = (label: string, value: string | undefined) => {
+    if (value && value.trim()) inspectorRows.push({ label, value: value.trim() });
+  };
+  push("Inspector", inspection.inspectorName);
+  push("License #", inspection.inspectorLicense);
+  push("Company",   inspection.inspectorCompany);
+  push("Phone",     inspection.inspectorPhone);
+  push("Email",     inspection.inspectorEmail);
+
+  const blockTop = logoY - 24; // top divider sits 24pt below logo bottom
+  let cursorY = blockTop;
   // Top divider
   page.drawLine({
-    start: { x: MARGIN + 60, y: titleBlockTop },
-    end:   { x: PAGE_W - MARGIN - 60, y: titleBlockTop },
+    start: { x: MARGIN + DIVIDER_INSET, y: cursorY },
+    end:   { x: PAGE_W - MARGIN - DIVIDER_INSET, y: cursorY },
     thickness: 0.75,
     color: rgb(0.2, 0.27, 0.4),
   });
-  // Title text
-  const titleText = "INSPECTION REPORT";
+  cursorY -= 22; // gap below divider before first row
+
+  for (const { label, value } of inspectorRows) {
+    page.drawText(label, {
+      x: MARGIN + DIVIDER_INSET, y: cursorY, size: 11,
+      font, color: rgb(0.45, 0.5, 0.6),
+    });
+    page.drawText(value, {
+      x: MARGIN + DIVIDER_INSET + LABEL_W, y: cursorY, size: 11,
+      font: fontBold, color: rgb(0.08, 0.1, 0.15),
+    });
+    cursorY -= ROW_H;
+  }
+  cursorY -= 4; // small gap before bottom divider
+  // Bottom divider
+  page.drawLine({
+    start: { x: MARGIN + DIVIDER_INSET, y: cursorY },
+    end:   { x: PAGE_W - MARGIN - DIVIDER_INSET, y: cursorY },
+    thickness: 0.75,
+    color: rgb(0.2, 0.27, 0.4),
+  });
+
+  // ── "INSPECTION REPORT" title (centered, below the inspector block) ─
   const titleSize = 18;
+  const titleY = cursorY - 38;
+  const titleText = "INSPECTION REPORT";
   const titleWidth = fontBold.widthOfTextAtSize(titleText, titleSize);
   page.drawText(titleText, {
     x: (PAGE_W - titleWidth) / 2,
-    y: titleBlockTop - 25,
+    y: titleY,
     size: titleSize,
     font: fontBold,
     color: rgb(0.11, 0.26, 0.5),
   });
-  // Bottom divider
-  page.drawLine({
-    start: { x: MARGIN + 60, y: titleBlockTop - 38 },
-    end:   { x: PAGE_W - MARGIN - 60, y: titleBlockTop - 38 },
-    thickness: 0.75,
-    color: rgb(0.2, 0.27, 0.4),
-  });
 
-  // ── Details block ───────────────────────────────────────────────────
-  // Plain "Label / Value" layout, left-aligned starting at MARGIN.
-  const detailsTop = titleBlockTop - 100;
-  let cursorY = detailsTop;
+  // ── Property + owner + inspection meta ──────────────────────────────
+  cursorY = titleY - 40;
   const drawSection = (label: string, lines: string[]) => {
     if (lines.length === 0) return;
     page.drawText(label.toUpperCase(), {
@@ -142,7 +176,7 @@ export async function buildCoverPage(
       });
       cursorY -= 18;
     }
-    cursorY -= 14;
+    cursorY -= 12;
   };
 
   const addr = inspection.address;
@@ -157,9 +191,7 @@ export async function buildCoverPage(
   if (inspection.ownerPhone) ownerLines.push(inspection.ownerPhone);
   drawSection("Owner", ownerLines);
 
-  // Inspection meta — laid out as label/value pairs side by side.
   const META_LABEL_W = 160;
-  const metaTop = cursorY;
   const drawMeta = (label: string, value: string) => {
     if (!value) return;
     page.drawText(label, {
@@ -172,7 +204,6 @@ export async function buildCoverPage(
     });
     cursorY -= 16;
   };
-
   drawMeta(
     "Inspection type",
     inspection.type === "four_point"
@@ -185,14 +216,6 @@ export async function buildCoverPage(
     "Inspection date",
     (inspection.inspectedOn ?? inspection.createdAt).slice(0, 10),
   );
-  drawMeta("Inspector", inspection.inspectorName ?? "");
-  drawMeta("License #", inspection.inspectorLicense ?? "");
-  if (inspection.inspectorCompany) {
-    drawMeta("Company", inspection.inspectorCompany);
-  }
-  if (inspection.inspectorPhone) {
-    drawMeta("Phone", inspection.inspectorPhone);
-  }
 
   // Footer
   page.drawText(
@@ -202,9 +225,6 @@ export async function buildCoverPage(
       color: rgb(0.5, 0.55, 0.62),
     },
   );
-
-  // suppress unused warning
-  void metaTop;
 
   return await doc.save();
 }

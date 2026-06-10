@@ -61,6 +61,7 @@ export default function ProfileScreen() {
   );
   const [inspectorCompany, setInspectorCompany] = useState(profile?.inspectorCompany ?? "");
   const [inspectorPhone, setInspectorPhone] = useState(profile?.inspectorPhone ?? "");
+  const [inspectorEmail, setInspectorEmail] = useState(profile?.inspectorEmail ?? "");
   const [inspectorSignaturePng, setInspectorSignaturePng] = useState(
     profile?.inspectorSignaturePng ?? "",
   );
@@ -87,6 +88,7 @@ export default function ProfileScreen() {
       inspectorLicenseType,
       inspectorCompany,
       inspectorPhone,
+      inspectorEmail,
       inspectorSignaturePng,
       businessLogoPng,
     });
@@ -257,6 +259,19 @@ export default function ProfileScreen() {
           placeholder="(555) 555-5555"
           placeholderTextColor={COLORS.textFaint}
           keyboardType="phone-pad"
+          editable={!saving}
+        />
+
+        <Text style={[styles.cardTitle, { marginTop: 14 }]}>Email</Text>
+        <TextInput
+          style={styles.input}
+          value={inspectorEmail}
+          onChangeText={setInspectorEmail}
+          placeholder="you@inspectco.com"
+          placeholderTextColor={COLORS.textFaint}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
           editable={!saving}
         />
 

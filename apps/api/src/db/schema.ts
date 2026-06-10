@@ -28,6 +28,7 @@ export const inspections = pgTable(
     inspectorLicenseType: text("inspector_license_type"),
     inspectorCompany: text("inspector_company"),
     inspectorPhone: text("inspector_phone"),
+    inspectorEmail: text("inspector_email"),
 
     // Customer / property-owner contact (captured at inspection creation).
     ownerEmail: text("owner_email"),

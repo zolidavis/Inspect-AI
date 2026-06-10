@@ -95,6 +95,8 @@ export const InspectionSchema = z.object({
   inspectorCompany: z.string().optional(),
   /** Inspector contact phone. */
   inspectorPhone: z.string().optional(),
+  /** Inspector / business contact email. Surfaced on the cover page. */
+  inspectorEmail: z.string().optional(),
   /** Customer / property-owner contact, captured at inspection creation. */
   ownerEmail: z.string().optional(),
   ownerPhone: z.string().optional(),

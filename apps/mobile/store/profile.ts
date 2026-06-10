@@ -58,6 +58,8 @@ export interface Profile {
   inspectorCompany: string;
   /** Inspector phone number. */
   inspectorPhone: string;
+  /** Inspector / business contact email. Surfaced on the PDF cover page. */
+  inspectorEmail: string;
   /**
    * Inspector's drawn signature as a base64 data URI ("data:image/png;base64,...")
    * captured via the signature pad on the Profile screen. Stamped on every
@@ -88,6 +90,7 @@ interface ProfileStore {
     inspectorLicenseType?: InspectorLicenseType | "";
     inspectorCompany?: string;
     inspectorPhone?: string;
+    inspectorEmail?: string;
     inspectorSignaturePng?: string;
     businessLogoPng?: string;
   }) => Promise<void>;
@@ -116,6 +119,7 @@ export const useProfile = create<ProfileStore>((set, get) => ({
         patch.inspectorLicenseType ?? existing?.inspectorLicenseType ?? "",
       inspectorCompany: (patch.inspectorCompany ?? existing?.inspectorCompany ?? "").trim(),
       inspectorPhone: (patch.inspectorPhone ?? existing?.inspectorPhone ?? "").trim(),
+      inspectorEmail: (patch.inspectorEmail ?? existing?.inspectorEmail ?? "").trim(),
       inspectorSignaturePng: patch.inspectorSignaturePng ?? existing?.inspectorSignaturePng ?? "",
       businessLogoPng: patch.businessLogoPng ?? existing?.businessLogoPng ?? "",
       createdAt: existing?.createdAt ?? now,
@@ -151,6 +155,7 @@ export const useProfile = create<ProfileStore>((set, get) => ({
             (saved.inspectorLicenseType as InspectorLicenseType | "") ?? "",
           inspectorCompany: saved.inspectorCompany ?? "",
           inspectorPhone: saved.inspectorPhone ?? "",
+          inspectorEmail: saved.inspectorEmail ?? "",
           inspectorSignaturePng: saved.inspectorSignaturePng ?? "",
           businessLogoPng: saved.businessLogoPng ?? "",
           createdAt: saved.createdAt ?? new Date().toISOString(),
