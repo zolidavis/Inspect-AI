@@ -24,8 +24,19 @@ import {
   View,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import type { Inspection } from "@inspect-ai/shared";
+import type { Inspection, PhotoRequirements } from "@inspect-ai/shared";
+import { PHOTO_REQUIREMENT_LABELS } from "@inspect-ai/shared";
 import { api } from "../../../lib/api";
+
+type PhotoReqKey = keyof PhotoRequirements;
+const PHOTO_REQ_KEYS: PhotoReqKey[] = [
+  "dwellingEachSide",
+  "roofEachSlope",
+  "plumbingWaterHeater",
+  "electricalServicePanel",
+  "electricalBoxWithPanelOff",
+  "hazardsOrDeficiencies",
+];
 
 const COLORS = {
   bg: "#0b1014",
@@ -53,6 +64,7 @@ export default function EditInfo() {
   const [ownerEmail, setOwnerEmail] = useState("");
   const [ownerPhone, setOwnerPhone] = useState("");
   const [numberOfStories, setNumberOfStories] = useState("");
+  const [photoReqs, setPhotoReqs] = useState<PhotoRequirements>({});
 
   useEffect(() => {
     (async () => {
@@ -69,6 +81,7 @@ export default function EditInfo() {
         setNumberOfStories(
           i.property?.numberOfStories != null ? String(i.property.numberOfStories) : "",
         );
+        setPhotoReqs(i.photoRequirements ?? {});
       } catch (e: any) {
         Alert.alert("Failed to load", e.message);
       } finally {
@@ -101,6 +114,7 @@ export default function EditInfo() {
         },
         ownerEmail: ownerEmail.trim() || undefined,
         ownerPhone: ownerPhone.trim() || undefined,
+        photoRequirements: photoReqs,
       };
       const storiesNum = numberOfStories.trim()
         ? Number.parseInt(numberOfStories.trim(), 10)
@@ -255,6 +269,55 @@ export default function EditInfo() {
         />
       </View>
 
+      {/* ── Minimum Photo Requirements card ─────────────────────────── */}
+      <View style={styles.card}>
+        <View style={photoStyles.cardHeader}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardTitle}>Minimum Photo Requirements</Text>
+            <Text style={styles.hint}>
+              Confirm each category was shot. Renders on page 1 of the 4-Point form.
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => {
+              const allChecked = PHOTO_REQ_KEYS.every((k) => photoReqs[k] === true);
+              const next: PhotoRequirements = {};
+              for (const k of PHOTO_REQ_KEYS) next[k] = !allChecked;
+              setPhotoReqs(next);
+            }}
+            style={photoStyles.checkAllBtn}
+          >
+            <Text style={photoStyles.checkAllText}>
+              {PHOTO_REQ_KEYS.every((k) => photoReqs[k] === true) ? "Clear all" : "Check all"}
+            </Text>
+          </Pressable>
+        </View>
+        {PHOTO_REQ_KEYS.map((key) => {
+          const checked = photoReqs[key] === true;
+          return (
+            <Pressable
+              key={key}
+              style={photoStyles.row}
+              onPress={() =>
+                setPhotoReqs((prev) => ({ ...prev, [key]: !checked }))
+              }
+            >
+              <View
+                style={[
+                  photoStyles.box,
+                  checked && photoStyles.boxOn,
+                ]}
+              >
+                {checked && <Text style={photoStyles.tick}>✓</Text>}
+              </View>
+              <Text style={photoStyles.rowLabel}>
+                {PHOTO_REQUIREMENT_LABELS[key]}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
       <Pressable
         style={[styles.saveBtn, saving && { opacity: 0.5 }]}
         disabled={saving}
@@ -321,4 +384,61 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   saveBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
+});
+
+const photoStyles = StyleSheet.create({
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    marginBottom: 6,
+  },
+  checkAllBtn: {
+    backgroundColor: COLORS.bgRow,
+    borderColor: COLORS.accent,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginTop: 2,
+  },
+  checkAllText: {
+    color: COLORS.accent,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    paddingVertical: 10,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  box: {
+    width: 22,
+    height: 22,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    borderColor: COLORS.textDim,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
+  },
+  boxOn: {
+    backgroundColor: COLORS.accent,
+    borderColor: COLORS.accent,
+  },
+  tick: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  rowLabel: {
+    flex: 1,
+    color: COLORS.text,
+    fontSize: 14,
+    lineHeight: 20,
+  },
 });

@@ -41,6 +41,35 @@ export const InspectionTypeSchema = z.enum(["four_point", "wind_mitigation", "bo
 export type InspectionType = z.infer<typeof InspectionTypeSchema>;
 
 /**
+ * Minimum Photo Requirements — the 6 checkboxes printed on page 1 of the
+ * Citizens 4-Point form. Inspector confirms they shot each category before
+ * the form is submitted. We persist the booleans so the PDF reflects the
+ * inspector's commitments and the mobile UI can show "X of 6 confirmed".
+ */
+export const PhotoRequirementsSchema = z.object({
+  dwellingEachSide: z.boolean().optional(),
+  roofEachSlope: z.boolean().optional(),
+  plumbingWaterHeater: z.boolean().optional(),
+  electricalServicePanel: z.boolean().optional(),
+  electricalBoxWithPanelOff: z.boolean().optional(),
+  hazardsOrDeficiencies: z.boolean().optional(),
+});
+export type PhotoRequirements = z.infer<typeof PhotoRequirementsSchema>;
+
+/**
+ * Human-readable labels matching the form's printed text. Used by the
+ * mobile UI + report cover page if we ever want to surface them.
+ */
+export const PHOTO_REQUIREMENT_LABELS: Record<keyof PhotoRequirements, string> = {
+  dwellingEachSide:          "Dwelling: Each side",
+  roofEachSlope:             "Roof: Each slope",
+  plumbingWaterHeater:       "Plumbing: Water heater (incl TPRV), under cabinet plumbing/drains, exposed valves",
+  electricalServicePanel:    "Main electrical service panel with interior door label",
+  electricalBoxWithPanelOff: "Electrical box with panel off",
+  hazardsOrDeficiencies:     "All hazards or deficiencies noted in this report",
+};
+
+/**
  * "I hold an active license as a:" — Qualified Inspector category on the
  * OIR-B1-1802 (Rev. 04/26) form. Stamped on every wind-mit report.
  */
@@ -86,6 +115,8 @@ export const InspectionSchema = z.object({
   property: PropertyLookupSchema.nullable().optional(),
   fourPoint: z.unknown().optional(),     // validated by forms/four-point
   windMit: z.unknown().optional(),       // validated by forms/wind-mitigation
+  /** Inspector's pre-flight photo checklist (page 1 of Citizens 4-Point). */
+  photoRequirements: PhotoRequirementsSchema.optional(),
   photos: z.array(PhotoSchema).default([]),
   inspectorName: z.string().optional(),
   inspectorLicense: z.string().optional(),

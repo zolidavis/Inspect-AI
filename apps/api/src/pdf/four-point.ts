@@ -103,6 +103,21 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
     value: inspection.inspectedOn?.slice(0, 10),
   });
 
+  // ── PAGE 1 — Minimum Photo Requirements ───────────────────────────────
+  // 6 inspector-confirmation checkboxes. Positions from pdftotext bbox:
+  //   y=142: "Dwelling:" word x=64 → ☐ x≈53 | "Roof:" x=154 → ☐ x≈143 |
+  //          "Plumbing:" x=235 → ☐ x≈224
+  //   y=154: "Main" x=64 → ☐ x≈53 (Main electrical service panel)
+  //   y=166: "Electrical" x=64 → ☐ x≈53 (Electrical box with panel off)
+  //   y=178: "All" x=64 → ☐ x≈53 (All hazards or deficiencies)
+  const pr: any = inspection.photoRequirements ?? {};
+  if (pr.dwellingEachSide)          checkBox(out, 0,  53, 142);
+  if (pr.roofEachSlope)             checkBox(out, 0, 143, 142);
+  if (pr.plumbingWaterHeater)       checkBox(out, 0, 224, 142);
+  if (pr.electricalServicePanel)    checkBox(out, 0,  53, 154);
+  if (pr.electricalBoxWithPanelOff) checkBox(out, 0,  53, 166);
+  if (pr.hazardsOrDeficiencies)     checkBox(out, 0,  53, 178);
+
   // ── PAGE 1 — Electrical System ────────────────────────────────────────
   // Position derivation: every checkbox ☐ glyph is ~10pt wide and sits to
   // the LEFT of its label word — i.e. ckbx_x ≈ (label_word_xMin - 11).

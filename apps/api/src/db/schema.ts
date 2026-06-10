@@ -48,6 +48,9 @@ export const inspections = pgTable(
     property: jsonb("property"),
     fourPoint: jsonb("four_point"),
     windMit: jsonb("wind_mit"),
+    // Inspector's pre-flight photo checklist (page 1 of Citizens 4-Point).
+    // 6 optional booleans, see PhotoRequirementsSchema.
+    photoRequirements: jsonb("photo_requirements"),
 
     // 'draft' | 'complete'
     status: text("status").notNull().default("draft"),

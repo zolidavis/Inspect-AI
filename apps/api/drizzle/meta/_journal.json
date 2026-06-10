@@ -43,6 +43,13 @@
       "when": 1781055725507,
       "tag": "0005_rare_jimmy_woo",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781058077553,
+      "tag": "0006_flashy_mister_sinister",
+      "breakpoints": true
     }
   ]
 }
