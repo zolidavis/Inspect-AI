@@ -45,6 +45,24 @@ export type SectionMeta = {
 const enumOptions = (codes: string[]): EnumOption[] =>
   codes.map((v) => ({ value: v, label: prettyLabel(v) }));
 
+/** Sat/Unsat/N/A picker for one plumbing fixture row. */
+const fixtureField = (path: string, label: string): FieldMeta => ({
+  kind: "enum",
+  path,
+  label,
+  options: [
+    { value: "satisfactory", label: "Satisfactory" },
+    { value: "unsatisfactory", label: "Unsatisfactory" },
+    { value: "na", label: "N/A" },
+  ],
+});
+
+const PIPING_AGE_OPTIONS: EnumOption[] = [
+  { value: "original", label: "Original to home" },
+  { value: "completely_repiped", label: "Completely re-piped" },
+  { value: "partially_repiped", label: "Partially re-piped" },
+];
+
 function prettyLabel(v: string): string {
   // strip leading enum prefix like "a_", "wm.", etc.
   return v
@@ -147,43 +165,82 @@ export const FOUR_POINT_SECTIONS: SectionMeta[] = [
       { kind: "string",  path: "electrical.notes", label: "Notes", placeholder: "Optional" },
     ],
   },
-  // 2. HVAC
+  // 2a. HVAC System
   {
     title: "HVAC System",
     fields: [
-      {
-        kind: "enum", path: "hvac.systemType", label: "System type",
-        options: enumOptions(["central_ac", "heat_pump", "window_units", "mini_split", "other"]),
-      },
-      { kind: "integer", path: "hvac.ageYears", label: "Age of system (years)", min: 0, max: 100 },
-      { kind: "integer", path: "hvac.yearLastUpdated", label: "Year last updated", min: 1900, max: 2100 },
-      {
-        kind: "enum", path: "hvac.condition", label: "Condition",
-        options: enumOptions(["good", "fair", "poor"]),
-      },
-      { kind: "boolean", path: "hvac.hazardsPresent", label: "Hazards present" },
-      { kind: "boolean", path: "hvac.inGoodWorkingOrder", label: "In good working order" },
-      { kind: "string", path: "hvac.notes", label: "Notes", placeholder: "Optional" },
+      { kind: "boolean", path: "hvac.centralAc", label: "Central AC" },
+      { kind: "boolean", path: "hvac.centralHeat", label: "Central heat" },
+      { kind: "string",  path: "hvac.primaryHeatSource", label: "If not central heat, primary heat source & fuel type", placeholder: "Optional" },
+      { kind: "boolean", path: "hvac.inGoodWorkingOrder", label: "Are the HVAC systems in good working order?" },
+      { kind: "string",  path: "hvac.inGoodWorkingOrderExplain", label: "If no, explain", placeholder: "Optional" },
+      { kind: "string",  path: "hvac.lastServiceDate", label: "Date of last HVAC servicing/inspection", placeholder: "MM/DD/YYYY" },
     ],
   },
-  // 3. Plumbing
+  // 2b. HVAC — Hazards Present
+  {
+    title: "HVAC — Hazards Present",
+    fields: [
+      { kind: "boolean", path: "hvac.hazards.woodStoveOrGasFireplacePresent",  label: "Wood-burning stove or central gas fireplace present?" },
+      { kind: "boolean", path: "hvac.hazards.woodStoveProfessionallyInstalled", label: "If present, was it professionally installed?" },
+      { kind: "boolean", path: "hvac.hazards.spaceHeaterPrimarySource",         label: "Space heater used as primary heat source?" },
+      { kind: "boolean", path: "hvac.hazards.spaceHeaterPortable",              label: "If a space heater, is the source portable?" },
+      { kind: "boolean", path: "hvac.hazards.airHandlerBlockageOrLeakage",      label: "Air handler/condensate/drain pan blockage or leakage?" },
+    ],
+  },
+  // 2c. HVAC — Supplemental
+  {
+    title: "HVAC — Supplemental",
+    fields: [
+      { kind: "integer", path: "hvac.ageYears", label: "Age of system (years)", min: 0, max: 100 },
+      { kind: "integer", path: "hvac.yearLastUpdated", label: "Year last updated", min: 1900, max: 2100 },
+      { kind: "string",  path: "hvac.notes", label: "Notes", placeholder: "Optional" },
+    ],
+  },
+  // 3a. Plumbing System
   {
     title: "Plumbing System",
     fields: [
-      { kind: "integer", path: "plumbing.ageYears", label: "Age of system (years)", min: 0, max: 100 },
-      { kind: "integer", path: "plumbing.yearLastUpdated", label: "Year last updated", min: 1900, max: 2100 },
-      {
-        kind: "enum", path: "plumbing.supplyMaterial", label: "Supply material",
-        options: enumOptions(["copper", "cpvc", "pex", "polybutylene", "galvanized", "mixed"]),
-      },
-      {
-        kind: "enum", path: "plumbing.drainMaterial", label: "Drain material",
-        options: enumOptions(["pvc", "cast_iron", "abs", "mixed"]),
-      },
+      { kind: "boolean", path: "plumbing.tprvPresent", label: "Temperature pressure relief valve on water heater?" },
+      { kind: "boolean", path: "plumbing.activeLeak",  label: "Any indication of an active leak?" },
+      { kind: "boolean", path: "plumbing.priorLeak",   label: "Any indication of a prior leak?" },
+      { kind: "string",  path: "plumbing.waterHeaterLocation", label: "Water heater location", placeholder: "Garage, closet, attic…" },
+    ],
+  },
+  // 3b. Plumbing — Fixtures condition (Sat / Unsat / N/A)
+  {
+    title: "Plumbing — Fixtures condition",
+    fields: [
+      fixtureField("plumbing.fixtures.dishwasher",       "Dishwasher"),
+      fixtureField("plumbing.fixtures.refrigerator",     "Refrigerator"),
+      fixtureField("plumbing.fixtures.washingMachine",   "Washing machine"),
+      fixtureField("plumbing.fixtures.waterHeater",      "Water heater"),
+      fixtureField("plumbing.fixtures.showersTubs",      "Showers/Tubs"),
+      fixtureField("plumbing.fixtures.toilets",          "Toilets"),
+      fixtureField("plumbing.fixtures.sinks",            "Sinks"),
+      fixtureField("plumbing.fixtures.sumpPump",         "Sump pump"),
+      fixtureField("plumbing.fixtures.mainShutOffValve", "Main shut off valve"),
+      fixtureField("plumbing.fixtures.allOtherVisible",  "All other visible"),
+      { kind: "string", path: "plumbing.unsatisfactoryComments", label: "If unsatisfactory, comments/details", placeholder: "leaks, soft spots, mold, corrosion…" },
+    ],
+  },
+  // 3c. Plumbing — Supplemental
+  {
+    title: "Plumbing — Supplemental",
+    fields: [
+      { kind: "enum", path: "plumbing.supplyPipingAge", label: "Age of piping — supply system", options: PIPING_AGE_OPTIONS },
+      { kind: "enum", path: "plumbing.drainPipingAge",  label: "Age of piping — drain system",  options: PIPING_AGE_OPTIONS },
+      { kind: "boolean", path: "plumbing.pipeTypes.copper",       label: "Pipe type: Copper" },
+      { kind: "boolean", path: "plumbing.pipeTypes.pvcCpvc",      label: "Pipe type: PVC/CPVC" },
+      { kind: "boolean", path: "plumbing.pipeTypes.galvanized",   label: "Pipe type: Galvanized" },
+      { kind: "boolean", path: "plumbing.pipeTypes.castIron",     label: "Pipe type: Cast Iron" },
+      { kind: "boolean", path: "plumbing.pipeTypes.polybutylene", label: "Pipe type: Polybutylene" },
+      { kind: "boolean", path: "plumbing.pipeTypes.abs",          label: "Pipe type: ABS" },
+      { kind: "boolean", path: "plumbing.pipeTypes.pex",          label: "Pipe type: PEX" },
+      { kind: "boolean", path: "plumbing.pipeTypes.other",        label: "Pipe type: Other" },
+      { kind: "string",  path: "plumbing.pipeTypes.yearInstalled", label: "Pipes year installed", placeholder: "Optional" },
       { kind: "integer", path: "plumbing.waterHeaterAgeYears", label: "Water heater age (years)", min: 0, max: 100 },
-      { kind: "boolean", path: "plumbing.inGoodWorkingOrder", label: "In good working order" },
-      { kind: "boolean", path: "plumbing.leaksObserved", label: "Active leaks observed" },
-      { kind: "string", path: "plumbing.notes", label: "Notes", placeholder: "Optional" },
+      { kind: "string",  path: "plumbing.notes", label: "Notes", placeholder: "Optional" },
     ],
   },
   // 4. Roof — Predominant covering
@@ -212,8 +269,19 @@ export const FOUR_POINT_SECTIONS: SectionMeta[] = [
         kind: "enum", path: "roof.predominant.condition", label: "Overall condition",
         options: enumOptions(["satisfactory", "unsatisfactory"]),
       },
-      { kind: "boolean", path: "roof.predominant.visibleDamage", label: "Visible damage / deterioration" },
-      { kind: "boolean", path: "roof.predominant.visibleLeaks", label: "Visible signs of leaks" },
+      { kind: "boolean", path: "roof.predominant.visibleDamage", label: "Any visible damage / deterioration?" },
+      // Damage check-all (check all that apply)
+      { kind: "boolean", path: "roof.predominant.damage.cracking",                label: "Damage: Cracking" },
+      { kind: "boolean", path: "roof.predominant.damage.cuppingCurling",          label: "Damage: Cupping/curling" },
+      { kind: "boolean", path: "roof.predominant.damage.excessiveGranuleLoss",    label: "Damage: Excessive granule loss" },
+      { kind: "boolean", path: "roof.predominant.damage.exposedAsphalt",          label: "Damage: Exposed asphalt" },
+      { kind: "boolean", path: "roof.predominant.damage.exposedFelt",             label: "Damage: Exposed felt" },
+      { kind: "boolean", path: "roof.predominant.damage.missingLooseCrackedTabs", label: "Damage: Missing/loose/cracked tabs or tiles" },
+      { kind: "boolean", path: "roof.predominant.damage.softSpotsInDecking",      label: "Damage: Soft spots in decking" },
+      { kind: "boolean", path: "roof.predominant.damage.visibleHailDamage",       label: "Damage: Visible hail damage" },
+      { kind: "boolean", path: "roof.predominant.visibleLeaks",        label: "Any visible signs of leaks?" },
+      { kind: "boolean", path: "roof.predominant.leakAtticUnderside",  label: "Leak — attic/underside of decking?" },
+      { kind: "boolean", path: "roof.predominant.leakInteriorCeilings", label: "Leak — interior ceilings?" },
     ],
   },
   // 4b. Roof — Secondary covering (optional)
@@ -242,8 +310,19 @@ export const FOUR_POINT_SECTIONS: SectionMeta[] = [
         kind: "enum", path: "roof.secondary.condition", label: "Overall condition",
         options: enumOptions(["satisfactory", "unsatisfactory"]),
       },
-      { kind: "boolean", path: "roof.secondary.visibleDamage", label: "Visible damage / deterioration" },
-      { kind: "boolean", path: "roof.secondary.visibleLeaks", label: "Visible signs of leaks" },
+      { kind: "boolean", path: "roof.secondary.visibleDamage", label: "Any visible damage / deterioration?" },
+      // Damage check-all (check all that apply)
+      { kind: "boolean", path: "roof.secondary.damage.cracking",                label: "Damage: Cracking" },
+      { kind: "boolean", path: "roof.secondary.damage.cuppingCurling",          label: "Damage: Cupping/curling" },
+      { kind: "boolean", path: "roof.secondary.damage.excessiveGranuleLoss",    label: "Damage: Excessive granule loss" },
+      { kind: "boolean", path: "roof.secondary.damage.exposedAsphalt",          label: "Damage: Exposed asphalt" },
+      { kind: "boolean", path: "roof.secondary.damage.exposedFelt",             label: "Damage: Exposed felt" },
+      { kind: "boolean", path: "roof.secondary.damage.missingLooseCrackedTabs", label: "Damage: Missing/loose/cracked tabs or tiles" },
+      { kind: "boolean", path: "roof.secondary.damage.softSpotsInDecking",      label: "Damage: Soft spots in decking" },
+      { kind: "boolean", path: "roof.secondary.damage.visibleHailDamage",       label: "Damage: Visible hail damage" },
+      { kind: "boolean", path: "roof.secondary.visibleLeaks",         label: "Any visible signs of leaks?" },
+      { kind: "boolean", path: "roof.secondary.leakAtticUnderside",   label: "Leak — attic/underside of decking?" },
+      { kind: "boolean", path: "roof.secondary.leakInteriorCeilings", label: "Leak — interior ceilings?" },
       { kind: "string", path: "roof.notes", label: "Roof notes (both coverings)", placeholder: "Optional" },
     ],
   },

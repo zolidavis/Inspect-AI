@@ -43,6 +43,21 @@ export default function InspectionDetail() {
   const tags = sectionTags(insp.type);
   const fp = (insp.fourPoint ?? {}) as any;
   const wm = (insp.windMit ?? {}) as any;
+  const countTrue = (obj: any) =>
+    obj ? Object.values(obj).filter((v) => v === true).length : 0;
+  const pipeTypeNames = (pt: any): string => {
+    const map: Record<string, string> = {
+      copper: "Copper", pvcCpvc: "PVC/CPVC", galvanized: "Galvanized",
+      castIron: "Cast Iron", polybutylene: "Polybutylene", abs: "ABS", pex: "PEX", other: "Other",
+    };
+    return Object.entries(pt ?? {})
+      .filter(([k, v]) => v === true && map[k])
+      .map(([k]) => map[k])
+      .join(", ");
+  };
+  const hvacHazards = countTrue(fp.hvac?.hazards);
+  const damageCount = (c: any) =>
+    countTrue(c?.damage) || (c?.visibleDamage === true ? 1 : 0);
   const showFp = insp.type === "four_point" || insp.type === "both";
   const showWm = insp.type === "wind_mitigation" || insp.type === "both";
 
@@ -222,26 +237,28 @@ export default function InspectionDetail() {
             <Row k="Condition" v={fmt(fp.electrical?.generalCondition)} />
           </Section>
           <Section title="HVAC">
-            <Row k="System" v={fmt(fp.hvac?.systemType)} />
+            <Row k="Central AC / heat" v={`${fmt(fp.hvac?.centralAc)} / ${fmt(fp.hvac?.centralHeat)}`} />
+            <Row k="Good working order" v={fmt(fp.hvac?.inGoodWorkingOrder)} />
             <Row k="Age (yrs)" v={fmt(fp.hvac?.ageYears)} />
-            <Row k="Condition" v={fmt(fp.hvac?.condition)} />
+            <Row k="Hazards" v={fmt(hvacHazards || undefined)} />
           </Section>
           <Section title="Plumbing">
-            <Row k="Supply" v={fmt(fp.plumbing?.supplyMaterial)} />
+            <Row k="Active leak" v={fmt(fp.plumbing?.activeLeak)} />
+            <Row k="Pipe types" v={fmt(pipeTypeNames(fp.plumbing?.pipeTypes) || undefined)} />
             <Row k="Water heater age" v={fmt(fp.plumbing?.waterHeaterAgeYears)} />
           </Section>
           <Section title="Roof — Predominant">
             <Row k="Covering" v={fmt(fp.roof?.predominant?.coveringMaterial)} />
             <Row k="Age (yrs)" v={fmt(fp.roof?.predominant?.ageYears)} />
             <Row k="Condition" v={fmt(fp.roof?.predominant?.condition)} />
-            <Row k="Visible damage" v={fmt(fp.roof?.predominant?.visibleDamage)} />
+            <Row k="Damage items" v={fmt(damageCount(fp.roof?.predominant) || undefined)} />
           </Section>
           {fp.roof?.secondary && Object.keys(fp.roof.secondary).length > 0 && (
             <Section title="Roof — Secondary">
               <Row k="Covering" v={fmt(fp.roof?.secondary?.coveringMaterial)} />
               <Row k="Age (yrs)" v={fmt(fp.roof?.secondary?.ageYears)} />
               <Row k="Condition" v={fmt(fp.roof?.secondary?.condition)} />
-              <Row k="Visible damage" v={fmt(fp.roof?.secondary?.visibleDamage)} />
+              <Row k="Damage items" v={fmt(damageCount(fp.roof?.secondary) || undefined)} />
             </Section>
           )}
           {completeErrors.fourPoint && completeErrors.fourPoint.length > 0 && (

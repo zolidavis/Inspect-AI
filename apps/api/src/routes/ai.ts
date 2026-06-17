@@ -84,10 +84,14 @@ const TAG_SPECS: Record<string, TagSpec> = {
   },
   "plumbing.supply": {
     form: "fourPoint",
-    focus: "Supply piping material.",
+    focus: "Supply piping material — set the matching pipe-type flag(s).",
     fields: [
-      { path: "plumbing.supplyMaterial", type: "enum: copper|cpvc|pex|polybutylene|galvanized|mixed", description: "Material of supply lines." },
-      { path: "plumbing.leaksObserved", type: "boolean", description: "Any visible active leaks." },
+      { path: "plumbing.pipeTypes.copper", type: "boolean", description: "True if copper supply lines observed." },
+      { path: "plumbing.pipeTypes.pvcCpvc", type: "boolean", description: "True if PVC/CPVC supply lines observed." },
+      { path: "plumbing.pipeTypes.pex", type: "boolean", description: "True if PEX supply lines observed." },
+      { path: "plumbing.pipeTypes.galvanized", type: "boolean", description: "True if galvanized steel supply lines observed (often a hazard)." },
+      { path: "plumbing.pipeTypes.polybutylene", type: "boolean", description: "True if polybutylene supply lines observed (a hazard)." },
+      { path: "plumbing.activeLeak", type: "boolean", description: "Any visible active leak." },
     ],
   },
   "plumbing.water_heater": {
@@ -95,24 +99,24 @@ const TAG_SPECS: Record<string, TagSpec> = {
     focus: "Water heater data plate. Read manufacture date to compute age in years.",
     fields: [
       { path: "plumbing.waterHeaterAgeYears", type: "integer", description: "Age in years computed from manufacture date on data plate." },
-      { path: "plumbing.leaksObserved", type: "boolean", description: "Any visible leaks around tank or fittings." },
+      { path: "plumbing.activeLeak", type: "boolean", description: "Any visible leak around tank or fittings." },
+      { path: "plumbing.tprvPresent", type: "boolean", description: "True if a temperature-pressure relief (TPR) valve is visible on the tank." },
     ],
   },
   "hvac.condenser": {
     form: "fourPoint",
-    focus: "Condenser data plate (manufacturer, model, manufacture date).",
+    focus: "Outdoor condenser data plate (manufacturer, model, manufacture date).",
     fields: [
-      { path: "hvac.systemType", type: "enum: central_ac|heat_pump|window_units|mini_split|other", description: "System type inferred from unit." },
-      { path: "hvac.ageYears", type: "integer", description: "Age in years from data plate." },
-      { path: "hvac.condition", type: "enum: good|fair|poor", description: "Visible condition." },
+      { path: "hvac.centralAc", type: "boolean", description: "True if this is a central AC / heat-pump condenser (vs window/mini-split)." },
+      { path: "hvac.ageYears", type: "integer", description: "Age in years from the data plate manufacture date." },
     ],
   },
   "hvac.air_handler": {
     form: "fourPoint",
-    focus: "Air handler data plate and condition.",
+    focus: "Indoor air handler data plate and condensate/drain pan condition.",
     fields: [
-      { path: "hvac.ageYears", type: "integer", description: "Age in years from data plate." },
-      { path: "hvac.condition", type: "enum: good|fair|poor", description: "Visible condition." },
+      { path: "hvac.ageYears", type: "integer", description: "Age in years from the data plate manufacture date." },
+      { path: "hvac.hazards.airHandlerBlockageOrLeakage", type: "boolean", description: "True if the air handler/condensate line/drain pan shows blockage, leakage, or water damage." },
     ],
   },
 

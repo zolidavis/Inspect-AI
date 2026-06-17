@@ -73,6 +73,19 @@ function checkBox(
   });
 }
 
+/** Pretty label for the inspector's "I hold a license as a:" category. */
+function licenseTypeLabel(v: string | undefined): string {
+  switch (v) {
+    case "home_inspector": return "Home Inspector";
+    case "building_code_inspector": return "Building Code Inspector";
+    case "contractor": return "Contractor";
+    case "engineer": return "Professional Engineer";
+    case "architect": return "Professional Architect";
+    case "other_authorized": return "Other Authorized";
+    default: return "";
+  }
+}
+
 function fieldsFor(inspection: Inspection): FieldDraw[] {
   const property: any = inspection.property ?? {};
   const fp: any = inspection.fourPoint ?? {};
@@ -211,66 +224,115 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
   if (wiringTypes.multistrandAl)              checkBox(out, 0, 309, 718);
   if (wiringTypes.clothJacketRubberInsulated) checkBox(out, 0, 401, 718);
 
-  // ── PAGE 2 — HVAC System ──────────────────────────────────────────────
-  // Central AC — y=108. "Yes" word x=108 → ☐ x≈97. "No" word x=144 → ☐ x≈133.
-  if (hvac.systemType === "central_ac" || hvac.systemType === "heat_pump") {
-    checkBox(out, 1, 97, 108); // Central AC Yes
-  } else if (hvac.systemType) {
-    checkBox(out, 1, 133, 108); // Central AC No
-  }
-
-  // "Are the heating, ventilation and AC systems in good working order?" y=154.
-  // "Yes" word x=342 → ☐ x≈331. "No" word x=374 → ☐ x≈363.
-  if (hvac.inGoodWorkingOrder === true) {
-    checkBox(out, 1, 331, 154);
-  } else if (hvac.inGoodWorkingOrder === false) {
-    checkBox(out, 1, 363, 154);
-  }
-
-  // Hazards Present — wood-burning stove "present?" at y=208.
-  // "Yes" x=257 → ☐ x≈246. (Single sentinel for any HVAC hazard.)
-  if (hvac.hazardsPresent === true) {
-    checkBox(out, 1, 246, 208);
-  }
-
-  // Supplemental Information — Age of system at y=303, Year last updated y=318.
-  push({ page: 1, x: 100, y: yFromTop(310), value: hvac.ageYears });
-  push({ page: 1, x: 110, y: yFromTop(325), value: hvac.yearLastUpdated });
-
-  // ── PAGE 2 — Plumbing System ──────────────────────────────────────────
-  // "Is there any indication of an active leak?" y=403.
-  // "Yes" x=202 → ☐ x≈191. "No" x=234 → ☐ x≈223.
-  if (plumbing.leaksObserved === true) {
-    checkBox(out, 1, 191, 403);
-  } else if (plumbing.leaksObserved === false) {
-    checkBox(out, 1, 223, 403);
-  }
-
-  // General condition Sat/Unsat — supplied via plumbing.inGoodWorkingOrder.
-  // The N/A column matrix is too detailed for a single bool; instead we just
-  // skip the per-fixture grid and rely on the "If unsatisfactory..." comment
-  // box. The condition flows into the "All other visible" row Sat/Unsat ckbx.
-  // y≈728 (All other visible) — leave for v3.
-
-  // Supplemental — Type of pipes (check all that apply). Each row:
-  //   y=633: Copper ☐ x=352 | PEX ☐ x=449
-  //   y=648: PVC/CPVC ☐ x=352 | Other ☐ x=449
-  //   y=663: Galvanized ☐ x=352
-  //   y=678: Cast Iron ☐ x=352
-  //   y=695: Polybutylene ☐ x=352
-  //   y=710: ABS ☐ x=352
-  const PIPE_BOX: Record<string, { x: number; y: number }> = {
-    copper:        { x: 352, y: 633 },
-    cpvc:          { x: 352, y: 648 }, // PVC/CPVC
-    pex:           { x: 449, y: 633 }, // PEX
-    galvanized:    { x: 352, y: 663 },
-    polybutylene:  { x: 352, y: 695 },
-    mixed:         { x: 449, y: 648 }, // Other (specify) — closest fallback
+  // ── PAGE 2 — HVAC System (V3, 1-for-1 with Citizens form) ─────────────
+  // Yes/No ckbx pattern: ckbx_x = label_word.xMin - 11.
+  const hvacHazards: any = hvac.hazards ?? {};
+  const yn = (
+    page: 0 | 1 | 2,
+    v: boolean | undefined,
+    yesX: number,
+    noX: number,
+    y: number,
+  ) => {
+    if (v === true) checkBox(out, page, yesX, y);
+    else if (v === false) checkBox(out, page, noX, y);
   };
-  const pipeBox = PIPE_BOX[plumbing.supplyMaterial];
-  if (pipeBox) checkBox(out, 1, pipeBox.x, pipeBox.y);
 
-  // Age of water heater at y=676, blank at x≈110.
+  // Central AC — y=108. Yes word x=108→☐97 | No word x=144→☐133.
+  yn(1, hvac.centralAc, 97, 133, 108);
+  // Central heat — y=123. Same columns.
+  yn(1, hvac.centralHeat, 97, 133, 123);
+  // "If not central heat, indicate primary heat source and fuel type:" y=138,
+  // label ends x=262 → value at x=266 (baseline yMax-2 = 145).
+  push({ page: 1, x: 266, y: yFromTop(145), value: hvac.primaryHeatSource, size: 8 });
+  // "Are the HVAC systems in good working order?" y=154. Yes x=342→☐331 | No x=374→☐363.
+  yn(1, hvac.inGoodWorkingOrder, 331, 363, 154);
+  // "(explain)" sits at x=386-417 → put the note after it.
+  push({ page: 1, x: 420, y: yFromTop(161), value: hvac.inGoodWorkingOrderExplain, size: 7 });
+  // "Date of last HVAC servicing/inspection:" y=169, label ends x=181 → value x=186.
+  push({ page: 1, x: 186, y: yFromTop(176), value: hvac.lastServiceDate, size: 9 });
+
+  // ── Hazards Present ──────────────────────────────────────────────────
+  // Wood-burning stove/gas fireplace present? y=208. Yes x=257→☐246 | No x=291→☐280.
+  yn(1, hvacHazards.woodStoveOrGasFireplacePresent, 246, 280, 208);
+  // Professionally installed? y=208. Yes x=437→☐426 | No x=472→☐461.
+  yn(1, hvacHazards.woodStoveProfessionallyInstalled, 426, 461, 208);
+  // Space heater used as primary heat source? y=223. Yes x=216→☐205 | No x=247→☐236.
+  yn(1, hvacHazards.spaceHeaterPrimarySource, 205, 236, 223);
+  // Is the source portable? y=238. Yes x=142→☐131 | No x=174→☐163.
+  yn(1, hvacHazards.spaceHeaterPortable, 131, 163, 238);
+  // Air handler/condensate/drain pan blockage or leakage? y=262 (2nd line). Yes x=53→☐42 | No x=90→☐79.
+  yn(1, hvacHazards.airHandlerBlockageOrLeakage, 42, 79, 262);
+
+  // Supplemental Information — Age of system y=303 → value x=100 (yMax-2=310);
+  // Year last updated y=318 → value x=112 (yMax-2=325).
+  push({ page: 1, x: 100, y: yFromTop(310), value: hvac.ageYears });
+  push({ page: 1, x: 112, y: yFromTop(325), value: hvac.yearLastUpdated });
+
+  // ── PAGE 2 — Plumbing System (V3, 1-for-1 with Citizens form) ─────────
+  // TPRV on water heater? y=391. Yes x=288→☐277 | No x=320→☐309.
+  yn(1, plumbing.tprvPresent, 277, 309, 391);
+  // Active leak? y=403. Yes x=202→☐191 | No x=234→☐223.
+  yn(1, plumbing.activeLeak, 191, 223, 403);
+  // Prior leak? y=415. Yes x=193→☐182 | No x=225→☐214.
+  yn(1, plumbing.priorLeak, 182, 214, 415);
+  // Water heater location: y=427, label ends x=120 → value x=125 (yMax-2=434).
+  push({ page: 1, x: 125, y: yFromTop(434), value: plumbing.waterHeaterLocation, size: 9 });
+
+  // ── Fixtures condition grid (Sat / Unsat / N/A) ──────────────────────
+  // Two side-by-side blocks. Column centers from the header bbox; X is drawn
+  // directly (these are grid rectangles, not ☐ glyphs) at the row baseline.
+  const FIX_COL: Record<string, { left: number; right: number }> = {
+    satisfactory:   { left: 133, right: 402 },
+    unsatisfactory: { left: 191, right: 460 },
+    na:             { left: 243, right: 513 },
+  };
+  const fixtures: any = plumbing.fixtures ?? {};
+  const fixtureCell = (cond: unknown, side: "left" | "right", yTop: number) => {
+    const col = FIX_COL[cond as string];
+    if (!col) return;
+    out.push({ page: 1, x: col[side], y: yFromTop(yTop + 7), size: 10, value: "X", bold: true });
+  };
+  fixtureCell(fixtures.dishwasher,       "left",  473);
+  fixtureCell(fixtures.refrigerator,     "left",  485);
+  fixtureCell(fixtures.washingMachine,   "left",  497);
+  fixtureCell(fixtures.waterHeater,      "left",  510);
+  fixtureCell(fixtures.showersTubs,      "left",  522);
+  fixtureCell(fixtures.toilets,          "right", 473);
+  fixtureCell(fixtures.sinks,            "right", 485);
+  fixtureCell(fixtures.sumpPump,         "right", 497);
+  fixtureCell(fixtures.mainShutOffValve, "right", 510);
+  fixtureCell(fixtures.allOtherVisible,  "right", 522);
+  // "If unsatisfactory..." comments box — first line at y≈555.
+  push({ page: 1, x: 44, y: yFromTop(562), value: plumbing.unsatisfactoryComments, size: 8 });
+
+  // ── Supplemental Information ─────────────────────────────────────────
+  // Age of Piping — Supply (ckbx x=65) and Drain (ckbx x=236) columns.
+  //   Original to home y=631 | Completely re-piped y=646 | Partially re-piped y=661
+  const PIPING_AGE_Y: Record<string, number> = {
+    original: 631,
+    completely_repiped: 646,
+    partially_repiped: 661,
+  };
+  const supplyY = PIPING_AGE_Y[plumbing.supplyPipingAge];
+  if (supplyY) checkBox(out, 1, 65, supplyY);
+  const drainY = PIPING_AGE_Y[plumbing.drainPipingAge];
+  if (drainY) checkBox(out, 1, 236, drainY);
+
+  // Type of pipes (check all that apply). Left sub-col x=351, right sub-col x=448.
+  const pipeTypes: any = plumbing.pipeTypes ?? {};
+  if (pipeTypes.copper)       checkBox(out, 1, 351, 631); // Copper
+  if (pipeTypes.pvcCpvc)      checkBox(out, 1, 351, 646); // PVC/CPVC
+  if (pipeTypes.galvanized)   checkBox(out, 1, 350, 661); // Galvanized
+  if (pipeTypes.castIron)     checkBox(out, 1, 350, 680); // Cast Iron
+  if (pipeTypes.polybutylene) checkBox(out, 1, 351, 695); // Polybutylene
+  if (pipeTypes.abs)          checkBox(out, 1, 351, 709); // ABS
+  if (pipeTypes.pex)          checkBox(out, 1, 448, 631); // PEX
+  if (pipeTypes.other)        checkBox(out, 1, 448, 646); // Other (specify)
+  // "Year Installed:" x=501-532 y=631 → value x=537 (yMax-2=638).
+  push({ page: 1, x: 537, y: yFromTop(638), value: pipeTypes.yearInstalled, size: 8 });
+
+  // Age of water heater y=676, blank at x≈116 (yMax-2=683).
   push({ page: 1, x: 116, y: yFromTop(683), value: plumbing.waterHeaterAgeYears });
 
   // ── PAGE 3 — Roof (Predominant + Secondary columns) ───────────────────
@@ -349,6 +411,28 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
     } else if (col.visibleLeaks === false) {
       checkBox(out, 2, 184 + xOffset, 422);
     }
+    // ── "Any visible signs of damage / deterioration?" check-all ────────
+    // Predominant ckbx x=51, secondary x=322 (xOffset 271). Row baselines:
+    const dmg: any = col.damage ?? {};
+    const DAMAGE_Y: Array<[string, number]> = [
+      ["cracking", 321],
+      ["cuppingCurling", 334],
+      ["excessiveGranuleLoss", 346],
+      ["exposedAsphalt", 358],
+      ["exposedFelt", 370],
+      ["missingLooseCrackedTabs", 381],
+      ["softSpotsInDecking", 395],
+      ["visibleHailDamage", 407],
+    ];
+    for (const [k, y] of DAMAGE_Y) {
+      if (dmg[k]) checkBox(out, 2, 51 + xOffset, y);
+    }
+    // Attic/underside of decking — visible leaks? y=434. Yes x=152→☐141 | No x=184→☐173.
+    if (col.leakAtticUnderside === true) checkBox(out, 2, 141 + xOffset, 434);
+    else if (col.leakAtticUnderside === false) checkBox(out, 2, 173 + xOffset, 434);
+    // Interior ceilings — visible leaks? y=446. Yes x=114→☐103 | No x=146→☐135.
+    if (col.leakInteriorCeilings === true) checkBox(out, 2, 103 + xOffset, 446);
+    else if (col.leakInteriorCeilings === false) checkBox(out, 2, 135 + xOffset, 446);
   };
 
   if (predominant && Object.keys(predominant).length > 0) {
@@ -363,15 +447,20 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
     fillRoofColumn(secondary, 271);
   }
 
-  // ── PAGE 3 — Inspector signature block (V1, kept) ─────────────────────
-  push({ page: 2, x: 50, y: yFromTop(648), value: inspection.inspectorName });
-  push({ page: 2, x: 444, y: yFromTop(648), value: inspection.inspectorLicense });
-  push({
-    page: 2,
-    x: 465,
-    y: yFromTop(625),
-    value: inspection.inspectedOn?.slice(0, 10),
-  });
+  // ── PAGE 3 — Inspector certification block (7 fields) ─────────────────
+  // Two rows of labels; values sit on the signature lines ABOVE each label.
+  //   Row 1 labels y=653: Inspector Signature [43] | Title [190] | License Number [314] | Date [456]
+  //   Row 2 labels y=692: Company Name [43] | License Type [190] | Work Phone [314]
+  const licType = licenseTypeLabel(inspection.inspectorLicenseType);
+  // Row 1 (baseline yMax-2 = 647 → sits on the line above the label).
+  push({ page: 2, x: 46,  y: yFromTop(647), value: inspection.inspectorName });
+  push({ page: 2, x: 190, y: yFromTop(647), value: licType, size: 9 });
+  push({ page: 2, x: 316, y: yFromTop(647), value: inspection.inspectorLicense });
+  push({ page: 2, x: 456, y: yFromTop(647), value: inspection.inspectedOn?.slice(0, 10) });
+  // Row 2 (baseline 686).
+  push({ page: 2, x: 46,  y: yFromTop(686), value: inspection.inspectorCompany, size: 9 });
+  push({ page: 2, x: 190, y: yFromTop(686), value: licType, size: 9 });
+  push({ page: 2, x: 316, y: yFromTop(686), value: inspection.inspectorPhone });
 
   return out;
 }
