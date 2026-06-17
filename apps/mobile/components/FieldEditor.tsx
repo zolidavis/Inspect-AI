@@ -2,6 +2,7 @@ import {
   Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from "react-native";
 import type { FieldMeta } from "../lib/form-meta";
+import { colors, font } from "../lib/theme";
 
 export function getAt(obj: any, path: string): any {
   return path.split(".").reduce((acc, k) => (acc == null ? acc : acc[k]), obj);
@@ -44,6 +45,7 @@ export function FieldEditor({
           <TextInput
             style={[styles.input, error && styles.inputError]}
             placeholder={field.placeholder}
+            placeholderTextColor={colors.textFaint}
             value={typeof value === "string" ? value : ""}
             onChangeText={(t) => onChange(t === "" ? undefined : t)}
           />
@@ -88,6 +90,7 @@ export function FieldEditor({
         <TextInput
           style={[styles.input, error && styles.inputError]}
           keyboardType="number-pad"
+          placeholderTextColor={colors.textFaint}
           value={value == null ? "" : String(value)}
           onChangeText={(t) => {
             if (t === "") return onChange(undefined);
@@ -138,32 +141,33 @@ export function FieldEditor({
 const styles = StyleSheet.create({
   row: { marginVertical: 6 },
   labelRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
-  label: { fontSize: 13, color: "#444", fontWeight: "600" },
-  error: { fontSize: 12, color: "#c33" },
+  label: { fontSize: 13, color: colors.textDim, fontFamily: font.semibold },
+  error: { fontSize: 12, color: colors.danger, fontFamily: font.medium },
   input: {
-    borderWidth: 1, borderColor: "#ccc", borderRadius: 8,
-    paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, backgroundColor: "#fff",
+    borderWidth: 1, borderColor: colors.border, borderRadius: 8,
+    paddingHorizontal: 12, paddingVertical: 10, fontSize: 16,
+    backgroundColor: colors.row, color: colors.text, fontFamily: font.regular,
   },
-  inputError: { borderColor: "#c33" },
+  inputError: { borderColor: colors.danger },
   chipsRow: { gap: 6, paddingVertical: 2 },
   chip: {
     paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999,
-    borderWidth: 1, borderColor: "#bbb", backgroundColor: "#fff",
+    borderWidth: 1, borderColor: colors.border, backgroundColor: colors.row,
   },
-  chipOn: { backgroundColor: "#0a66ff", borderColor: "#0a66ff" },
-  chipText: { color: "#333", fontSize: 13 },
-  chipTextOn: { color: "#fff", fontWeight: "600" },
-  chipDanger: { borderColor: "#e0a3a3", backgroundColor: "#fff5f5" },
-  chipDangerOn: { backgroundColor: "#c0392b", borderColor: "#c0392b" },
-  chipDangerText: { color: "#b3261e" },
+  chipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+  chipText: { color: colors.textDim, fontSize: 13, fontFamily: font.medium },
+  chipTextOn: { color: colors.onAccent, fontFamily: font.semibold },
+  chipDanger: { borderColor: "#5a2530", backgroundColor: colors.dangerFill },
+  chipDangerOn: { backgroundColor: colors.dangerOn, borderColor: colors.dangerOn },
+  chipDangerText: { color: colors.danger },
   // Yes/No segmented control
   ynRow: { flexDirection: "row", gap: 8 },
   ynBtn: {
     flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: "center",
-    borderWidth: 1, borderColor: "#bbb", backgroundColor: "#fff",
+    borderWidth: 1, borderColor: colors.border, backgroundColor: colors.row,
   },
-  ynYesOn: { backgroundColor: "#1e9e63", borderColor: "#1e9e63" },
-  ynNoOn: { backgroundColor: "#555", borderColor: "#555" },
-  ynText: { color: "#333", fontSize: 14, fontWeight: "600" },
-  ynTextOn: { color: "#fff" },
+  ynYesOn: { backgroundColor: colors.yes, borderColor: colors.yes },
+  ynNoOn: { backgroundColor: colors.no, borderColor: colors.no },
+  ynText: { color: colors.textDim, fontSize: 14, fontFamily: font.semibold },
+  ynTextOn: { color: "#04221a" },
 });

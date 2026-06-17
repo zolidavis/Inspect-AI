@@ -27,6 +27,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import type { Inspection, PhotoRequirements } from "@inspect-ai/shared";
 import { PHOTO_REQUIREMENT_LABELS } from "@inspect-ai/shared";
 import { api } from "../../../lib/api";
+import { colors, font } from "../../../lib/theme";
 
 type PhotoReqKey = keyof PhotoRequirements;
 const PHOTO_REQ_KEYS: PhotoReqKey[] = [
@@ -37,17 +38,6 @@ const PHOTO_REQ_KEYS: PhotoReqKey[] = [
   "electricalBoxWithPanelOff",
   "hazardsOrDeficiencies",
 ];
-
-const COLORS = {
-  bg: "#0b1014",
-  card: "#10161c",
-  bgRow: "#161c22",
-  text: "#f0f4f8",
-  textDim: "#8a96a4",
-  textFaint: "#54616f",
-  border: "#222a32",
-  accent: "#3b82f6",
-};
 
 export default function EditInfo() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -95,7 +85,7 @@ export default function EditInfo() {
   if (loading || !insp) {
     return (
       <View style={[styles.root, styles.center]}>
-        <ActivityIndicator color={COLORS.accent} />
+        <ActivityIndicator color={colors.accent} />
       </View>
     );
   }
@@ -183,7 +173,7 @@ export default function EditInfo() {
           value={line1}
           onChangeText={setLine1}
           placeholder="123 Main St"
-          placeholderTextColor={COLORS.textFaint}
+          placeholderTextColor={colors.textFaint}
           autoCapitalize="words"
         />
 
@@ -195,7 +185,7 @@ export default function EditInfo() {
               value={city}
               onChangeText={setCity}
               placeholder="Tampa"
-              placeholderTextColor={COLORS.textFaint}
+              placeholderTextColor={colors.textFaint}
               autoCapitalize="words"
             />
           </View>
@@ -229,7 +219,7 @@ export default function EditInfo() {
               value={numberOfStories}
               onChangeText={(v) => setNumberOfStories(v.replace(/[^0-9]/g, ""))}
               placeholder="1"
-              placeholderTextColor={COLORS.textFaint}
+              placeholderTextColor={colors.textFaint}
               keyboardType="number-pad"
               maxLength={2}
             />
@@ -241,7 +231,7 @@ export default function EditInfo() {
               value={inspectionDate}
               onChangeText={(v) => setInspectionDate(v.replace(/[^0-9-]/g, ""))}
               placeholder="2026-06-17"
-              placeholderTextColor={COLORS.textFaint}
+              placeholderTextColor={colors.textFaint}
               keyboardType="numbers-and-punctuation"
               maxLength={10}
             />
@@ -261,7 +251,7 @@ export default function EditInfo() {
           value={ownerName}
           onChangeText={setOwnerName}
           placeholder={insp.property?.ownerName ?? "e.g. John Smith"}
-          placeholderTextColor={COLORS.textFaint}
+          placeholderTextColor={colors.textFaint}
           autoCapitalize="words"
         />
         {insp.property?.source === "rentcast" && (
@@ -276,7 +266,7 @@ export default function EditInfo() {
           value={ownerEmail}
           onChangeText={setOwnerEmail}
           placeholder="owner@example.com"
-          placeholderTextColor={COLORS.textFaint}
+          placeholderTextColor={colors.textFaint}
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
@@ -288,7 +278,7 @@ export default function EditInfo() {
           value={ownerPhone}
           onChangeText={setOwnerPhone}
           placeholder="(555) 555-5555"
-          placeholderTextColor={COLORS.textFaint}
+          placeholderTextColor={colors.textFaint}
           keyboardType="phone-pad"
         />
       </View>
@@ -348,7 +338,7 @@ export default function EditInfo() {
         onPress={save}
       >
         {saving ? (
-          <ActivityIndicator color="#fff" />
+          <ActivityIndicator color={colors.onAccent} />
         ) : (
           <Text style={styles.saveBtnText}>Save changes</Text>
         )}
@@ -358,56 +348,58 @@ export default function EditInfo() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
+  root: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: 16, gap: 14 },
   center: { alignItems: "center", justifyContent: "center" },
-  h1: { color: COLORS.text, fontSize: 22, fontWeight: "700" },
-  sub: { color: COLORS.textDim, fontSize: 13 },
+  h1: { color: colors.text, fontSize: 22, fontFamily: font.bold },
+  sub: { color: colors.textDim, fontSize: 13, fontFamily: font.regular },
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     padding: 16,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   cardTitle: {
-    color: COLORS.text,
-    fontWeight: "700",
+    color: colors.text,
+    fontFamily: font.bold,
     fontSize: 11,
     textTransform: "uppercase",
     letterSpacing: 1,
     marginBottom: 10,
   },
   label: {
-    color: COLORS.textDim,
+    color: colors.textDim,
     fontSize: 12,
-    fontWeight: "600",
+    fontFamily: font.semibold,
     marginBottom: 4,
     marginTop: 8,
   },
   input: {
-    backgroundColor: COLORS.bgRow,
-    color: COLORS.text,
+    backgroundColor: colors.row,
+    color: colors.text,
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     fontSize: 16,
+    fontFamily: font.regular,
   },
   hint: {
-    color: COLORS.textFaint,
+    color: colors.textFaint,
     fontSize: 11,
     marginTop: 4,
+    fontFamily: font.regular,
   },
   saveBtn: {
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: "center",
     marginTop: 4,
   },
-  saveBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
+  saveBtnText: { color: colors.onAccent, fontFamily: font.bold, fontSize: 14 },
 });
 
 const photoStyles = StyleSheet.create({
@@ -418,8 +410,8 @@ const photoStyles = StyleSheet.create({
     marginBottom: 6,
   },
   checkAllBtn: {
-    backgroundColor: COLORS.bgRow,
-    borderColor: COLORS.accent,
+    backgroundColor: colors.row,
+    borderColor: colors.accent,
     borderWidth: 1,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -427,9 +419,9 @@ const photoStyles = StyleSheet.create({
     marginTop: 2,
   },
   checkAllText: {
-    color: COLORS.accent,
+    color: colors.accent,
     fontSize: 12,
-    fontWeight: "700",
+    fontFamily: font.bold,
   },
   row: {
     flexDirection: "row",
@@ -437,32 +429,33 @@ const photoStyles = StyleSheet.create({
     paddingVertical: 10,
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: colors.border,
   },
   box: {
     width: 22,
     height: 22,
     borderRadius: 5,
     borderWidth: 1.5,
-    borderColor: COLORS.textDim,
+    borderColor: colors.textDim,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 1,
   },
   boxOn: {
-    backgroundColor: COLORS.accent,
-    borderColor: COLORS.accent,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   tick: {
-    color: "#fff",
-    fontWeight: "800",
+    color: colors.onAccent,
+    fontFamily: font.extrabold,
     fontSize: 14,
     lineHeight: 18,
   },
   rowLabel: {
     flex: 1,
-    color: COLORS.text,
+    color: colors.text,
     fontSize: 14,
     lineHeight: 20,
+    fontFamily: font.regular,
   },
 });

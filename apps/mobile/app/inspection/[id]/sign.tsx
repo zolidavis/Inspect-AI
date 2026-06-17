@@ -24,17 +24,18 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import type { Inspection } from "@inspect-ai/shared";
 import { SignaturePad } from "../../../components/SignaturePad";
 import { api } from "../../../lib/api";
+import { colors, font } from "../../../lib/theme";
 
 const COLORS = {
-  bg: "#0b1014",
-  card: "#10161c",
-  bgRow: "#161c22",
-  text: "#f0f4f8",
-  textDim: "#8a96a4",
-  textFaint: "#54616f",
-  border: "#222a32",
-  accent: "#3b82f6",     // matches Profile palette
-  danger: "#ef5a5a",
+  bg: colors.bg,
+  card: colors.card,
+  bgRow: colors.row,
+  text: colors.text,
+  textDim: colors.textDim,
+  textFaint: colors.textFaint,
+  border: colors.border,
+  accent: colors.accent,
+  danger: colors.danger,
 };
 
 export default function SignReport() {
@@ -168,7 +169,7 @@ export default function SignReport() {
         onPress={save}
       >
         {saving ? (
-          <ActivityIndicator color="#0b1014" />
+          <ActivityIndicator color={colors.onAccent} />
         ) : (
           <Text style={styles.saveBtnText}>Save signature</Text>
         )}
@@ -190,7 +191,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: COLORS.bg },
   scroll: { padding: 16, gap: 14 },
   center: { alignItems: "center", justifyContent: "center" },
-  h1: { color: COLORS.text, fontSize: 22, fontWeight: "700" },
+  h1: { color: COLORS.text, fontSize: 22, fontFamily: font.bold },
   sub: { color: COLORS.textDim, fontSize: 13, lineHeight: 18 },
   card: {
     backgroundColor: COLORS.card,
@@ -202,20 +203,20 @@ const styles = StyleSheet.create({
   cardLabel: {
     color: COLORS.textDim,
     fontSize: 11,
-    fontWeight: "700",
+    fontFamily: font.bold,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   cardValue: {
     color: COLORS.text,
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: font.semibold,
     marginTop: 4,
   },
   cardSub: { color: COLORS.textDim, fontSize: 13, marginTop: 2 },
 
   sigPreviewWrap: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#ffffff", // signature canvas — kept white so the drawn signature is legible
     borderRadius: 10,
     padding: 8,
     marginTop: 10,
@@ -250,7 +251,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.accent,
   },
-  sigBtnText: { color: COLORS.accent, fontWeight: "700", fontSize: 13 },
+  sigBtnText: { color: COLORS.accent, fontFamily: font.bold, fontSize: 13 },
   dateHint: { color: COLORS.textFaint, fontSize: 11, marginTop: 4 },
   legal: {
     color: COLORS.textFaint,
@@ -265,5 +266,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 4,
   },
-  saveBtnText: { color: "#ffffff", fontWeight: "800", fontSize: 14 },
+  saveBtnText: { color: colors.onAccent, fontFamily: font.extrabold, fontSize: 14 },
 });

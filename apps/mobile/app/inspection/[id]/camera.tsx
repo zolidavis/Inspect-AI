@@ -8,6 +8,7 @@ import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { api } from "../../../lib/api";
+import { colors } from "../../../lib/theme";
 
 /**
  * Two modes — driven by whether the URL carries a `tag` query param:
@@ -143,7 +144,7 @@ export default function Camera() {
         <View style={styles.tagRow}>
           {isAuto ? (
             <>
-              <Ionicons name="sparkles-outline" size={14} color="#9be9a8" />
+              <Ionicons name="sparkles-outline" size={14} color={colors.accent} />
               <Text style={styles.tag}>AI auto-tag</Text>
             </>
           ) : (
@@ -205,6 +206,6 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   galleryText: { color: "#fff", fontWeight: "600", fontSize: 11 },
-  button: { backgroundColor: "#0a66ff", padding: 12, borderRadius: 8 },
-  buttonText: { color: "#fff", fontWeight: "600" },
+  button: { backgroundColor: colors.accent, padding: 12, borderRadius: 8 },
+  buttonText: { color: colors.onAccent, fontWeight: "600" },
 });

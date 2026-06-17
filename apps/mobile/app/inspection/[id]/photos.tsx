@@ -21,17 +21,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import type { Photo } from "@inspect-ai/shared";
 import { api } from "../../../lib/api";
-
-const COLORS = {
-  bg: "#0b1014",
-  card: "#10161c",
-  text: "#f0f4f8",
-  textDim: "#8a96a4",
-  textFaint: "#54616f",
-  border: "#222a32",
-  accent: "#3b82f6",
-  danger: "#c0392b",
-};
+import { colors, font } from "../../../lib/theme";
 
 function prettyTag(tag: string): string {
   if (tag === "auto") return "Unsorted / auto";
@@ -96,7 +86,7 @@ export default function Photos() {
   if (loading) {
     return (
       <View style={[styles.root, styles.center]}>
-        <ActivityIndicator color={COLORS.accent} />
+        <ActivityIndicator color={colors.accent} />
       </View>
     );
   }
@@ -120,13 +110,13 @@ export default function Photos() {
         style={styles.addBtn}
         onPress={() => router.push(`/inspection/${id}/camera`)}
       >
-        <Ionicons name="add" size={18} color="#fff" />
+        <Ionicons name="add" size={18} color={colors.onAccent} />
         <Text style={styles.addBtnText}>Add more photos</Text>
       </Pressable>
 
       {photos.length === 0 && (
         <View style={styles.empty}>
-          <Ionicons name="images-outline" size={36} color={COLORS.textFaint} />
+          <Ionicons name="images-outline" size={36} color={colors.textFaint} />
           <Text style={styles.emptyText}>No photos yet.</Text>
         </View>
       )}
@@ -148,7 +138,7 @@ export default function Photos() {
                   <Image source={{ uri: p.url }} style={styles.thumb} />
                 ) : (
                   <View style={[styles.thumb, styles.thumbMissing]}>
-                    <Ionicons name="image-outline" size={28} color={COLORS.textFaint} />
+                    <Ionicons name="image-outline" size={28} color={colors.textFaint} />
                   </View>
                 )}
                 <View style={styles.delBadge}>
@@ -174,28 +164,28 @@ export default function Photos() {
 
 const GAP = 10;
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
+  root: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: 16, gap: 14, paddingBottom: 40 },
   center: { alignItems: "center", justifyContent: "center" },
-  h1: { color: COLORS.text, fontSize: 22, fontWeight: "700" },
-  sub: { color: COLORS.textDim, fontSize: 13 },
+  h1: { color: colors.text, fontSize: 22, fontFamily: font.bold },
+  sub: { color: colors.textDim, fontSize: 13, fontFamily: font.regular },
   addBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     paddingVertical: 12,
     borderRadius: 10,
   },
-  addBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
+  addBtnText: { color: colors.onAccent, fontFamily: font.bold, fontSize: 14 },
   empty: { alignItems: "center", gap: 8, paddingVertical: 40 },
-  emptyText: { color: COLORS.textFaint, fontSize: 14 },
+  emptyText: { color: colors.textFaint, fontSize: 14, fontFamily: font.regular },
   group: { gap: 8 },
   groupTitle: {
-    color: COLORS.textDim,
+    color: colors.textDim,
     fontSize: 11,
-    fontWeight: "700",
+    fontFamily: font.bold,
     textTransform: "uppercase",
     letterSpacing: 1,
   },
@@ -205,21 +195,21 @@ const styles = StyleSheet.create({
     width: "100%",
     aspectRatio: 1,
     borderRadius: 8,
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   thumbMissing: { alignItems: "center", justifyContent: "center" },
   delBadge: {
     position: "absolute",
     top: 6,
     right: 6,
-    backgroundColor: COLORS.danger,
+    backgroundColor: colors.danger,
     width: 26,
     height: 26,
     borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
   },
-  cellNote: { color: COLORS.textFaint, fontSize: 9, marginTop: 2 },
+  cellNote: { color: colors.textFaint, fontSize: 9, marginTop: 2, fontFamily: font.regular },
 });

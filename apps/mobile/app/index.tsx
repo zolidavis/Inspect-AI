@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import type { Inspection } from "@inspect-ai/shared";
 import { api } from "../lib/api";
+import { colors, font } from "../lib/theme";
 
 export default function Inspections() {
   const router = useRouter();
@@ -109,7 +110,7 @@ export default function Inspections() {
               onPress={() => confirmDelete(item)}
               style={({ pressed }) => [styles.trashBtn, pressed && { opacity: 0.5 }]}
             >
-              <Ionicons name="trash-outline" size={20} color="#a02020" />
+              <Ionicons name="trash-outline" size={20} color={colors.danger} />
             </Pressable>
           </Pressable>
         )}
@@ -126,16 +127,16 @@ function labelForType(t: Inspection["type"]) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#fff" },
+  root: { flex: 1, backgroundColor: colors.bg },
   row: {
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: "#ddd",
+    borderColor: colors.border,
   },
-  rowTitle: { fontSize: 16, fontWeight: "600" },
-  rowMeta: { fontSize: 13, color: "#666", marginTop: 2 },
+  rowTitle: { fontSize: 16, fontFamily: font.semibold, color: colors.text },
+  rowMeta: { fontSize: 13, color: colors.textDim, marginTop: 2 },
   trashBtn: {
     width: 36,
     height: 36,
@@ -144,15 +145,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   empty: { padding: 40, alignItems: "center" },
-  emptyTitle: { fontSize: 18, fontWeight: "600" },
-  emptyHint: { color: "#666", marginTop: 6 },
-  error: { backgroundColor: "#fee", padding: 10, color: "#900" },
+  emptyTitle: { fontSize: 18, fontFamily: font.semibold, color: colors.text },
+  emptyHint: { color: colors.textDim, marginTop: 6 },
+  error: { backgroundColor: colors.dangerFill, padding: 10, color: colors.danger },
   fab: {
     position: "absolute", right: 24, bottom: 32,
     width: 56, height: 56, borderRadius: 28,
-    backgroundColor: "#0a66ff", alignItems: "center", justifyContent: "center",
+    backgroundColor: colors.accent, alignItems: "center", justifyContent: "center",
     shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 },
     elevation: 4,
   },
-  fabPlus: { color: "#fff", fontSize: 28, lineHeight: 30, fontWeight: "600" },
+  fabPlus: { color: colors.onAccent, fontSize: 28, lineHeight: 30, fontFamily: font.semibold },
 });

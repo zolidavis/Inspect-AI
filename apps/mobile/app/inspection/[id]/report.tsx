@@ -1,6 +1,7 @@
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { api } from "../../../lib/api";
+import { colors, font } from "../../../lib/theme";
 
 export default function Report() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -20,16 +21,18 @@ export default function Report() {
       <Pressable style={styles.btn} onPress={() => open("wind_mitigation")}>
         <Text style={styles.btnText}>Wind Mitigation PDF</Text>
       </Pressable>
-      <Pressable style={[styles.btn, { backgroundColor: "#222" }]} onPress={() => open("both")}>
-        <Text style={styles.btnText}>Combined PDF</Text>
+      <Pressable style={[styles.btn, styles.btnCombined]} onPress={() => open("both")}>
+        <Text style={styles.btnCombinedText}>Combined PDF</Text>
       </Pressable>
     </View>
   );
 }
 const styles = StyleSheet.create({
-  root: { padding: 16, gap: 12 },
-  h1: { fontSize: 22, fontWeight: "700" },
-  p: { color: "#666" },
-  btn: { backgroundColor: "#0a66ff", padding: 14, borderRadius: 10, alignItems: "center" },
-  btnText: { color: "#fff", fontWeight: "600", fontSize: 16 },
+  root: { padding: 16, gap: 12, backgroundColor: colors.bg },
+  h1: { fontSize: 22, fontFamily: font.bold, color: colors.text },
+  p: { color: colors.textDim },
+  btn: { backgroundColor: colors.accent, padding: 14, borderRadius: 10, alignItems: "center" },
+  btnText: { color: colors.onAccent, fontFamily: font.semibold, fontSize: 16 },
+  btnCombined: { backgroundColor: colors.row },
+  btnCombinedText: { color: colors.text, fontFamily: font.semibold, fontSize: 16 },
 });

@@ -5,6 +5,7 @@ import {
 } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { api, type Suggestion } from "../../../lib/api";
+import { colors, font } from "../../../lib/theme";
 
 export default function Suggestions() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -64,7 +65,7 @@ export default function Suggestions() {
   };
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator /></View>;
+    return <View style={styles.center}><ActivityIndicator color={colors.accent} /></View>;
   }
 
   if (items.length === 0) {
@@ -102,8 +103,8 @@ export default function Suggestions() {
               </View>
               {s.conflictsWithCurrent && (
                 <View style={styles.kvRow}>
-                  <Text style={[styles.k, { color: "#a44" }]}>Current</Text>
-                  <Text style={[styles.v, { color: "#a44" }]}>{String(s.currentValue)}</Text>
+                  <Text style={[styles.k, { color: colors.danger }]}>Current</Text>
+                  <Text style={[styles.v, { color: colors.danger }]}>{String(s.currentValue)}</Text>
                 </View>
               )}
               <View style={styles.meta}>
@@ -123,7 +124,7 @@ export default function Suggestions() {
           disabled={applying || accepted.size === 0}
           onPress={apply}
         >
-          {applying ? <ActivityIndicator color="#fff" /> : <Text style={styles.applyText}>Apply</Text>}
+          {applying ? <ActivityIndicator color={colors.onAccent} /> : <Text style={styles.applyText}>Apply</Text>}
         </Pressable>
       </View>
     </View>
@@ -133,41 +134,41 @@ export default function Suggestions() {
 const key = (s: Suggestion) => `${s.form}:${s.path}`;
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24 },
-  empty: { fontSize: 16, fontWeight: "600" },
-  dim: { color: "#666", marginTop: 6 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 24, backgroundColor: colors.bg },
+  empty: { fontSize: 16, fontFamily: font.semibold, color: colors.text },
+  dim: { color: colors.textDim, marginTop: 6 },
   list: { padding: 12, gap: 10, paddingBottom: 100 },
   card: {
-    backgroundColor: "#fff", padding: 12, borderRadius: 10,
-    borderWidth: 1, borderColor: "#e2e2e2",
+    backgroundColor: colors.card, padding: 12, borderRadius: 10,
+    borderWidth: 1, borderColor: colors.border,
   },
-  cardOn: { borderColor: "#0a66ff", backgroundColor: "#f0f6ff" },
-  cardConflict: { borderColor: "#e1b94a", backgroundColor: "#fffaee" },
+  cardOn: { borderColor: colors.accent, backgroundColor: colors.accentSoft },
+  cardConflict: { borderColor: colors.warn, backgroundColor: colors.dangerFill },
   cardHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  path: { fontFamily: "Menlo", fontSize: 13, fontWeight: "600" },
+  path: { fontFamily: "Menlo", fontSize: 13, fontWeight: "600", color: colors.text },
   box: {
     width: 24, height: 24, borderRadius: 5,
-    borderWidth: 1.5, borderColor: "#aaa",
+    borderWidth: 1.5, borderColor: colors.textFaint,
     alignItems: "center", justifyContent: "center",
   },
-  boxOn: { backgroundColor: "#0a66ff", borderColor: "#0a66ff" },
-  check: { color: "#fff", fontWeight: "700" },
+  boxOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+  check: { color: colors.onAccent, fontFamily: font.bold },
   kvRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 6 },
-  k: { color: "#666" },
-  v: { fontWeight: "500" },
+  k: { color: colors.textDim },
+  v: { fontFamily: font.medium, color: colors.text },
   meta: { marginTop: 8 },
-  metaText: { color: "#888", fontSize: 12 },
-  notes: { color: "#666", fontSize: 12, marginTop: 4, fontStyle: "italic" },
+  metaText: { color: colors.textDim, fontSize: 12 },
+  notes: { color: colors.textDim, fontSize: 12, marginTop: 4, fontStyle: "italic" },
   footer: {
     position: "absolute", left: 0, right: 0, bottom: 0,
-    padding: 12, backgroundColor: "#fff",
-    borderTopWidth: StyleSheet.hairlineWidth, borderColor: "#ccc",
+    padding: 12, backgroundColor: colors.card,
+    borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
   },
-  count: { color: "#666" },
+  count: { color: colors.textDim },
   apply: {
-    backgroundColor: "#0a66ff", paddingHorizontal: 24, paddingVertical: 12,
+    backgroundColor: colors.accent, paddingHorizontal: 24, paddingVertical: 12,
     borderRadius: 8,
   },
-  applyText: { color: "#fff", fontWeight: "600", fontSize: 16 },
+  applyText: { color: colors.onAccent, fontFamily: font.semibold, fontSize: 16 },
 });

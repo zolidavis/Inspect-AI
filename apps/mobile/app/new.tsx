@@ -6,6 +6,7 @@ import {
 import { useRouter } from "expo-router";
 import type { InspectionType } from "@inspect-ai/shared";
 import { api } from "../lib/api";
+import { colors, font } from "../lib/theme";
 import {
   inspectorNameOf,
   isInspectorComplete,
@@ -140,15 +141,15 @@ export default function NewInspection() {
       </View>
 
       <Text style={styles.label}>Property address</Text>
-      <TextInput style={styles.input} placeholder="Street address" value={line1} onChangeText={setLine1} />
+      <TextInput style={styles.input} placeholder="Street address" placeholderTextColor={colors.textFaint} value={line1} onChangeText={setLine1} />
       <View style={{ flexDirection: "row", gap: 8 }}>
         <TextInput
           style={[styles.input, { flex: 2 }]}
-          placeholder="City" value={city} onChangeText={setCity}
+          placeholder="City" placeholderTextColor={colors.textFaint} value={city} onChangeText={setCity}
         />
         <TextInput
           style={[styles.input, { flex: 1 }]}
-          placeholder="ZIP" value={zip} onChangeText={setZip} keyboardType="number-pad"
+          placeholder="ZIP" placeholderTextColor={colors.textFaint} value={zip} onChangeText={setZip} keyboardType="number-pad"
         />
       </View>
 
@@ -156,6 +157,7 @@ export default function NewInspection() {
       <TextInput
         style={styles.input}
         placeholder="Email"
+        placeholderTextColor={colors.textFaint}
         value={ownerEmail}
         onChangeText={setOwnerEmail}
         keyboardType="email-address"
@@ -165,6 +167,7 @@ export default function NewInspection() {
       <TextInput
         style={styles.input}
         placeholder="Phone"
+        placeholderTextColor={colors.textFaint}
         value={ownerPhone}
         onChangeText={setOwnerPhone}
         keyboardType="phone-pad"
@@ -178,37 +181,38 @@ export default function NewInspection() {
         disabled={busy || !inspectorOk}
         onPress={create}
       >
-        {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Create</Text>}
+        {busy ? <ActivityIndicator color={colors.onAccent} /> : <Text style={styles.buttonText}>Create</Text>}
       </Pressable>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { padding: 16, gap: 8 },
-  label: { fontSize: 13, fontWeight: "600", marginTop: 12, color: "#444" },
+  root: { padding: 16, gap: 8, backgroundColor: colors.bg },
+  label: { fontSize: 13, fontFamily: font.semibold, marginTop: 12, color: colors.textDim },
   input: {
-    borderWidth: 1, borderColor: "#ccc", borderRadius: 8,
-    paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, backgroundColor: "#fff",
+    borderWidth: 1, borderColor: colors.border, borderRadius: 8,
+    paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, backgroundColor: colors.row,
+    color: colors.text, fontFamily: font.regular,
   },
-  segmented: { flexDirection: "row", borderWidth: 1, borderColor: "#0a66ff", borderRadius: 8, overflow: "hidden" },
+  segmented: { flexDirection: "row", borderWidth: 1, borderColor: colors.accent, borderRadius: 8, overflow: "hidden" },
   segment: { flex: 1, paddingVertical: 10, alignItems: "center" },
-  segmentOn: { backgroundColor: "#0a66ff" },
-  segmentText: { color: "#0a66ff", fontWeight: "600" },
-  segmentTextOn: { color: "#fff" },
+  segmentOn: { backgroundColor: colors.accent },
+  segmentText: { color: colors.accent, fontFamily: font.semibold },
+  segmentTextOn: { color: colors.onAccent },
   button: {
-    marginTop: 24, backgroundColor: "#0a66ff", borderRadius: 8,
+    marginTop: 24, backgroundColor: colors.accent, borderRadius: 8,
     paddingVertical: 14, alignItems: "center",
   },
-  buttonText: { color: "#fff", fontWeight: "600", fontSize: 16 },
+  buttonText: { color: colors.onAccent, fontFamily: font.semibold, fontSize: 16 },
   banner: {
-    backgroundColor: "#fff8d0",
-    borderColor: "#e5c400",
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.warn,
     borderWidth: 1,
     borderRadius: 10,
     padding: 14,
     marginBottom: 8,
   },
-  bannerTitle: { fontSize: 14, fontWeight: "700", color: "#7a5a0a" },
-  bannerHint: { color: "#7a5a0a", fontSize: 12, lineHeight: 18, marginTop: 4 },
+  bannerTitle: { fontSize: 14, fontFamily: font.bold, color: colors.warn },
+  bannerHint: { color: colors.warn, fontSize: 12, lineHeight: 18, marginTop: 4 },
 });

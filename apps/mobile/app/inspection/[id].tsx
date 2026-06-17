@@ -8,6 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { FourPoint, WindMit, type Inspection } from "@inspect-ai/shared";
 import { api, CompleteError } from "../../lib/api";
 import { inspectorNameOf, useProfile } from "../../store/profile";
+import { colors, font } from "../../lib/theme";
 
 export default function InspectionDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -37,7 +38,7 @@ export default function InspectionDetail() {
   useFocusEffect(useCallback(() => { void load(); setCompleteErrors({}); }, [load]));
 
   if (loading || !insp) {
-    return <View style={styles.center}><ActivityIndicator /></View>;
+    return <View style={styles.center}><ActivityIndicator color={colors.accent} /></View>;
   }
 
   const tags = sectionTags(insp.type);
@@ -183,7 +184,7 @@ export default function InspectionDetail() {
           disabled={syncing}
           onPress={syncFromProfile}
         >
-          <Ionicons name="sync-outline" size={18} color="#0a3d2c" />
+          <Ionicons name="sync-outline" size={18} color={colors.accent} />
           <View style={{ flex: 1 }}>
             <Text style={styles.syncTitle}>Update inspector info</Text>
             <Text style={styles.syncHint}>
@@ -191,7 +192,7 @@ export default function InspectionDetail() {
               to this inspection.
             </Text>
           </View>
-          {syncing ? <ActivityIndicator color="#0a3d2c" /> : (
+          {syncing ? <ActivityIndicator color={colors.accent} /> : (
             <Text style={styles.syncArrow}>›</Text>
           )}
         </Pressable>
@@ -321,7 +322,7 @@ export default function InspectionDetail() {
         {insp.photos.length > 0 && (
           <Link href={`/inspection/${insp.id}/photos`} asChild>
             <Pressable style={styles.manageRow}>
-              <Ionicons name="images-outline" size={16} color="#0a66ff" />
+              <Ionicons name="images-outline" size={16} color={colors.accent} />
               <Text style={styles.manageText}>
                 View / edit {insp.photos.length} photo{insp.photos.length === 1 ? "" : "s"}
               </Text>
@@ -351,7 +352,7 @@ export default function InspectionDetail() {
           <Ionicons
             name={insp.inspectorSignaturePng ? "checkmark-circle" : "ellipse-outline"}
             size={20}
-            color={insp.inspectorSignaturePng ? "#1f9d3b" : "#bbb"}
+            color={insp.inspectorSignaturePng ? colors.yes : colors.textFaint}
           />
           <Text style={styles.sigLabel}>Inspector</Text>
           <Text style={[
@@ -366,7 +367,7 @@ export default function InspectionDetail() {
             <Ionicons
               name={insp.homeownerSignaturePng ? "checkmark-circle" : "ellipse-outline"}
               size={20}
-              color={insp.homeownerSignaturePng ? "#1f9d3b" : "#bbb"}
+              color={insp.homeownerSignaturePng ? colors.yes : colors.textFaint}
             />
             <Text style={styles.sigLabel}>Homeowner</Text>
             <Text style={[
@@ -386,7 +387,7 @@ export default function InspectionDetail() {
           onPress={complete}
         >
           {completing
-            ? <ActivityIndicator color="#fff" />
+            ? <ActivityIndicator color={colors.onAccent} />
             : <Text style={styles.completeText}>Mark complete</Text>}
         </Pressable>
       )}
@@ -432,92 +433,92 @@ function Row({ k, v }: { k: string; v: string }) {
 }
 
 const styles = StyleSheet.create({
-  root: { padding: 16, gap: 12 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  root: { padding: 16, gap: 12, backgroundColor: colors.bg },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg },
   headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  h1: { fontSize: 22, fontWeight: "700" },
-  sub: { color: "#666", marginTop: 2 },
+  h1: { fontSize: 22, fontFamily: font.bold, color: colors.text },
+  sub: { color: colors.textDim, marginTop: 2 },
   statusBadge: {
     paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999,
-    backgroundColor: "#eee",
+    backgroundColor: colors.row,
   },
-  statusComplete: { backgroundColor: "#1f9d3b" },
-  statusText: { fontSize: 12, color: "#555", textTransform: "uppercase", fontWeight: "600" },
-  statusTextComplete: { color: "#fff" },
+  statusComplete: { backgroundColor: colors.yes },
+  statusText: { fontSize: 12, color: colors.textDim, textTransform: "uppercase", fontFamily: font.semibold },
+  statusTextComplete: { color: colors.onAccent },
   card: {
-    backgroundColor: "#fafafa", padding: 14, borderRadius: 10,
-    borderWidth: 1, borderColor: "#eee",
+    backgroundColor: colors.card, padding: 14, borderRadius: 10,
+    borderWidth: 1, borderColor: colors.border,
   },
   cardHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },
-  cardTitle: { fontSize: 16, fontWeight: "600" },
-  editLink: { color: "#0a66ff", fontWeight: "600" },
-  sectionTitle: { fontSize: 13, fontWeight: "600", color: "#444", marginTop: 6, marginBottom: 2 },
+  cardTitle: { fontSize: 16, fontFamily: font.semibold, color: colors.text },
+  editLink: { color: colors.accent, fontFamily: font.semibold },
+  sectionTitle: { fontSize: 13, fontFamily: font.semibold, color: colors.textDim, marginTop: 6, marginBottom: 2 },
   row: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 3 },
-  rowK: { color: "#666", flex: 1 },
-  rowV: { fontWeight: "500", flex: 1, textAlign: "right" },
-  rowVEmpty: { color: "#bbb", fontWeight: "400" },
-  dim: { color: "#888", marginTop: 6, fontSize: 12 },
+  rowK: { color: colors.textDim, flex: 1 },
+  rowV: { fontFamily: font.medium, flex: 1, textAlign: "right", color: colors.text },
+  rowVEmpty: { color: colors.textFaint, fontFamily: font.regular },
+  dim: { color: colors.textDim, marginTop: 6, fontSize: 12 },
   tagRow: {
-    paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth, borderColor: "#e2e2e2",
+    paddingVertical: 10, borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
     flexDirection: "row", justifyContent: "space-between", alignItems: "center",
   },
-  tagName: { textTransform: "capitalize" },
-  tagCount: { color: "#888" },
+  tagName: { textTransform: "capitalize", color: colors.text },
+  tagCount: { color: colors.textDim },
   manageRow: {
     flexDirection: "row", alignItems: "center", gap: 8,
     marginTop: 10, paddingVertical: 10, paddingHorizontal: 12,
-    backgroundColor: "#f0f6ff", borderRadius: 8,
-    borderWidth: 1, borderColor: "#cfe0ff",
+    backgroundColor: colors.accentSoft, borderRadius: 8,
+    borderWidth: 1, borderColor: colors.accent,
   },
-  manageText: { flex: 1, color: "#0a66ff", fontWeight: "600", fontSize: 13 },
+  manageText: { flex: 1, color: colors.accent, fontFamily: font.semibold, fontSize: 13 },
   syncBanner: {
     flexDirection: "row", alignItems: "center", gap: 10,
-    backgroundColor: "#eef9f1",
-    borderColor: "#2dd4a3", borderWidth: 1,
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.accent, borderWidth: 1,
     padding: 12, borderRadius: 10,
   },
-  syncTitle: { fontWeight: "700", color: "#0a3d2c", fontSize: 13 },
-  syncHint: { color: "#3a6b56", fontSize: 11, marginTop: 1, lineHeight: 14 },
-  syncArrow: { fontSize: 22, color: "#0a3d2c" },
+  syncTitle: { fontFamily: font.bold, color: colors.text, fontSize: 13 },
+  syncHint: { color: colors.textDim, fontSize: 11, marginTop: 1, lineHeight: 14 },
+  syncArrow: { fontSize: 22, color: colors.accent },
 
   sigRow: {
     flexDirection: "row", alignItems: "center", gap: 10,
     paddingVertical: 8,
   },
-  sigLabel: { flex: 1, fontWeight: "600", color: "#333" },
-  sigStatus: { color: "#888", fontSize: 13 },
-  sigStatusDone: { color: "#1f9d3b", fontWeight: "600" },
+  sigLabel: { flex: 1, fontFamily: font.semibold, color: colors.text },
+  sigStatus: { color: colors.textDim, fontSize: 13 },
+  sigStatusDone: { color: colors.yes, fontFamily: font.semibold },
 
   autoBtn: {
     flexDirection: "row", alignItems: "center", gap: 12,
-    backgroundColor: "#eef9f1",
-    borderColor: "#2dd4a3", borderWidth: 1,
+    backgroundColor: colors.accentSoft,
+    borderColor: colors.accent, borderWidth: 1,
     paddingHorizontal: 12, paddingVertical: 12, borderRadius: 10,
     marginTop: 6, marginBottom: 4,
   },
   autoBtnEmoji: { fontSize: 22 },
-  autoBtnText: { fontSize: 15, fontWeight: "700", color: "#0a3d2c" },
-  autoBtnHint: { fontSize: 11, color: "#3a6b56", marginTop: 1 },
-  autoBtnArrow: { fontSize: 24, color: "#0a3d2c" },
+  autoBtnText: { fontSize: 15, fontFamily: font.bold, color: colors.text },
+  autoBtnHint: { fontSize: 11, color: colors.textDim, marginTop: 1 },
+  autoBtnArrow: { fontSize: 24, color: colors.accent },
   sectionSubLabel: {
-    fontSize: 11, color: "#888", marginTop: 12, marginBottom: 2,
+    fontSize: 11, color: colors.textDim, marginTop: 12, marginBottom: 2,
     textTransform: "uppercase", letterSpacing: 0.5,
   },
-  cta: { backgroundColor: "#0a66ff", padding: 14, borderRadius: 10, alignItems: "center", marginTop: 8 },
-  ctaText: { color: "#fff", fontWeight: "600", fontSize: 16 },
-  completeBtn: { backgroundColor: "#1f9d3b", padding: 14, borderRadius: 10, alignItems: "center" },
-  completeText: { color: "#fff", fontWeight: "600", fontSize: 16 },
+  cta: { backgroundColor: colors.accent, padding: 14, borderRadius: 10, alignItems: "center", marginTop: 8 },
+  ctaText: { color: colors.onAccent, fontFamily: font.semibold, fontSize: 16 },
+  completeBtn: { backgroundColor: colors.yes, padding: 14, borderRadius: 10, alignItems: "center" },
+  completeText: { color: colors.onAccent, fontFamily: font.semibold, fontSize: 16 },
   suggestBanner: {
     flexDirection: "row", justifyContent: "space-between", alignItems: "center",
-    backgroundColor: "#fffaee", borderColor: "#e1b94a", borderWidth: 1,
+    backgroundColor: colors.accentSoft, borderColor: colors.accent, borderWidth: 1,
     padding: 14, borderRadius: 10,
   },
-  suggestText: { fontWeight: "600", color: "#7a5a0a" },
-  suggestArrow: { fontSize: 22, color: "#7a5a0a" },
+  suggestText: { fontFamily: font.semibold, color: colors.text },
+  suggestArrow: { fontSize: 22, color: colors.accent },
   errorBlock: {
-    marginTop: 10, padding: 10, backgroundColor: "#fdecec",
-    borderRadius: 8, borderWidth: 1, borderColor: "#f0bcbc",
+    marginTop: 10, padding: 10, backgroundColor: colors.dangerFill,
+    borderRadius: 8, borderWidth: 1, borderColor: colors.danger,
   },
-  errorTitle: { color: "#a02020", fontWeight: "600", marginBottom: 4 },
-  errorItem: { color: "#a02020", fontSize: 13 },
+  errorTitle: { color: colors.danger, fontFamily: font.semibold, marginBottom: 4 },
+  errorItem: { color: colors.danger, fontSize: 13 },
 });

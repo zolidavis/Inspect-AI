@@ -7,6 +7,7 @@ import { FieldEditor, getAt, setAt } from "./FieldEditor";
 import type { SectionMeta } from "../lib/form-meta";
 import { isFieldVisible } from "../lib/form-meta";
 import { api } from "../lib/api";
+import { colors, font } from "../lib/theme";
 import type { Inspection } from "@inspect-ai/shared";
 
 /**
@@ -80,7 +81,7 @@ export function FormEditor({
   };
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator /></View>;
+    return <View style={styles.center}><ActivityIndicator color={colors.accent} /></View>;
   }
 
   return (
@@ -113,7 +114,7 @@ export function FormEditor({
           style={[styles.save, saving && { opacity: 0.5 }]}
           disabled={saving} onPress={save}
         >
-          {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveText}>Save</Text>}
+          {saving ? <ActivityIndicator color={colors.onAccent} /> : <Text style={styles.saveText}>Save</Text>}
         </Pressable>
       </View>
     </View>
@@ -121,19 +122,19 @@ export function FormEditor({
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  list: { padding: 12, gap: 10, paddingBottom: 100 },
-  h1: { fontSize: 20, fontWeight: "700", marginBottom: 4 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.bg },
+  list: { padding: 12, gap: 10, paddingBottom: 100, backgroundColor: colors.bg },
+  h1: { fontSize: 20, fontFamily: font.bold, color: colors.text, marginBottom: 4 },
   card: {
-    backgroundColor: "#fafafa", padding: 12, borderRadius: 10,
-    borderWidth: 1, borderColor: "#eee",
+    backgroundColor: colors.card, padding: 12, borderRadius: 14,
+    borderWidth: 1, borderColor: colors.border,
   },
-  sectionTitle: { fontSize: 15, fontWeight: "600", marginBottom: 4 },
+  sectionTitle: { fontSize: 15, fontFamily: font.semibold, color: colors.text, marginBottom: 4 },
   footer: {
     position: "absolute", left: 0, right: 0, bottom: 0,
-    padding: 12, backgroundColor: "#fff",
-    borderTopWidth: StyleSheet.hairlineWidth, borderColor: "#ccc",
+    padding: 12, backgroundColor: colors.bg,
+    borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.border,
   },
-  save: { backgroundColor: "#0a66ff", padding: 14, borderRadius: 8, alignItems: "center" },
-  saveText: { color: "#fff", fontWeight: "600", fontSize: 16 },
+  save: { backgroundColor: colors.accent, padding: 14, borderRadius: 10, alignItems: "center" },
+  saveText: { color: colors.onAccent, fontFamily: font.bold, fontSize: 16 },
 });

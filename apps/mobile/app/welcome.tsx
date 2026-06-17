@@ -23,17 +23,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useProfile } from "../store/profile";
 import { useGoogleSignIn } from "../lib/auth";
-
-const COLORS = {
-  bg: "#0b1014",
-  bgRow: "#161c22",
-  bgElevated: "#10161c",
-  text: "#f0f4f8",
-  textDim: "#8a96a4",
-  textFaint: "#54616f",
-  border: "#222a32",
-  accent: "#2dd4a3",
-};
+import { colors, font } from "../lib/theme";
 
 export default function Welcome() {
   const router = useRouter();
@@ -80,7 +70,7 @@ export default function Welcome() {
         >
           <View style={styles.hero}>
             <View style={styles.heroIcon}>
-              <Ionicons name="home-outline" size={48} color={COLORS.accent} />
+              <Ionicons name="home-outline" size={48} color={colors.accent} />
             </View>
             <Text style={styles.brand}>Inspect AI</Text>
             <Text style={styles.tagline}>
@@ -97,7 +87,7 @@ export default function Welcome() {
             </Text>
 
             <View style={[styles.providerBtn, styles.providerOff]}>
-              <Ionicons name="logo-apple" size={20} color={COLORS.text} style={styles.providerIcon} />
+              <Ionicons name="logo-apple" size={20} color={colors.text} style={styles.providerIcon} />
               <Text style={styles.providerText}>Sign in with Apple</Text>
               <View style={styles.soonBadge}>
                 <Text style={styles.soonBadgeText}>SOON</Text>
@@ -139,7 +129,7 @@ export default function Welcome() {
                 value={name}
                 onChangeText={setName}
                 placeholder="Your name"
-                placeholderTextColor={COLORS.textFaint}
+                placeholderTextColor={colors.textFaint}
                 autoCapitalize="words"
                 autoCorrect={false}
                 editable={!busy}
@@ -164,7 +154,7 @@ export default function Welcome() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
+  root: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: 20, paddingBottom: 40, gap: 16 },
 
   hero: { alignItems: "center", marginTop: 32, marginBottom: 4 },
@@ -172,101 +162,103 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 22,
-    backgroundColor: COLORS.bgElevated,
+    backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
   },
   brand: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: 36,
-    fontWeight: "800",
+    fontFamily: font.extrabold,
     marginTop: 16,
     letterSpacing: -0.5,
   },
   tagline: {
-    color: COLORS.textDim,
+    color: colors.textDim,
     fontSize: 15,
     marginTop: 8,
     textAlign: "center",
     paddingHorizontal: 8,
     lineHeight: 21,
+    fontFamily: font.regular,
   },
 
   card: {
-    backgroundColor: COLORS.bgElevated,
+    backgroundColor: colors.card,
     padding: 16,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   cardTitle: {
-    color: COLORS.text,
-    fontWeight: "700",
+    color: colors.text,
+    fontFamily: font.bold,
     fontSize: 13,
     textTransform: "uppercase",
     letterSpacing: 1,
     marginBottom: 6,
   },
-  cardHint: { color: COLORS.textDim, fontSize: 12, lineHeight: 18, marginBottom: 12 },
+  cardHint: { color: colors.textDim, fontSize: 12, lineHeight: 18, marginBottom: 12, fontFamily: font.regular },
 
   input: {
-    backgroundColor: COLORS.bgRow,
-    color: COLORS.text,
+    backgroundColor: colors.row,
+    color: colors.text,
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     fontSize: 16,
+    fontFamily: font.regular,
   },
 
   providerBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: COLORS.bgRow,
+    backgroundColor: colors.row,
     paddingHorizontal: 14,
     paddingVertical: 14,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   providerOff: { opacity: 0.5 },
   providerIcon: { width: 22, textAlign: "center" },
-  providerText: { color: COLORS.text, fontSize: 14, fontWeight: "600", flex: 1 },
+  providerText: { color: colors.text, fontSize: 14, fontFamily: font.semibold, flex: 1 },
   providerGoogle: { backgroundColor: "#fff", borderColor: "#fff" },
   providerGoogleIcon: {
     color: "#4285F4",
-    fontWeight: "800",
+    fontFamily: font.extrabold,
     fontSize: 18,
   },
   providerGoogleText: { color: "#1f1f1f" },
 
   soonBadge: {
-    backgroundColor: "#f6c34a",
+    backgroundColor: colors.row,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
   },
-  soonBadgeText: { color: "#000", fontWeight: "800", fontSize: 9, letterSpacing: 1 },
+  soonBadgeText: { color: colors.textFaint, fontFamily: font.extrabold, fontSize: 9, letterSpacing: 1 },
 
   guestToggle: { paddingVertical: 10, alignItems: "center" },
   guestToggleText: {
-    color: COLORS.textDim,
+    color: colors.textDim,
     fontSize: 13,
-    fontWeight: "600",
+    fontFamily: font.semibold,
     textDecorationLine: "underline",
   },
   guestBtn: {
     marginTop: 12,
-    backgroundColor: COLORS.bgRow,
+    backgroundColor: colors.row,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: "center",
   },
-  guestBtnText: { color: COLORS.text, fontWeight: "700", fontSize: 14 },
+  guestBtnText: { color: colors.text, fontFamily: font.bold, fontSize: 14 },
 });

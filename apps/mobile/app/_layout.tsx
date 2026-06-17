@@ -1,9 +1,18 @@
 import { useEffect } from "react";
-import { Pressable, StyleSheet, Text } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+} from "@expo-google-fonts/inter";
 import { initialsFor, useProfile } from "../store/profile";
+import { colors, font, navHeader } from "../lib/theme";
 
 /**
  * Small avatar circle in the top-right of the stack header. Tap →
@@ -30,6 +39,14 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
 
+  const [fontsLoaded] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+  });
+
   // One-time profile hydration from AsyncStorage on app start.
   useEffect(() => {
     void hydrate();
@@ -45,12 +62,17 @@ export default function RootLayout() {
     }
   }, [hydrated, signedIn, segments, router]);
 
+  // Hold first paint until Inter is ready so we don't flash system font.
+  if (!fontsLoaded) {
+    return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
+  }
+
   return (
     <SafeAreaProvider>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
       <Stack
         screenOptions={{
-          headerTitleStyle: { fontWeight: "600" },
+          ...navHeader,
           headerRight: () => <HeaderAvatar />,
         }}
       >
@@ -75,10 +97,10 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#2dd4a3",
+    backgroundColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
   },
-  avatarText: { color: "#0b1014", fontWeight: "800", fontSize: 13 },
+  avatarText: { color: colors.onAccent, fontFamily: font.extrabold, fontSize: 13 },
 });

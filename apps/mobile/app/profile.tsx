@@ -25,26 +25,7 @@ import {
   useProfile,
   type InspectorLicenseType,
 } from "../store/profile";
-
-/**
- * Blue palette tuned to the app icon (navy backdrop #1c4280).
- *   accent     — primary brand blue, bright on dark background
- *   accentDeep — saved-button text on lighter chips, also the icon
- *                navy when we need it
- */
-const COLORS = {
-  bg: "#0b1014",
-  bgRow: "#161c22",
-  bgElevated: "#10161c",
-  text: "#f0f4f8",
-  textDim: "#8a96a4",
-  textFaint: "#54616f",
-  border: "#222a32",
-  accent: "#3b82f6",         // bright blue (Tailwind blue-500)
-  accentDeep: "#1c4280",     // icon backdrop navy
-  accentSoft: "#1a2c4a",     // selected-row fill on dark bg
-  danger: "#ef5a5a",
-};
+import { colors, font } from "../lib/theme";
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -168,7 +149,7 @@ export default function ProfileScreen() {
                     : "person-outline"
               }
               size={11}
-              color={COLORS.textDim}
+              color={colors.textDim}
             />
             <Text style={styles.providerBadgeText}>
               {profile?.provider === "google"
@@ -188,7 +169,7 @@ export default function ProfileScreen() {
           value={name}
           onChangeText={setName}
           placeholder="Your name"
-          placeholderTextColor={COLORS.textFaint}
+          placeholderTextColor={colors.textFaint}
           autoCapitalize="words"
           editable={!saving}
         />
@@ -199,7 +180,7 @@ export default function ProfileScreen() {
           value={email}
           onChangeText={setEmail}
           placeholder="you@example.com"
-          placeholderTextColor={COLORS.textFaint}
+          placeholderTextColor={colors.textFaint}
           autoCapitalize="none"
           keyboardType="email-address"
           editable={!saving && !isGoogleAccount}
@@ -223,7 +204,7 @@ export default function ProfileScreen() {
           value={inspectorName}
           onChangeText={setInspectorName}
           placeholder="As it appears on your FL license"
-          placeholderTextColor={COLORS.textFaint}
+          placeholderTextColor={colors.textFaint}
           autoCapitalize="words"
           editable={!saving}
         />
@@ -234,7 +215,7 @@ export default function ProfileScreen() {
           value={inspectorLicense}
           onChangeText={setInspectorLicense}
           placeholder="e.g. HI-12345"
-          placeholderTextColor={COLORS.textFaint}
+          placeholderTextColor={colors.textFaint}
           autoCapitalize="characters"
           autoCorrect={false}
           editable={!saving}
@@ -246,7 +227,7 @@ export default function ProfileScreen() {
           value={inspectorCompany}
           onChangeText={setInspectorCompany}
           placeholder="Company name"
-          placeholderTextColor={COLORS.textFaint}
+          placeholderTextColor={colors.textFaint}
           autoCapitalize="words"
           editable={!saving}
         />
@@ -257,7 +238,7 @@ export default function ProfileScreen() {
           value={inspectorPhone}
           onChangeText={setInspectorPhone}
           placeholder="(555) 555-5555"
-          placeholderTextColor={COLORS.textFaint}
+          placeholderTextColor={colors.textFaint}
           keyboardType="phone-pad"
           editable={!saving}
         />
@@ -268,7 +249,7 @@ export default function ProfileScreen() {
           value={inspectorEmail}
           onChangeText={setInspectorEmail}
           placeholder="you@inspectco.com"
-          placeholderTextColor={COLORS.textFaint}
+          placeholderTextColor={colors.textFaint}
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
@@ -324,7 +305,7 @@ export default function ProfileScreen() {
           </View>
         ) : (
           <View style={styles.logoEmpty}>
-            <Ionicons name="image-outline" size={28} color={COLORS.textFaint} />
+            <Ionicons name="image-outline" size={28} color={colors.textFaint} />
             <Text style={styles.sigEmptyText}>No logo on file</Text>
           </View>
         )}
@@ -335,7 +316,7 @@ export default function ProfileScreen() {
             disabled={pickingLogo}
             style={[styles.sigEditBtn, { flex: 1 }, pickingLogo && { opacity: 0.5 }]}
           >
-            <Ionicons name="cloud-upload-outline" size={16} color={COLORS.accent} />
+            <Ionicons name="cloud-upload-outline" size={16} color={colors.accent} />
             <Text style={styles.sigEditBtnText}>
               {businessLogoPng ? "Replace logo" : "Upload logo"}
             </Text>
@@ -343,10 +324,10 @@ export default function ProfileScreen() {
           {businessLogoPng ? (
             <Pressable
               onPress={clearLogo}
-              style={[styles.sigEditBtn, { width: 110, borderColor: COLORS.danger }]}
+              style={[styles.sigEditBtn, { width: 110, borderColor: colors.danger }]}
             >
-              <Ionicons name="trash-outline" size={16} color={COLORS.danger} />
-              <Text style={[styles.sigEditBtnText, { color: COLORS.danger }]}>Remove</Text>
+              <Ionicons name="trash-outline" size={16} color={colors.danger} />
+              <Text style={[styles.sigEditBtnText, { color: colors.danger }]}>Remove</Text>
             </Pressable>
           ) : null}
         </View>
@@ -369,7 +350,7 @@ export default function ProfileScreen() {
           </View>
         ) : (
           <View style={styles.sigEmpty}>
-            <Ionicons name="create-outline" size={26} color={COLORS.textFaint} />
+            <Ionicons name="create-outline" size={26} color={colors.textFaint} />
             <Text style={styles.sigEmptyText}>No signature on file</Text>
           </View>
         )}
@@ -378,7 +359,7 @@ export default function ProfileScreen() {
           onPress={() => setSigPadOpen(true)}
           style={styles.sigEditBtn}
         >
-          <Ionicons name="create-outline" size={16} color={COLORS.accent} />
+          <Ionicons name="create-outline" size={16} color={colors.accent} />
           <Text style={styles.sigEditBtnText}>
             {inspectorSignaturePng ? "Redraw signature" : "Tap to sign"}
           </Text>
@@ -403,7 +384,7 @@ export default function ProfileScreen() {
       />
 
       <Pressable onPress={doSignOut} style={styles.signOutBtn}>
-        <Ionicons name="log-out-outline" size={18} color={COLORS.danger} />
+        <Ionicons name="log-out-outline" size={18} color={colors.danger} />
         <Text style={styles.signOutText}>Sign out</Text>
       </Pressable>
     </ScrollView>
@@ -411,7 +392,7 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.bg },
+  root: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: 16, gap: 16 },
 
   heroRow: { flexDirection: "row", alignItems: "center", gap: 16 },
@@ -419,13 +400,13 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarText: { color: "#ffffff", fontSize: 24, fontWeight: "800" },
-  heroName: { color: COLORS.text, fontSize: 18, fontWeight: "700" },
-  heroSub: { color: COLORS.textDim, fontSize: 13, marginTop: 2 },
+  avatarText: { color: colors.onAccent, fontSize: 24, fontFamily: font.extrabold },
+  heroName: { color: colors.text, fontSize: 18, fontFamily: font.bold },
+  heroSub: { color: colors.textDim, fontSize: 13, marginTop: 2 },
   providerBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -433,40 +414,41 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   providerBadgeText: {
-    color: COLORS.textDim,
+    color: colors.textDim,
     fontSize: 11,
     textTransform: "uppercase",
     letterSpacing: 0.5,
-    fontWeight: "600",
+    fontFamily: font.semibold,
   },
 
   card: {
-    backgroundColor: COLORS.bgElevated,
+    backgroundColor: colors.card,
     padding: 16,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   cardTitle: {
-    color: COLORS.text,
-    fontWeight: "700",
+    color: colors.text,
+    fontFamily: font.bold,
     fontSize: 11,
     textTransform: "uppercase",
     letterSpacing: 1,
     marginBottom: 6,
   },
   input: {
-    backgroundColor: COLORS.bgRow,
-    color: COLORS.text,
+    backgroundColor: colors.row,
+    color: colors.text,
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     fontSize: 16,
+    fontFamily: font.regular,
   },
   inputDisabled: { opacity: 0.6 },
-  hint: { color: COLORS.textFaint, fontSize: 11, marginTop: 4, marginBottom: 0 },
+  hint: { color: colors.textFaint, fontSize: 11, marginTop: 4, marginBottom: 0 },
 
   licenseRow: {
     flexDirection: "row",
@@ -474,43 +456,43 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: COLORS.bgRow,
+    backgroundColor: colors.row,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   licenseRowOn: {
-    borderColor: COLORS.accent,
-    backgroundColor: COLORS.accentSoft,
+    borderColor: colors.accent,
+    backgroundColor: colors.accentSoft,
   },
   licenseDot: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: COLORS.textFaint,
+    borderColor: colors.textFaint,
     alignItems: "center",
     justifyContent: "center",
   },
   licenseDotOn: {
-    borderColor: COLORS.accent,
+    borderColor: colors.accent,
   },
   licenseDotInner: {
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
   },
   licenseLabel: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: 14,
-    fontWeight: "600",
+    fontFamily: font.semibold,
   },
   licenseLabelOn: {
-    color: COLORS.accent,
+    color: colors.accent,
   },
   licenseSub: {
-    color: COLORS.textDim,
+    color: colors.textDim,
     fontSize: 11,
     marginTop: 2,
   },
@@ -521,7 +503,7 @@ const styles = StyleSheet.create({
     padding: 8,
     marginTop: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     height: 110,
     alignItems: "center",
     justifyContent: "center",
@@ -533,7 +515,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginTop: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     height: 140,
     alignItems: "center",
     justifyContent: "center",
@@ -544,26 +526,26 @@ const styles = StyleSheet.create({
     height: 140,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     borderStyle: "dashed",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    backgroundColor: COLORS.bgRow,
+    backgroundColor: colors.row,
   },
   sigEmpty: {
     marginTop: 10,
     height: 110,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     borderStyle: "dashed",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    backgroundColor: COLORS.bgRow,
+    backgroundColor: colors.row,
   },
-  sigEmptyText: { color: COLORS.textFaint, fontSize: 12 },
+  sigEmptyText: { color: colors.textFaint, fontSize: 12 },
   sigEditBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -573,17 +555,17 @@ const styles = StyleSheet.create({
     marginTop: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: COLORS.accent,
+    borderColor: colors.accent,
   },
-  sigEditBtnText: { color: COLORS.accent, fontWeight: "700", fontSize: 13 },
+  sigEditBtnText: { color: colors.accent, fontFamily: font.bold, fontSize: 13 },
 
   saveBtn: {
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: "center",
   },
-  saveBtnText: { color: "#ffffff", fontWeight: "800", fontSize: 14 },
+  saveBtnText: { color: colors.onAccent, fontFamily: font.extrabold, fontSize: 14 },
 
   signOutBtn: {
     flexDirection: "row",
@@ -592,5 +574,5 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 14,
   },
-  signOutText: { color: COLORS.danger, fontWeight: "700", fontSize: 14 },
+  signOutText: { color: colors.danger, fontFamily: font.bold, fontSize: 14 },
 });
