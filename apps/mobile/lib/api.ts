@@ -105,8 +105,17 @@ export const api = {
     return res.json();
   },
 
+  // Cache-bust param (`v`) forces the browser/CDN to re-fetch a freshly
+  // generated PDF after the inspection was edited, instead of replaying a
+  // cached copy. The server also sends Cache-Control: no-store.
+  listPhotos: (inspectionId: string) =>
+    req<Photo[]>(`/photos/inspection/${inspectionId}`),
+
+  deletePhoto: (photoId: string) =>
+    req<{ ok: boolean }>(`/photos/${photoId}`, { method: "DELETE" }),
+
   pdfUrl: (inspectionId: string, type: InspectionType) =>
-    `${BASE}/pdf/${inspectionId}?type=${type}`,
+    `${BASE}/pdf/${inspectionId}?type=${type}&v=${Date.now()}`,
 
   getSuggestions: (inspectionId: string) =>
     req<{ suggestions: Suggestion[] }>(`/inspections/${inspectionId}/suggestions`),

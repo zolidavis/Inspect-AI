@@ -57,6 +57,9 @@ pdf.get("/:inspectionId", async (c) => {
     "Content-Disposition",
     `inline; filename="inspection-${inspection.id}.pdf"`,
   );
+  // Never cache — the PDF is regenerated from live data on every request,
+  // so a cached copy would show stale form values after an edit.
+  c.header("Cache-Control", "no-store, max-age=0, must-revalidate");
   return c.body(bytes as unknown as ArrayBuffer);
 });
 

@@ -149,6 +149,7 @@ export default function InspectionDetail() {
             <Text style={styles.editLink}>Edit</Text>
           </Pressable>
         </View>
+        <Row k="Inspection date" v={fmt(insp.inspectedOn ? insp.inspectedOn.slice(0, 10) : undefined)} />
         <Row k="Owner" v={insp.property?.ownerName ?? "—"} />
         <Row k="Email" v={fmt(insp.ownerEmail)} />
         <Row k="Phone" v={fmt(insp.ownerPhone)} />
@@ -317,6 +318,18 @@ export default function InspectionDetail() {
           </Pressable>
         </Link>
 
+        {insp.photos.length > 0 && (
+          <Link href={`/inspection/${insp.id}/photos`} asChild>
+            <Pressable style={styles.manageRow}>
+              <Ionicons name="images-outline" size={16} color="#0a66ff" />
+              <Text style={styles.manageText}>
+                View / edit {insp.photos.length} photo{insp.photos.length === 1 ? "" : "s"}
+              </Text>
+              <Text style={styles.tagCount}>›</Text>
+            </Pressable>
+          </Link>
+        )}
+
         <Text style={styles.sectionSubLabel}>Or pick a section to shoot manually:</Text>
         {tags.map((tag) => {
           const count = insp.photos.filter((p) => p.tag === tag).length;
@@ -450,6 +463,13 @@ const styles = StyleSheet.create({
   },
   tagName: { textTransform: "capitalize" },
   tagCount: { color: "#888" },
+  manageRow: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    marginTop: 10, paddingVertical: 10, paddingHorizontal: 12,
+    backgroundColor: "#f0f6ff", borderRadius: 8,
+    borderWidth: 1, borderColor: "#cfe0ff",
+  },
+  manageText: { flex: 1, color: "#0a66ff", fontWeight: "600", fontSize: 13 },
   syncBanner: {
     flexDirection: "row", alignItems: "center", gap: 10,
     backgroundColor: "#eef9f1",

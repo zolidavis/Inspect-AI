@@ -1,5 +1,5 @@
 import {
-  Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View,
+  Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from "react-native";
 import type { FieldMeta } from "../lib/form-meta";
 
@@ -40,12 +40,48 @@ export function FieldEditor({
       </View>
 
       {field.kind === "string" && (
-        <TextInput
-          style={[styles.input, error && styles.inputError]}
-          placeholder={field.placeholder}
-          value={typeof value === "string" ? value : ""}
-          onChangeText={(t) => onChange(t === "" ? undefined : t)}
-        />
+        <>
+          <TextInput
+            style={[styles.input, error && styles.inputError]}
+            placeholder={field.placeholder}
+            value={typeof value === "string" ? value : ""}
+            onChangeText={(t) => onChange(t === "" ? undefined : t)}
+          />
+          {field.suggestions && field.suggestions.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.chipsRow}
+              keyboardShouldPersistTaps="handled"
+              style={{ marginTop: 6 }}
+            >
+              {field.suggestions.map((s) => {
+                const on = value === s.value;
+                return (
+                  <Pressable
+                    key={s.value}
+                    onPress={() => onChange(on ? undefined : s.value)}
+                    style={[
+                      styles.chip,
+                      s.danger && styles.chipDanger,
+                      on && (s.danger ? styles.chipDangerOn : styles.chipOn),
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.chipText,
+                        s.danger && styles.chipDangerText,
+                        on && styles.chipTextOn,
+                      ]}
+                    >
+                      {s.danger ? `⚠ ${s.value}` : s.value}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          )}
+        </>
       )}
 
       {field.kind === "integer" && (
@@ -62,10 +98,21 @@ export function FieldEditor({
       )}
 
       {field.kind === "boolean" && (
-        <Switch
-          value={value === true}
-          onValueChange={(b) => onChange(b)}
-        />
+        <View style={styles.ynRow}>
+          {([["Yes", true], ["No", false]] as const).map(([label, val]) => {
+            const on = value === val;
+            return (
+              <Pressable
+                key={label}
+                // Tap the active one again to clear back to "unanswered".
+                onPress={() => onChange(on ? undefined : val)}
+                style={[styles.ynBtn, on && (val ? styles.ynYesOn : styles.ynNoOn)]}
+              >
+                <Text style={[styles.ynText, on && styles.ynTextOn]}>{label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
       )}
 
       {field.kind === "enum" && (
@@ -106,4 +153,17 @@ const styles = StyleSheet.create({
   chipOn: { backgroundColor: "#0a66ff", borderColor: "#0a66ff" },
   chipText: { color: "#333", fontSize: 13 },
   chipTextOn: { color: "#fff", fontWeight: "600" },
+  chipDanger: { borderColor: "#e0a3a3", backgroundColor: "#fff5f5" },
+  chipDangerOn: { backgroundColor: "#c0392b", borderColor: "#c0392b" },
+  chipDangerText: { color: "#b3261e" },
+  // Yes/No segmented control
+  ynRow: { flexDirection: "row", gap: 8 },
+  ynBtn: {
+    flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: "center",
+    borderWidth: 1, borderColor: "#bbb", backgroundColor: "#fff",
+  },
+  ynYesOn: { backgroundColor: "#1e9e63", borderColor: "#1e9e63" },
+  ynNoOn: { backgroundColor: "#555", borderColor: "#555" },
+  ynText: { color: "#333", fontSize: 14, fontWeight: "600" },
+  ynTextOn: { color: "#fff" },
 });

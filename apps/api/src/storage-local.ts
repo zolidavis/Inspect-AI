@@ -6,7 +6,7 @@
  * replaces this entire module with a stub (`scripts/build-vercel.mjs`
  * → esbuild plugin). At runtime in Node, this file loads normally.
  */
-import { mkdir, writeFile, readFile, stat } from "node:fs/promises";
+import { mkdir, writeFile, readFile, stat, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import type { Storage } from "./storage.js";
 
@@ -40,6 +40,13 @@ export function createLocalStorage(): Storage {
       await writeFile(target, bytes);
     },
     get: readImpl,
+    async delete(key) {
+      try {
+        await unlink(join(LOCAL_UPLOAD_DIR, key));
+      } catch {
+        /* already gone — ignore */
+      }
+    },
     async signedGetUrl(key) {
       return `${publicBaseUrl()}/photos/local/${encodeURIComponent(key)}`;
     },

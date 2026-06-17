@@ -18,11 +18,31 @@ export type EnumOption = { value: string; label: string };
 export type ShowIf = { path: string; equals: string | string[] };
 
 type Base = { showIf?: ShowIf };
+/** Quick-fill suggestion chip for a string field. `danger` styles it red. */
+export type Suggestion = { value: string; danger?: boolean };
 export type FieldMeta =
-  | (Base & { kind: "string"; path: string; label: string; placeholder?: string })
+  | (Base & { kind: "string"; path: string; label: string; placeholder?: string; suggestions?: Suggestion[] })
   | (Base & { kind: "integer"; path: string; label: string; min?: number; max?: number })
   | (Base & { kind: "boolean"; path: string; label: string })
   | (Base & { kind: "enum"; path: string; label: string; options: EnumOption[] });
+
+/**
+ * 10 most common residential electrical panel brands. The four flagged
+ * `danger` are the notorious fire-hazard / non-insurable makes inspectors
+ * must call out (Federal Pacific Stab-Lok, Zinsco, Sylvania-Zinsco, Challenger).
+ */
+export const PANEL_BRANDS: Suggestion[] = [
+  { value: "Square D" },
+  { value: "Eaton / Cutler-Hammer" },
+  { value: "General Electric (GE)" },
+  { value: "Siemens" },
+  { value: "Murray" },
+  { value: "Westinghouse" },
+  { value: "Federal Pacific (Stab-Lok)", danger: true },
+  { value: "Zinsco", danger: true },
+  { value: "Sylvania", danger: true },
+  { value: "Challenger", danger: true },
+];
 
 /** Helper used by FormEditor to decide whether to render a field. */
 export function isFieldVisible(
@@ -148,11 +168,11 @@ export const FOUR_POINT_SECTIONS: SectionMeta[] = [
       // Main panel supplemental
       { kind: "integer", path: "electrical.mainPanel.panelAge",        label: "Main panel age (years)", min: 0, max: 150 },
       { kind: "integer", path: "electrical.mainPanel.yearLastUpdated", label: "Main panel year last updated", min: 1900, max: 2100 },
-      { kind: "string",  path: "electrical.mainPanel.brandModel",      label: "Main panel brand/model", placeholder: "Square D, Eaton, …" },
+      { kind: "string",  path: "electrical.mainPanel.brandModel",      label: "Main panel brand/model", placeholder: "Square D, Eaton, …", suggestions: PANEL_BRANDS },
       // Second panel supplemental
       { kind: "integer", path: "electrical.secondPanel.panelAge",        label: "Second panel age (years)", min: 0, max: 150 },
       { kind: "integer", path: "electrical.secondPanel.yearLastUpdated", label: "Second panel year last updated", min: 1900, max: 2100 },
-      { kind: "string",  path: "electrical.secondPanel.brandModel",      label: "Second panel brand/model", placeholder: "Optional" },
+      { kind: "string",  path: "electrical.secondPanel.brandModel",      label: "Second panel brand/model", placeholder: "Optional", suggestions: PANEL_BRANDS },
       // Wiring Type(s) — check all that apply
       { kind: "boolean", path: "electrical.wiringTypes.copper",                     label: "Wiring: Copper" },
       { kind: "boolean", path: "electrical.wiringTypes.copperCladAl",               label: "Wiring: Copper Clad AL" },

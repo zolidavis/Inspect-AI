@@ -64,6 +64,7 @@ export default function RootLayout() {
         <Stack.Screen name="inspection/[id]/edit/four-point" options={{ title: "Edit 4-Point" }} />
         <Stack.Screen name="inspection/[id]/edit/wind-mit" options={{ title: "Edit Wind Mit" }} />
         <Stack.Screen name="inspection/[id]/report" options={{ title: "Report" }} />
+        <Stack.Screen name="inspection/[id]/photos" options={{ title: "Manage Photos" }} />
       </Stack>
     </SafeAreaProvider>
   );

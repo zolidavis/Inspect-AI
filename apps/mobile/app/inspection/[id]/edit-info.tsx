@@ -64,6 +64,7 @@ export default function EditInfo() {
   const [ownerEmail, setOwnerEmail] = useState("");
   const [ownerPhone, setOwnerPhone] = useState("");
   const [numberOfStories, setNumberOfStories] = useState("");
+  const [inspectionDate, setInspectionDate] = useState(""); // YYYY-MM-DD
   const [photoReqs, setPhotoReqs] = useState<PhotoRequirements>({});
 
   useEffect(() => {
@@ -81,6 +82,7 @@ export default function EditInfo() {
         setNumberOfStories(
           i.property?.numberOfStories != null ? String(i.property.numberOfStories) : "",
         );
+        setInspectionDate(i.inspectedOn ? i.inspectedOn.slice(0, 10) : "");
         setPhotoReqs(i.photoRequirements ?? {});
       } catch (e: any) {
         Alert.alert("Failed to load", e.message);
@@ -103,6 +105,11 @@ export default function EditInfo() {
       Alert.alert("Address required", "Line 1, City, and ZIP must be filled.");
       return;
     }
+    const dateStr = inspectionDate.trim();
+    if (dateStr && !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      Alert.alert("Invalid date", "Use YYYY-MM-DD, e.g. 2026-06-17.");
+      return;
+    }
     setSaving(true);
     try {
       const patch: Partial<Inspection> = {
@@ -115,6 +122,7 @@ export default function EditInfo() {
         ownerEmail: ownerEmail.trim() || undefined,
         ownerPhone: ownerPhone.trim() || undefined,
         photoRequirements: photoReqs,
+        ...(dateStr ? { inspectedOn: `${dateStr}T00:00:00.000Z` } : {}),
       };
       const storiesNum = numberOfStories.trim()
         ? Number.parseInt(numberOfStories.trim(), 10)
@@ -213,18 +221,34 @@ export default function EditInfo() {
           </View>
         </View>
 
-        <Text style={[styles.label, { marginTop: 14 }]}># of stories</Text>
-        <TextInput
-          style={[styles.input, { maxWidth: 120 }]}
-          value={numberOfStories}
-          onChangeText={(v) => setNumberOfStories(v.replace(/[^0-9]/g, ""))}
-          placeholder="1"
-          placeholderTextColor={COLORS.textFaint}
-          keyboardType="number-pad"
-          maxLength={2}
-        />
+        <View style={{ flexDirection: "row", gap: 10 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.label, { marginTop: 14 }]}># of stories</Text>
+            <TextInput
+              style={[styles.input, { maxWidth: 120 }]}
+              value={numberOfStories}
+              onChangeText={(v) => setNumberOfStories(v.replace(/[^0-9]/g, ""))}
+              placeholder="1"
+              placeholderTextColor={COLORS.textFaint}
+              keyboardType="number-pad"
+              maxLength={2}
+            />
+          </View>
+          <View style={{ flex: 1.4 }}>
+            <Text style={[styles.label, { marginTop: 14 }]}>Inspection date</Text>
+            <TextInput
+              style={styles.input}
+              value={inspectionDate}
+              onChangeText={(v) => setInspectionDate(v.replace(/[^0-9-]/g, ""))}
+              placeholder="2026-06-17"
+              placeholderTextColor={COLORS.textFaint}
+              keyboardType="numbers-and-punctuation"
+              maxLength={10}
+            />
+          </View>
+        </View>
         <Text style={styles.hint}>
-          Stamped on the OIR-B1-1802 wind mitigation form.
+          # of stories stamps on the OIR-B1-1802; inspection date stamps on both report PDFs.
         </Text>
       </View>
 

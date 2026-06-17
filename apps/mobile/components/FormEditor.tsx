@@ -33,7 +33,26 @@ export function FormEditor({
       setLoading(true);
       try {
         const i = await api.getInspection(inspectionId);
-        setState((i as any)[formKey] ?? {});
+        let s = (i as any)[formKey] ?? {};
+        // Default electrical panel age to the home's age (panels are usually
+        // original unless updated). Only pre-fill when the field is empty so
+        // a saved value is never clobbered. Second panel only if it's in use.
+        if (formKey === "fourPoint") {
+          const yb = i.property?.yearBuilt;
+          const homeAge = yb ? new Date().getFullYear() - yb : null;
+          if (homeAge != null && homeAge >= 0 && homeAge <= 150) {
+            const main = s.electrical?.mainPanel ?? {};
+            if (main.panelAge == null) {
+              s = setAt(s, "electrical.mainPanel.panelAge", homeAge);
+            }
+            const second = s.electrical?.secondPanel ?? {};
+            const secondInUse = Object.keys(second).length > 0;
+            if (secondInUse && second.panelAge == null) {
+              s = setAt(s, "electrical.secondPanel.panelAge", homeAge);
+            }
+          }
+        }
+        setState(s);
       } finally { setLoading(false); }
     })();
   }, [inspectionId, formKey]);

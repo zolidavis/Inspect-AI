@@ -22,6 +22,8 @@ export interface Storage {
   put(key: string, bytes: Uint8Array, opts?: PutOptions): Promise<void>;
   /** Fetch raw bytes (for Claude vision input, etc.). */
   get(key: string): Promise<{ bytes: Uint8Array; contentType: string }>;
+  /** Remove an object. No-op if it doesn't exist. */
+  delete(key: string): Promise<void>;
   signedGetUrl(key: string, ttlSeconds?: number): Promise<string>;
   /** Local backend only — used by the dev pass-through route. */
   readLocal?(key: string): Promise<{ bytes: Uint8Array; contentType: string }>;
@@ -70,6 +72,13 @@ function createR2Storage(): Storage {
       const contentType = res.headers.get("content-type") ?? "application/octet-stream";
       return { bytes, contentType };
     },
+    async delete(key) {
+      const res = await client.fetch(`${base}/${encodeURI(key)}`, { method: "DELETE" });
+      // R2 returns 204 on delete, 404 if already gone — both are fine.
+      if (!res.ok && res.status !== 404) {
+        throw new Error(`r2.delete failed ${res.status} for ${key}`);
+      }
+    },
     async signedGetUrl(key, ttlSeconds = 3600) {
       const signed = await client.sign(`${base}/${encodeURI(key)}`, {
         method: "GET",
@@ -115,6 +124,7 @@ function makeLazyLocalStorage(): Storage {
     backend: "local",
     async put(key, bytes, opts) { return (await load()).put(key, bytes, opts); },
     async get(key) { return (await load()).get(key); },
+    async delete(key) { return (await load()).delete(key); },
     async signedGetUrl(key, ttl) { return (await load()).signedGetUrl(key, ttl); },
     async readLocal(key) { return (await load()).readLocal!(key); },
   };

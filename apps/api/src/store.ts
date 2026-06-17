@@ -168,6 +168,14 @@ class Store {
       .onConflictDoUpdate({ target: photosTable.id, set: row });
     return p;
   }
+
+  async deletePhoto(id: string): Promise<boolean> {
+    const result = await db
+      .delete(photosTable)
+      .where(eq(photosTable.id, id))
+      .returning({ id: photosTable.id });
+    return result.length > 0;
+  }
 }
 
 export const store = new Store();

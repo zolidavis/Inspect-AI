@@ -69,6 +69,24 @@ photos.get("/inspection/:id", async (c) => {
 });
 
 /**
+ * DELETE /photos/:id
+ * Removes the photo from storage (best-effort) and the DB.
+ */
+photos.delete("/:id", async (c) => {
+  const id = c.req.param("id");
+  const photo = await store.getPhoto(id);
+  if (!photo) return c.json({ error: "not_found" }, 404);
+  try {
+    await storage.delete(photo.storageKey);
+  } catch (err) {
+    // Storage delete is best-effort — don't block the DB removal on it.
+    console.error("[photos] storage.delete failed", err);
+  }
+  const ok = await store.deletePhoto(id);
+  return c.json({ ok });
+});
+
+/**
  * GET /photos/local/:key
  * Dev-only pass-through that serves a file from the local-disk backend.
  * R2 mode skips this route — clients hit Cloudflare directly via the
