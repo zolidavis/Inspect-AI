@@ -91,9 +91,23 @@ export const RoofDeckAttachmentSchema = z.enum([
 ]);
 
 // 6. Roof to Wall Attachment (was Q4 in 01/12, renumbered in 04/26).
-// New form added "H. Connection(s) not installed as intended".
+//
+// The 04/26 revision RESTRUCTURED this section. The printed form now has
+// exactly these checkboxes: "A. Toenails" (with three sub-bullets a1/a2/a3)
+// and the three "Minimal conditions to qualify for categories B, C, or D"
+// numbered 1/2/3. There are NO separate B/C/D/E/F/G/H answer rows anymore —
+// the insurer derives the B/C/D category from which numbered condition is
+// met. So the inspector's single answer is one of: A, 1, 2, or 3.
+//
+// Legacy b_clips/c_single_wraps/d_double_wraps/e_structural/etc. are kept in
+// the enum (accepted-but-not-offered) so previously-saved inspections still
+// validate; a one-time data migration maps them to m1/m2/m3.
 export const RoofToWallSchema = z.enum([
   "a_toe_nails",
+  "m1",
+  "m2",
+  "m3",
+  // legacy (01/12 form) — accepted for backward compatibility, not shown:
   "b_clips",
   "c_single_wraps",
   "d_double_wraps",
@@ -103,10 +117,10 @@ export const RoofToWallSchema = z.enum([
   "h_not_installed",
 ]);
 
-/** A.1/A.2/A.3 — which qualifying condition for option A. */
+/** A.1/A.2/A.3 — which qualifying condition for option A (toenails). */
 export const RoofToWallAQualifierSchema = z.enum(["a1", "a2", "a3"]);
 
-/** Shared 1/2/3 minimal-condition picker for options B / C / D. */
+/** @deprecated 04/26 folds the 1/2/3 conditions into RoofToWallSchema. */
 export const RoofToWallMinimalConditionSchema = z.enum(["m1", "m2", "m3"]);
 
 // 7. Roof Geometry (was Q5 in 01/12)
@@ -194,10 +208,11 @@ export const WindMitFormSchema = z.object({
   // 5+. (the 04/26 form re-shuffled the numbers but the underlying
   // classifications still apply)
   roofDeckAttachment: RoofDeckAttachmentSchema,
+  // 04/26: answer is one of A (toenails) / m1 / m2 / m3 directly.
   roofToWallAttachment: RoofToWallSchema,
   /** A. Toenails: which of A.1/A.2/A.3 qualifying condition applies. */
   roofToWallAQualifier: RoofToWallAQualifierSchema.optional(),
-  /** B/C/D shared minimal-condition picker (1/2/3). */
+  /** @deprecated kept so legacy data validates; superseded by m1/m2/m3 above. */
   roofToWallMinimalCondition: RoofToWallMinimalConditionSchema.optional(),
 
   // 7. Roof Geometry. A. Hip needs perimeter lengths; B. Flat needs areas.

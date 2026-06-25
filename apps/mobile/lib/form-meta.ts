@@ -449,37 +449,25 @@ export const WIND_MIT_SECTIONS: SectionMeta[] = [
   {
     title: "6. Roof-to-Wall Attachment",
     fields: [
+      // 04/26 form: the only checkboxes are A (toenails) and the three
+      // "minimal conditions" 1/2/3. Pick the WEAKEST directly.
       {
         kind: "enum", path: "roofToWallAttachment", label: "WEAKEST connection",
         options: [
-          { value: "a_toe_nails",     label: "A. Toenails" },
-          { value: "b_clips",         label: "B. Clips" },
-          { value: "c_single_wraps",  label: "C. Single wraps" },
-          { value: "d_double_wraps",  label: "D. Double wraps" },
-          { value: "e_structural",    label: "E. Structural (anchor bolts to concrete)" },
-          { value: "f_other",         label: "F. Other" },
-          { value: "g_unknown",       label: "G. Unknown or unidentified" },
-          { value: "h_not_installed", label: "H. Connection(s) not installed as intended" },
+          { value: "a_toe_nails", label: "A. Toenails" },
+          { value: "m1", label: "1. Metal connectors, ≥ 3 nails to truss/rafter + top plate, ≤ ½\" gap, no corrosion" },
+          { value: "m2", label: "2. Single strap wrapping over truss/rafter, ≥ 3 nails each side, no corrosion" },
+          { value: "m3", label: "3. Purpose-made connector / structural fastener per manufacturer spec" },
         ],
       },
       // ── A. Toenails qualifying condition (shows only if A picked) ─────
       {
-        kind: "enum", path: "roofToWallAQualifier", label: "A. Toenails — qualifying condition",
+        kind: "enum", path: "roofToWallAQualifier", label: "A. Toenails — which applies",
         showIf: { path: "roofToWallAttachment", equals: "a_toe_nails" },
         options: [
-          { value: "a1", label: "A1. Anchored to top plate w/ nails at angle through truss" },
-          { value: "a2", label: "A2. Metal connectors/fasteners not meeting B/C/D requirements" },
+          { value: "a1", label: "A1. Anchored to top plate w/ nails at an angle through truss/rafter" },
+          { value: "a2", label: "A2. Metal connectors/fasteners not installed as intended / don't meet 1, 2 or 3" },
           { value: "a3", label: "A3. Other documented method ≥ 185 lbs uplift" },
-        ],
-      },
-      // ── B/C/D minimal conditions (shared 1/2/3 set) ───────────────────
-      {
-        kind: "enum", path: "roofToWallMinimalCondition", label: "B/C/D minimal condition",
-        showIf: { path: "roofToWallAttachment", equals: ["b_clips", "c_single_wraps", "d_double_wraps"] },
-        options: [
-          { value: "m1", label: "1. ≥ 3 nails to truss/rafter, attached to top plate, ≤ ½\" gap, no corrosion" },
-          { value: "m2", label: "2. Single strap wrapping over truss/rafter, ≥ 3 nails each side, no corrosion" },
-          { value: "m3", label: "3. Purpose-made connectors/fasteners per manufacturer spec" },
         ],
       },
     ],

@@ -80,12 +80,15 @@ function createR2Storage(): Storage {
       }
     },
     async signedGetUrl(key, ttlSeconds = 3600) {
-      const signed = await client.sign(`${base}/${encodeURI(key)}`, {
+      // X-Amz-Expires MUST be a QUERY parameter for a presigned URL — never
+      // a signed header. Passing it via `headers` made aws4fetch add an
+      // empty `x-amz-expires` to SignedHeaders, so R2's reconstructed
+      // canonical request never matched → SignatureDoesNotMatch (403).
+      const url = new URL(`${base}/${encodeURI(key)}`);
+      url.searchParams.set("X-Amz-Expires", String(ttlSeconds));
+      const signed = await client.sign(url, {
         method: "GET",
         aws: { signQuery: true, allHeaders: false },
-        headers: {
-          "X-Amz-Expires": String(ttlSeconds),
-        },
       });
       return signed.url;
     },

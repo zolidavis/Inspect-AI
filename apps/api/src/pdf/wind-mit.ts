@@ -282,44 +282,37 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
     checkBox(out, 1, 36, Q5_Y[wm.roofDeckAttachment]!);
   }
 
-  // ── PAGE 2/3 — Q6 Roof-to-Wall Attachment ─────────────────────────────
-  // Main category boxes A (toenails) on p2, B-I on p3.
-  type RtwBox = { page: number; y: number };
-  const Q6_MAIN: Record<string, RtwBox> = {
-    a_toe_nails:      { page: 1, y: 464 },  // page 2
-    b_clips:          { page: 2, y:  62 },  // page 3
-    c_single_wraps:   { page: 2, y: 154 },
-    d_double_wraps:   { page: 2, y: 223 },
-    e_structural:     { page: 2, y: 315 },
-    f_other:          { page: 2, y: 326 },
-    g_unknown:        { page: 2, y: 338 },
-    h_not_installed:  { page: 2, y: 361 },  // I. Connection(s) not installed
+  // ── PAGE 2 (index 1) — Q6 Roof-to-Wall Attachment ─────────────────────
+  // 04/26 layout: ALL of section 6 is on page index 1. The printed boxes are
+  // "A. Toenails" (x≈36) and the three minimal conditions 1/2/3 (x≈72).
+  // Top-down y's measured from the form bbox (label yMin).
+  const Q6_MAIN: Record<string, { x: number; y: number }> = {
+    a_toe_nails: { x: 36, y: 464 }, // "A. Toenails:"
+    m1:          { x: 72, y: 579 }, // "1. Metal connectors..."
+    m2:          { x: 72, y: 614 }, // "2. ...single strap..."
+    m3:          { x: 72, y: 637 }, // "3. Purpose-made..."
   };
-  const rtw = wm.roofToWallAttachment;
+  // Map any legacy 01/12 values onto the new condition boxes so old data
+  // still renders: clips/single → 1, double → 3 (else fall back to the
+  // stored minimal condition).
+  const LEGACY_RTW: Record<string, string> = {
+    b_clips: "m1",
+    c_single_wraps: "m1",
+    d_double_wraps: "m3",
+  };
+  const rawRtw = wm.roofToWallAttachment;
+  const rtw =
+    rawRtw && Q6_MAIN[rawRtw]
+      ? rawRtw
+      : (LEGACY_RTW[rawRtw] ?? wm.roofToWallMinimalCondition);
   if (rtw && Q6_MAIN[rtw]) {
-    const m = Q6_MAIN[rtw]!;
-    checkBox(out, m.page, 36, m.y);
+    checkBox(out, 1, Q6_MAIN[rtw]!.x, Q6_MAIN[rtw]!.y);
 
-    // A.Toenails sub-qualifier (A.1 / A.2 / A.3) — page 2, x=72
+    // A. Toenails sub-qualifier (A.1 / A.2 / A.3) — page index 1, x=72.
     if (rtw === "a_toe_nails" && wm.roofToWallAQualifier) {
       const A_SUB_Y: Record<string, number> = { a1: 476, a2: 499, a3: 522 };
       const y = A_SUB_Y[wm.roofToWallAQualifier];
       if (y !== undefined) checkBox(out, 1, 72, y);
-    }
-
-    // B/C/D minimal-condition sub-pickers — page 3, x=72
-    // Each category has its own m1/m2/m3 rows.
-    if (wm.roofToWallMinimalCondition) {
-      const M_SUB_Y: Record<string, Record<string, number>> = {
-        b_clips:        { m1:  85, m2:  96, m3: 120 },
-        c_single_wraps: { m1: 165, m2: 189 },        // C only has 2 sub-options on form
-        d_double_wraps: { m1: 234, m2: 269, m3: 292 },
-      };
-      const subs = M_SUB_Y[rtw];
-      if (subs) {
-        const y = subs[wm.roofToWallMinimalCondition];
-        if (y !== undefined) checkBox(out, 2, 72, y);
-      }
     }
   }
 

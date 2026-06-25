@@ -286,7 +286,7 @@ export default function InspectionDetail() {
           <Row k="2. Roof covering" v={fmt(wm.roofCovering?.type)} />
           <Row k="   Meets code" v={fmt(wm.roofCovering?.meetsCode)} />
           <Row k="3. Deck attachment" v={fmt(wm.roofDeckAttachment)} />
-          <Row k="4. Roof-to-wall" v={fmt(wm.roofToWallAttachment)} />
+          <Row k="6. Roof-to-wall" v={roofToWall(wm.roofToWallAttachment)} />
           <Row k="5. Geometry" v={fmt(wm.roofGeometry)} />
           <Row k="6. SWR" v={fmt(wm.secondaryWaterResistance)} />
           <Row k="7. Opening protection" v={fmt(wm.openingProtection)} />
@@ -408,6 +408,17 @@ function sectionTags(type: Inspection["type"]): string[] {
 }
 function prettyTag(t: string) {
   return t.replace(/^wm\./, "").replace(/_/g, " ").replace(/\./g, " · ");
+}
+function roofToWall(v: unknown): string {
+  const map: Record<string, string> = {
+    a_toe_nails: "A. Toenails",
+    m1: "1. Metal connectors (≥3 nails)",
+    m2: "2. Single strap wrap",
+    m3: "3. Purpose-made / structural",
+    // legacy
+    b_clips: "Clips (1)", c_single_wraps: "Single wrap (1)", d_double_wraps: "Double wrap (3)",
+  };
+  return typeof v === "string" && map[v] ? map[v] : fmt(v);
 }
 function fmt(v: unknown): string {
   if (v === undefined || v === null || v === "") return "—";

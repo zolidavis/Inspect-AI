@@ -134,7 +134,7 @@ const TAG_SPECS: Record<string, TagSpec> = {
     form: "windMit",
     focus: "Truss-to-wall connection: toe nails, clips, single wraps, double wraps, or structural.",
     fields: [
-      { path: "roofToWallAttachment", type: "enum: a_toe_nails|b_clips|c_single_wraps|d_double_wraps|e_structural|f_other|g_unknown", description: "Connection classification per OIR-B1-1802 section 4." },
+      { path: "roofToWallAttachment", type: "enum: a_toe_nails|m1|m2|m3", description: "OIR-B1-1802 (04/26) section 6 WEAKEST connection: a_toe_nails = toenails only; m1 = metal connectors with 3+ nails to truss/rafter and top plate; m2 = single strap wrapping over the truss/rafter with 3+ nails each side; m3 = purpose-made connector or structural fastener." },
     ],
   },
   "wm.roof_geometry": {
