@@ -114,6 +114,17 @@ export const api = {
   deletePhoto: (photoId: string) =>
     req<{ ok: boolean }>(`/photos/${photoId}`, { method: "DELETE" }),
 
+  /**
+   * Re-tag a photo (used by the photo editor to correct an AI
+   * misclassification). The server clears the stale aiAnalysis; callers
+   * should follow with analyzePhoto() to repopulate findings for the new tag.
+   */
+  setPhotoTag: (photoId: string, tag: string) =>
+    req<Photo>(`/photos/${photoId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ tag }),
+    }),
+
   pdfUrl: (inspectionId: string, type: InspectionType) =>
     `${BASE}/pdf/${inspectionId}?type=${type}&v=${Date.now()}`,
 
