@@ -127,7 +127,7 @@ const TAG_SPECS: Record<string, TagSpec> = {
     fields: [
       { path: "roofCovering.type", type: "enum: asphalt_fiberglass_shingle|concrete_clay_tile|metal|built_up|membrane|wood_shake|other", description: "Material." },
       { path: "roofCovering.fbcOrMiamiDadeApproved", type: "boolean", description: "True if FBC/Miami-Dade product approval visible." },
-      { path: "roofCovering.meetsCode", type: "enum: a_compliant|b_non_compliant|c_unknown", description: "Compliance status." },
+      { path: "roofCovering.meetsCode", type: "enum: a_compliant|b_mdc_or_hvhz|c_one_or_more_noncompliant|d_none_compliant", description: "4.2 Product Approval Listing: a_compliant = all coverings have FBC/MDC product approval; b_mdc_or_hvhz = MDC approval or HVHZ permit; c_one_or_more_noncompliant = one or more do not meet A/B; d_none_compliant = none meet A/B." },
     ],
   },
   "wm.roof_to_wall": {
@@ -162,7 +162,7 @@ const TAG_SPECS: Record<string, TagSpec> = {
     form: "windMit",
     focus: "Deck material and nailing pattern visible from attic.",
     fields: [
-      { path: "roofDeckAttachment", type: "enum: a_plywood_osb_6d_nails_6_12|b_plywood_osb_8d_nails_6_12|c_plywood_osb_8d_nails_6_6|d_reinforced_concrete|e_other|f_unknown", description: "Roof deck attachment per section 3." },
+      { path: "roofDeckAttachment", type: "enum: a_plywood_osb_6d_nails_6_12|b_plywood_osb_8d_nails_6_12|c_plywood_osb_8d_nails_6_6|d_reinforced_concrete|e_spray_foam|f_other|g_unknown|h_no_attic_access", description: "Section 5 WEAKEST roof deck attachment: a = 7/16\" OSB w/ 6d nails 6\"/12\"; b = 8d nails 12\" field; c = 8d nails 6\" field; d = reinforced concrete; e = spray foam (110 PSF); f = other; g = unknown; h = no attic access." },
     ],
   },
 };

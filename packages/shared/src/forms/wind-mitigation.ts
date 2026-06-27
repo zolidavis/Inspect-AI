@@ -76,18 +76,37 @@ export const RoofCoveringSchema = z.object({
   /** Legacy "is there any FBC/MDC approval visible?" boolean. The AI
    *  vision route still emits this hint. */
   fbcOrMiamiDadeApproved: z.boolean().optional(),
-  /** Overall compliance question A/B/C/D (covers the whole roof). */
-  meetsCode: z.enum(["a_compliant", "b_non_compliant", "c_unknown"]),
+  /** 4.2 Product Approval Listing — the whole-roof compliance answer A/B/C/D.
+   *  A = all meet FBC/MDC product approval; B = all have MDC approval or an
+   *  HVHZ permit 9/1/94–3/1/02; C = one or more do not meet A or B;
+   *  D = no roof coverings meet A or B. Legacy b_non_compliant/c_unknown are
+   *  accepted and routed to C/D respectively. */
+  meetsCode: z.enum([
+    "a_compliant",
+    "b_mdc_or_hvhz",
+    "c_one_or_more_noncompliant",
+    "d_none_compliant",
+    // legacy 3-value enum:
+    "b_non_compliant",
+    "c_unknown",
+  ]),
 });
 
-// 3. Roof Deck Attachment
+// 5. Roof Deck Attachment — the 04/26 form has 8 options A–H, including the
+// new E (spray foam) and H (no attic access). Legacy e_other/f_unknown are
+// accepted and routed to F/G respectively.
 export const RoofDeckAttachmentSchema = z.enum([
   "a_plywood_osb_6d_nails_6_12",
   "b_plywood_osb_8d_nails_6_12",
   "c_plywood_osb_8d_nails_6_6",
   "d_reinforced_concrete",
-  "e_other",
-  "f_unknown",
+  "e_spray_foam",       // E. Spray foam products, 110 PSF (FOS 1.5)
+  "f_other",            // F. Other
+  "g_unknown",          // G. Unknown or unidentified
+  "h_no_attic_access",  // H. No attic access
+  // legacy (pre-04/26 naming):
+  "e_other",            // → F. Other
+  "f_unknown",          // → G. Unknown
 ]);
 
 // 6. Roof to Wall Attachment (was Q4 in 01/12, renumbered in 04/26).

@@ -256,27 +256,35 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
     checkBox(out, 0, ROOF_SLOPE_X[wm.roofSlope]!, 492);
   }
 
-  // ── PAGE 2 — Q4 WEAKEST overall roof-covering compliance ──────────────
-  // Four boxes A/B/C/D at top of page 2.
+  // ── PAGE 2 — 4.2 Product Approval Listing (A/B/C/D) ───────────────────
+  // Four boxes A/B/C/D at top of page 2 (box x=36; label yMin top-down).
   const Q4_WEAKEST_Y: Record<string, number> = {
-    a_compliant:     73,   // A. All meet 2007 FBC product approval reqs
-    // No exact b_compliant_mdc match in schema; legacy bug:
-    b_non_compliant: 119,  // C. One or more do not meet
-    // c_unknown has no checkbox — D = "no roof coverings meet" doesn't fit.
+    a_compliant:                74,  // A. All meet FBC/MDC product approval
+    b_mdc_or_hvhz:              96,  // B. All have MDC approval / HVHZ permit
+    c_one_or_more_noncompliant: 119, // C. One or more do not meet A or B
+    d_none_compliant:           131, // D. No coverings meet A or B
+    // legacy 3-value enum → closest 04/26 box:
+    b_non_compliant:            119, // (one or more don't meet) → C
+    c_unknown:                  131, // (unknown) → D
   };
   const meetsCode = rc.meetsCode;
   if (meetsCode && Q4_WEAKEST_Y[meetsCode] !== undefined) {
     checkBox(out, 1, 36, Q4_WEAKEST_Y[meetsCode]!);
   }
 
-  // ── PAGE 2 — Q5 Roof Deck Attachment ──────────────────────────────────
+  // ── PAGE 2 — Q5 Roof Deck Attachment (A–H) ────────────────────────────
   const Q5_Y: Record<string, number> = {
     a_plywood_osb_6d_nails_6_12: 165,
     b_plywood_osb_8d_nails_6_12: 234,
     c_plywood_osb_8d_nails_6_6:  280,
-    d_reinforced_concrete:       337,
-    e_other:                     372,  // F. Other on the form
-    f_unknown:                   383,  // G. Unknown on the form
+    d_reinforced_concrete:       338,
+    e_spray_foam:                349,  // E. Spray foam (NEW in 04/26)
+    f_other:                     372,  // F. Other
+    g_unknown:                   384,  // G. Unknown or unidentified
+    h_no_attic_access:           395,  // H. No attic access (NEW in 04/26)
+    // legacy (pre-04/26 naming):
+    e_other:                     372,  // → F. Other
+    f_unknown:                   384,  // → G. Unknown
   };
   if (wm.roofDeckAttachment && Q5_Y[wm.roofDeckAttachment] !== undefined) {
     checkBox(out, 1, 36, Q5_Y[wm.roofDeckAttachment]!);
@@ -362,16 +370,17 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
   if (wm.roofGeometry && Q7_Y[wm.roofGeometry] !== undefined) {
     checkBox(out, 2, 36, Q7_Y[wm.roofGeometry]!);
   }
-  // Perimeter/area blanks — Hip option needs total perimeter + non-hip
-  // perimeter; Flat option needs flat area + total area.
-  // These print on a 2nd-pass line under the geometry section. Positions
-  // estimated; tune from a generated sample if needed.
+  // Perimeter/area blanks — bbox-measured (label line yMin, baseline ≈ +10).
+  //   Hip line  (y≈430): "...non-hip features: __[242]__ feet;
+  //                       Total roof system perimeter: __[412]__ feet."
+  //   Flat line (y≈453): "Roof area with slope less than 2:12 __[276]__ sq ft;
+  //                       Total roof area __[403]__ sq ft."
   if (wm.roofGeometry === "a_hip") {
-    push({ page: 2, x: 420, y: yFromTop(418), size: 9, value: wm.roofGeometryNonHipPerimeter });
-    push({ page: 2, x: 420, y: yFromTop(430), size: 9, value: wm.roofGeometryTotalPerimeter });
+    push({ page: 2, x: 242, y: yFromTop(440), size: 9, value: wm.roofGeometryNonHipPerimeter });
+    push({ page: 2, x: 412, y: yFromTop(440), size: 9, value: wm.roofGeometryTotalPerimeter });
   } else if (wm.roofGeometry === "b_flat") {
-    push({ page: 2, x: 420, y: yFromTop(441), size: 9, value: wm.roofGeometryFlatAreaLt2_12 });
-    push({ page: 2, x: 420, y: yFromTop(453), size: 9, value: wm.roofGeometryTotalArea });
+    push({ page: 2, x: 276, y: yFromTop(463), size: 9, value: wm.roofGeometryFlatAreaLt2_12 });
+    push({ page: 2, x: 403, y: yFromTop(463), size: 9, value: wm.roofGeometryTotalArea });
   }
 
   // ── PAGE 3 — Q8 Sealed Roof Deck (SWR) ────────────────────────────────

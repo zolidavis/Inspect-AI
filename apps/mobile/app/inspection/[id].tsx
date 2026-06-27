@@ -283,13 +283,13 @@ export default function InspectionDetail() {
             </Pressable>
           </View>
           <Row k="1. Building code" v={fmt(wm.buildingCode)} />
-          <Row k="2. Roof covering" v={fmt(wm.roofCovering?.type)} />
-          <Row k="   Meets code" v={fmt(wm.roofCovering?.meetsCode)} />
-          <Row k="3. Deck attachment" v={fmt(wm.roofDeckAttachment)} />
+          <Row k="4. Roof covering" v={fmt(wm.roofCovering?.type)} />
+          <Row k="   Product approval" v={meetsCode(wm.roofCovering?.meetsCode)} />
+          <Row k="5. Deck attachment" v={deckAttach(wm.roofDeckAttachment)} />
           <Row k="6. Roof-to-wall" v={roofToWall(wm.roofToWallAttachment)} />
-          <Row k="5. Geometry" v={fmt(wm.roofGeometry)} />
-          <Row k="6. SWR" v={fmt(wm.secondaryWaterResistance)} />
-          <Row k="7. Opening protection" v={fmt(wm.openingProtection)} />
+          <Row k="7. Geometry" v={fmt(wm.roofGeometry)} />
+          <Row k="8. SWR" v={fmt(wm.secondaryWaterResistance)} />
+          <Row k="9. Opening protection" v={fmt(wm.openingProtection)} />
           {completeErrors.windMit && completeErrors.windMit.length > 0 && (
             <View style={styles.errorBlock}>
               <Text style={styles.errorTitle}>Missing/invalid:</Text>
@@ -425,6 +425,34 @@ function roofToWall(v: unknown): string {
     m1: "1. Metal connectors (≥3 nails)",
     m2: "2. Single strap wrap",
     m3: "3. Purpose-made / structural",
+  };
+  return typeof v === "string" && map[v] ? map[v] : fmt(v);
+}
+function meetsCode(v: unknown): string {
+  const map: Record<string, string> = {
+    a_compliant: "A. Product approval",
+    b_mdc_or_hvhz: "B. MDC / HVHZ",
+    c_one_or_more_noncompliant: "C. One+ non-compliant",
+    d_none_compliant: "D. None compliant",
+    // legacy
+    b_non_compliant: "C. One+ non-compliant",
+    c_unknown: "D. None compliant",
+  };
+  return typeof v === "string" && map[v] ? map[v] : fmt(v);
+}
+function deckAttach(v: unknown): string {
+  const map: Record<string, string> = {
+    a_plywood_osb_6d_nails_6_12: "A. OSB 6d 6\"/12\"",
+    b_plywood_osb_8d_nails_6_12: "B. OSB 8d 12\" field",
+    c_plywood_osb_8d_nails_6_6: "C. OSB 8d 6\" field",
+    d_reinforced_concrete: "D. Reinforced concrete",
+    e_spray_foam: "E. Spray foam",
+    f_other: "F. Other",
+    g_unknown: "G. Unknown",
+    h_no_attic_access: "H. No attic access",
+    // legacy
+    e_other: "F. Other",
+    f_unknown: "G. Unknown",
   };
   return typeof v === "string" && map[v] ? map[v] : fmt(v);
 }
