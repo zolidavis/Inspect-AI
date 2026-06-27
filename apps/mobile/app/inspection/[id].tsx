@@ -412,11 +412,19 @@ function prettyTag(t: string) {
 function roofToWall(v: unknown): string {
   const map: Record<string, string> = {
     a_toe_nails: "A. Toenails",
+    b_clips: "B. Clips",
+    c_single_wraps: "C. Single Wraps",
+    d_double_wraps: "D. Double Wraps",
+    e_structural: "E. Structural",
+    f_other: "F. Other",
+    g_unknown: "G. Unknown",
+    h_no_attic_access: "H. No attic access",
+    i_not_installed: "I. Not installed as intended",
+    // legacy
+    h_not_installed: "I. Not installed as intended",
     m1: "1. Metal connectors (≥3 nails)",
     m2: "2. Single strap wrap",
     m3: "3. Purpose-made / structural",
-    // legacy
-    b_clips: "Clips (1)", c_single_wraps: "Single wrap (1)", d_double_wraps: "Double wrap (3)",
   };
   return typeof v === "string" && map[v] ? map[v] : fmt(v);
 }

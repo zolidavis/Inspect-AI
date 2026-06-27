@@ -282,38 +282,75 @@ function fieldsFor(inspection: Inspection): FieldDraw[] {
     checkBox(out, 1, 36, Q5_Y[wm.roofDeckAttachment]!);
   }
 
-  // ── PAGE 2 (index 1) — Q6 Roof-to-Wall Attachment ─────────────────────
-  // 04/26 layout: ALL of section 6 is on page index 1. The printed boxes are
-  // "A. Toenails" (x≈36) and the three minimal conditions 1/2/3 (x≈72).
+  // ── Q6 Roof-to-Wall Attachment ────────────────────────────────────────
+  // 04/26 layout spans two pdf-lib pages:
+  //   • page index 1: "A. Toenails" (+ a1/a2/a3) and the minimal conditions
+  //     1/2/3 (the qualifying class required for categories B/C/D).
+  //   • page index 2: B/C/D (each with sub-bullets) and E/F/G/H/I.
+  // Main category boxes sit at x=36; indented sub-bullets at x=72.
   // Top-down y's measured from the form bbox (label yMin).
-  const Q6_MAIN: Record<string, { x: number; y: number }> = {
-    a_toe_nails: { x: 36, y: 464 }, // "A. Toenails:"
-    m1:          { x: 72, y: 579 }, // "1. Metal connectors..."
-    m2:          { x: 72, y: 614 }, // "2. ...single strap..."
-    m3:          { x: 72, y: 637 }, // "3. Purpose-made..."
+  const Q6_MAIN: Record<string, { page: number; x: number; y: number }> = {
+    a_toe_nails:       { page: 1, x: 36, y: 464 },
+    b_clips:           { page: 2, x: 36, y: 62 },
+    c_single_wraps:    { page: 2, x: 36, y: 154 },
+    d_double_wraps:    { page: 2, x: 36, y: 223 },
+    e_structural:      { page: 2, x: 36, y: 315 },
+    f_other:           { page: 2, x: 36, y: 327 },
+    g_unknown:         { page: 2, x: 36, y: 338 },
+    h_no_attic_access: { page: 2, x: 36, y: 350 },
+    i_not_installed:   { page: 2, x: 36, y: 361 },
   };
-  // Map any legacy 01/12 values onto the new condition boxes so old data
-  // still renders: clips/single → 1, double → 3 (else fall back to the
-  // stored minimal condition).
-  const LEGACY_RTW: Record<string, string> = {
-    b_clips: "m1",
-    c_single_wraps: "m1",
-    d_double_wraps: "m3",
+  // Legacy values → new categories. The 01/12 "not installed" becomes I; the
+  // earlier 04/26 pass that stored the minimal condition (m1/m2/m3) in the
+  // answer can't recover a category, so only its condition box is stamped.
+  const LEGACY_RTW_MAIN: Record<string, string> = {
+    h_not_installed: "i_not_installed",
   };
-  const rawRtw = wm.roofToWallAttachment;
-  const rtw =
-    rawRtw && Q6_MAIN[rawRtw]
-      ? rawRtw
-      : (LEGACY_RTW[rawRtw] ?? wm.roofToWallMinimalCondition);
-  if (rtw && Q6_MAIN[rtw]) {
-    checkBox(out, 1, Q6_MAIN[rtw]!.x, Q6_MAIN[rtw]!.y);
+  const rawRtw = wm.roofToWallAttachment as string | undefined;
+  const mainKey =
+    rawRtw && Q6_MAIN[rawRtw] ? rawRtw : (rawRtw ? LEGACY_RTW_MAIN[rawRtw] : undefined);
 
-    // A. Toenails sub-qualifier (A.1 / A.2 / A.3) — page index 1, x=72.
-    if (rtw === "a_toe_nails" && wm.roofToWallAQualifier) {
-      const A_SUB_Y: Record<string, number> = { a1: 476, a2: 499, a3: 522 };
-      const y = A_SUB_Y[wm.roofToWallAQualifier];
-      if (y !== undefined) checkBox(out, 1, 72, y);
-    }
+  if (mainKey && Q6_MAIN[mainKey]) {
+    const m = Q6_MAIN[mainKey]!;
+    checkBox(out, m.page, m.x, m.y);
+  }
+
+  // A. Toenails sub-qualifier (A.1 / A.2 / A.3) — page index 1, x=72.
+  if (mainKey === "a_toe_nails" && wm.roofToWallAQualifier) {
+    const A_SUB_Y: Record<string, number> = { a1: 476, a2: 499, a3: 522 };
+    const y = A_SUB_Y[wm.roofToWallAQualifier];
+    if (y !== undefined) checkBox(out, 1, 72, y);
+  }
+
+  // Minimal condition 1/2/3 (qualifies B/C/D) — page index 1, x=72. Stamped
+  // when a B/C/D category is selected, or for legacy m1/m2/m3 answers.
+  const MIN_Y: Record<string, number> = { m1: 579, m2: 614, m3: 637 };
+  const minCond =
+    wm.roofToWallMinimalCondition ??
+    (rawRtw && MIN_Y[rawRtw] ? (rawRtw as "m1" | "m2" | "m3") : undefined);
+  const isBCD =
+    mainKey === "b_clips" || mainKey === "c_single_wraps" || mainKey === "d_double_wraps";
+  if (minCond && MIN_Y[minCond] !== undefined && (isBCD || !mainKey)) {
+    checkBox(out, 1, 72, MIN_Y[minCond]!);
+  }
+
+  // B/C/D sub-bullets — page index 2, x=72.
+  const B_SUB_Y: Record<string, number> = { b1: 85, b2: 96, b3: 120 };
+  const C_SUB_Y: Record<string, number> = { c1: 165, c2: 189 };
+  const D_SUB_Y: Record<string, number> = { d1: 235, d2: 269, d3: 292 };
+  if (mainKey === "b_clips" && wm.roofToWallBSub && B_SUB_Y[wm.roofToWallBSub] !== undefined) {
+    checkBox(out, 2, 72, B_SUB_Y[wm.roofToWallBSub]!);
+  }
+  if (mainKey === "c_single_wraps" && wm.roofToWallCSub && C_SUB_Y[wm.roofToWallCSub] !== undefined) {
+    checkBox(out, 2, 72, C_SUB_Y[wm.roofToWallCSub]!);
+  }
+  if (mainKey === "d_double_wraps" && wm.roofToWallDSub && D_SUB_Y[wm.roofToWallDSub] !== undefined) {
+    checkBox(out, 2, 72, D_SUB_Y[wm.roofToWallDSub]!);
+  }
+
+  // F. Other free text — page index 2 on the underline (x=85, baseline yMax-2).
+  if (mainKey === "f_other" && wm.roofToWallOther) {
+    out.push({ page: 2, x: 85, y: yFromTop(340 - 2), size: 9, value: String(wm.roofToWallOther) });
   }
 
   // ── PAGE 3 — Q7 Roof Geometry ─────────────────────────────────────────

@@ -92,36 +92,53 @@ export const RoofDeckAttachmentSchema = z.enum([
 
 // 6. Roof to Wall Attachment (was Q4 in 01/12, renumbered in 04/26).
 //
-// The 04/26 revision RESTRUCTURED this section. The printed form now has
-// exactly these checkboxes: "A. Toenails" (with three sub-bullets a1/a2/a3)
-// and the three "Minimal conditions to qualify for categories B, C, or D"
-// numbered 1/2/3. There are NO separate B/C/D/E/F/G/H answer rows anymore —
-// the insurer derives the B/C/D category from which numbered condition is
-// met. So the inspector's single answer is one of: A, 1, 2, or 3.
+// The 04/26 revision keeps the full A–I category list, it just spreads it
+// across two printed pages: page 2 has "A. Toenails" (+ sub-bullets a1/a2/a3)
+// and the "Minimal conditions to qualify for categories B, C, or D" numbered
+// 1/2/3; page 3 has the B/C/D/E/F/G/H/I rows with their own sub-bullets.
 //
-// Legacy b_clips/c_single_wraps/d_double_wraps/e_structural/etc. are kept in
-// the enum (accepted-but-not-offered) so previously-saved inspections still
-// validate; a one-time data migration maps them to m1/m2/m3.
+// The inspector's primary answer (`roofToWallAttachment`) is the WEAKEST
+// CATEGORY: A–I. Supporting selections:
+//   • roofToWallAQualifier       — A.1/A.2/A.3 (only when A)
+//   • roofToWallMinimalCondition — 1/2/3, the qualifying connection class
+//                                  required for B/C/D (Note: all retrofit
+//                                  connectors / structural fasteners must
+//                                  meet option 3)
+//   • roofToWallBSub/CSub/DSub   — the specific sub-bullet under B/C/D
+//   • roofToWallOther            — free text for F
+//
+// Legacy values are still accepted so old rows validate: m1/m2/m3 (an
+// earlier 04/26 pass that folded the minimal condition into the answer) and
+// h_not_installed (the 01/12 "not installed as intended", now category I).
 export const RoofToWallSchema = z.enum([
   "a_toe_nails",
-  "m1",
-  "m2",
-  "m3",
-  // legacy (01/12 form) — accepted for backward compatibility, not shown:
   "b_clips",
   "c_single_wraps",
   "d_double_wraps",
   "e_structural",
   "f_other",
   "g_unknown",
+  "h_no_attic_access",
+  "i_not_installed",
+  // legacy — accepted for backward compatibility, not offered in the picker:
+  "m1",
+  "m2",
+  "m3",
   "h_not_installed",
 ]);
 
 /** A.1/A.2/A.3 — which qualifying condition for option A (toenails). */
 export const RoofToWallAQualifierSchema = z.enum(["a1", "a2", "a3"]);
 
-/** @deprecated 04/26 folds the 1/2/3 conditions into RoofToWallSchema. */
+/** Minimal condition 1/2/3 that a B/C/D connection must satisfy. */
 export const RoofToWallMinimalConditionSchema = z.enum(["m1", "m2", "m3"]);
+
+/** B. Clips sub-bullets. */
+export const RoofToWallBSubSchema = z.enum(["b1", "b2", "b3"]);
+/** C. Single Wraps sub-bullets. */
+export const RoofToWallCSubSchema = z.enum(["c1", "c2"]);
+/** D. Double Wraps sub-bullets. */
+export const RoofToWallDSubSchema = z.enum(["d1", "d2", "d3"]);
 
 // 7. Roof Geometry (was Q5 in 01/12)
 export const RoofGeometrySchema = z.enum(["a_hip", "b_flat", "c_other"]);
@@ -208,12 +225,20 @@ export const WindMitFormSchema = z.object({
   // 5+. (the 04/26 form re-shuffled the numbers but the underlying
   // classifications still apply)
   roofDeckAttachment: RoofDeckAttachmentSchema,
-  // 04/26: answer is one of A (toenails) / m1 / m2 / m3 directly.
+  // 04/26 section 6: WEAKEST category A–I, plus supporting sub-selections.
   roofToWallAttachment: RoofToWallSchema,
   /** A. Toenails: which of A.1/A.2/A.3 qualifying condition applies. */
   roofToWallAQualifier: RoofToWallAQualifierSchema.optional(),
-  /** @deprecated kept so legacy data validates; superseded by m1/m2/m3 above. */
+  /** Minimal condition 1/2/3 the B/C/D connection meets. */
   roofToWallMinimalCondition: RoofToWallMinimalConditionSchema.optional(),
+  /** B. Clips: which sub-bullet applies. */
+  roofToWallBSub: RoofToWallBSubSchema.optional(),
+  /** C. Single Wraps: which sub-bullet applies. */
+  roofToWallCSub: RoofToWallCSubSchema.optional(),
+  /** D. Double Wraps: which sub-bullet applies. */
+  roofToWallDSub: RoofToWallDSubSchema.optional(),
+  /** F. Other: free-text description. */
+  roofToWallOther: z.string().optional(),
 
   // 7. Roof Geometry. A. Hip needs perimeter lengths; B. Flat needs areas.
   roofGeometry: RoofGeometrySchema,
