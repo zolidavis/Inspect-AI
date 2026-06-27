@@ -72,7 +72,9 @@ export default function EditInfo() {
         setNumberOfStories(
           i.property?.numberOfStories != null ? String(i.property.numberOfStories) : "",
         );
-        setInspectionDate(i.inspectedOn ? i.inspectedOn.slice(0, 10) : "");
+        // Default to the inspection date, falling back to the creation date
+        // so the field is never blank for older inspections.
+        setInspectionDate((i.inspectedOn ?? i.createdAt ?? "").slice(0, 10));
         setPhotoReqs(i.photoRequirements ?? {});
       } catch (e: any) {
         Alert.alert("Failed to load", e.message);

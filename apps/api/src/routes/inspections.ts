@@ -49,6 +49,9 @@ inspections.post("/", async (c) => {
     businessLogoPng: parsed.data.businessLogoPng,
     ownerEmail: parsed.data.ownerEmail,
     ownerPhone: parsed.data.ownerPhone,
+    // Default the inspection date to the creation date; the inspector can
+    // override it on the edit-info screen.
+    inspectedOn: now,
     status: "draft",
     createdAt: now,
     updatedAt: now,

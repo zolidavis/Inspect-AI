@@ -150,7 +150,7 @@ export default function InspectionDetail() {
             <Text style={styles.editLink}>Edit</Text>
           </Pressable>
         </View>
-        <Row k="Inspection date" v={fmt(insp.inspectedOn ? insp.inspectedOn.slice(0, 10) : undefined)} />
+        <Row k="Inspection date" v={fmt((insp.inspectedOn ?? insp.createdAt ?? "").slice(0, 10) || undefined)} />
         <Row k="Owner" v={insp.property?.ownerName ?? "—"} />
         <Row k="Email" v={fmt(insp.ownerEmail)} />
         <Row k="Phone" v={fmt(insp.ownerPhone)} />
