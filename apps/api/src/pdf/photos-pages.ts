@@ -17,6 +17,7 @@
 import {
   PDFDocument,
   StandardFonts,
+  degrees,
   type PDFImage,
   type PDFFont,
   type PDFPage,
@@ -28,7 +29,7 @@ const PAGE_W = 612; // US Letter in PDF points
 const PAGE_H = 792;
 const MARGIN = 32;
 const GUTTER = 16;     // space between cells (horizontal + vertical)
-const CAPTION_H = 30;  // reserved at bottom of each cell for tag + date
+const CAPTION_H = 44;  // reserved at bottom of each cell for tag + date + caption
 
 /** 2×2 grid → 4 photos per page. */
 const COLS = 2;
@@ -136,13 +137,30 @@ function drawCell(
   const imageBoxBottom = cellY - cellH + CAPTION_H; // pdf-lib y of image-box bottom edge
 
   if (loaded.img) {
-    // Scale-to-fit inside the image box, centered.
-    const scale = Math.min(cellW / loaded.img.width, imageBoxH / loaded.img.height);
-    const drawnW = loaded.img.width * scale;
+    // Display rotation is stored CLOCKWISE (matching the in-app preview).
+    // pdf-lib rotates COUNTER-clockwise about the draw anchor (x,y), so the
+    // pdf angle is (360 − rot). For 90/270 the bounding box aspect swaps.
+    const rot = (((loaded.photo.rotation ?? 0) % 360) + 360) % 360;
+    const quarter = rot === 90 || rot === 270;
+    const effW = quarter ? loaded.img.height : loaded.img.width;
+    const effH = quarter ? loaded.img.width : loaded.img.height;
+    const scale = Math.min(cellW / effW, imageBoxH / effH);
+    const drawnW = loaded.img.width * scale;   // unrotated draw size
     const drawnH = loaded.img.height * scale;
-    const x = cellX + (cellW - drawnW) / 2;
-    const y = imageBoxBottom + (imageBoxH - drawnH) / 2;
-    page.drawImage(loaded.img, { x, y, width: drawnW, height: drawnH });
+    const bbW = effW * scale;                   // on-page bounding box
+    const bbH = effH * scale;
+    const bx = cellX + (cellW - bbW) / 2;        // bbox bottom-left
+    const by = imageBoxBottom + (imageBoxH - bbH) / 2;
+    // Anchor table (pdf CCW angle = 360 − rot). See derivation in commit.
+    const pdfRot = (360 - rot) % 360;
+    let ax = bx, ay = by;
+    if (pdfRot === 90)  { ax = bx + bbW; ay = by; }
+    else if (pdfRot === 180) { ax = bx + bbW; ay = by + bbH; }
+    else if (pdfRot === 270) { ax = bx; ay = by + bbH; }
+    page.drawImage(loaded.img, {
+      x: ax, y: ay, width: drawnW, height: drawnH,
+      rotate: degrees(pdfRot),
+    });
   } else {
     // Placeholder rectangle + "image unavailable" line.
     page.drawRectangle({
@@ -176,13 +194,20 @@ function drawCell(
     size: 9,
     font: fontBold,
   });
-  // Line 2: capture date, smaller
-  page.drawText(`Captured ${fmtCaptured(loaded.photo.capturedAt)}`, {
-    x: cellX,
-    y: captionTop - 20,
-    size: 8,
-    font,
-  });
+  // Line 2: inspector caption (if any), else fall through to date only.
+  const caption = loaded.photo.caption?.trim();
+  if (caption) {
+    page.drawText(ellipsize(caption, font, 9, cellW), {
+      x: cellX, y: captionTop - 20, size: 9, font,
+    });
+    page.drawText(`Captured ${fmtCaptured(loaded.photo.capturedAt)}`, {
+      x: cellX, y: captionTop - 31, size: 8, font,
+    });
+  } else {
+    page.drawText(`Captured ${fmtCaptured(loaded.photo.capturedAt)}`, {
+      x: cellX, y: captionTop - 20, size: 8, font,
+    });
+  }
 }
 
 /**

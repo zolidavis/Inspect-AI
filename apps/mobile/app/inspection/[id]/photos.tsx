@@ -1,29 +1,33 @@
 /**
- * Photo management — view, re-tag, re-analyze, and delete the photos attached
- * to an inspection.
+ * Photo management — view, navigate, re-tag, caption, rotate, re-analyze, and
+ * delete the photos attached to an inspection.
  *
  * Reached from the hub's Photos card ("View / edit photos"). Photos are
  * grouped by their section tag. Tapping a photo opens a full-size editor where
  * the inspector can:
- *   • view the photo large,
+ *   • swipe / arrow between photos without closing the editor,
  *   • CORRECT the section (re-tag) when the AI auto-classifier guessed wrong —
  *     the server clears the stale analysis and we re-run AI for the new tag,
+ *   • write a CAPTION printed under the photo in the report,
+ *   • ROTATE the photo (90° steps) — applied in-app and in the PDF,
  *   • re-run AI analysis,
  *   • delete the photo.
  *
  * Works for both 4-Point and Wind Mitigation — the re-tag picker offers only
  * the sections valid for this inspection's type.
  */
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Image,
   Modal,
+  PanResponder,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -57,9 +61,11 @@ export default function Photos() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [inspType, setInspType] = useState<Inspection["type"] | undefined>();
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<Photo | null>(null);
+  // Index into the flat `ordered` list (null = editor closed).
+  const [editIdx, setEditIdx] = useState<number | null>(null);
   // null | "retag" | "analyze" | "delete" — drives the modal busy state.
   const [busy, setBusy] = useState<null | "retag" | "analyze" | "delete">(null);
+  const [caption, setCaption] = useState("");
 
   const load = useCallback(async () => {
     try {
@@ -80,10 +86,56 @@ export default function Photos() {
   // Reload on focus so newly captured photos appear when returning here.
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  /** Replace a photo in local state (and the open editor, if it's the one). */
+  // Group by tag (newest-first within each group) for the grid, and flatten
+  // to a stable `ordered` list the editor navigates through.
+  const { groups, ordered } = useMemo(() => {
+    const g = new Map<string, Photo[]>();
+    for (const p of photos) {
+      const arr = g.get(p.tag) ?? [];
+      arr.push(p);
+      g.set(p.tag, arr);
+    }
+    const flat: Photo[] = [];
+    for (const arr of g.values()) flat.push(...arr);
+    return { groups: g, ordered: flat };
+  }, [photos]);
+
+  const editing = editIdx != null ? ordered[editIdx] ?? null : null;
+
+  // Sync the caption input whenever the open photo changes.
+  useEffect(() => {
+    setCaption(editing?.caption ?? "");
+  }, [editing?.id]);
+
+  const openPhoto = (p: Photo) => {
+    const idx = ordered.findIndex((x) => x.id === p.id);
+    if (idx >= 0) setEditIdx(idx);
+  };
+
+  const go = (delta: number) => {
+    if (editIdx == null || busy) return;
+    const next = editIdx + delta;
+    if (next >= 0 && next < ordered.length) setEditIdx(next);
+  };
+  // Keep the latest `go` reachable from the (once-created) PanResponder.
+  const goRef = useRef(go);
+  goRef.current = go;
+
+  // Horizontal swipe on the image → prev/next.
+  const pan = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_e, g) =>
+        Math.abs(g.dx) > 24 && Math.abs(g.dx) > Math.abs(g.dy) * 1.4,
+      onPanResponderRelease: (_e, g) => {
+        if (g.dx > 50) goRef.current(-1);
+        else if (g.dx < -50) goRef.current(1);
+      },
+    }),
+  ).current;
+
+  /** Replace a photo in local state. */
   const applyUpdate = (p: Photo) => {
     setPhotos((prev) => prev.map((x) => (x.id === p.id ? p : x)));
-    setEditing((cur) => (cur && cur.id === p.id ? p : cur));
   };
 
   /** Correct the section, then re-run AI for the new tag (best effort). */
@@ -103,6 +155,33 @@ export default function Photos() {
       Alert.alert("Re-tag failed", e.message);
     } finally {
       setBusy(null);
+    }
+  };
+
+  /** Commit the caption (on blur / done). */
+  const saveCaption = async () => {
+    if (!editing) return;
+    const trimmed = caption.trim();
+    if (trimmed === (editing.caption ?? "")) return;
+    try {
+      const updated = await api.setPhotoCaption(editing.id, trimmed);
+      applyUpdate(updated);
+    } catch (e: any) {
+      Alert.alert("Couldn't save caption", e.message);
+    }
+  };
+
+  /** Rotate 90° clockwise — optimistic, PATCH in background. */
+  const rotate = async () => {
+    if (!editing || busy) return;
+    const next = (((editing.rotation ?? 0) + 90) % 360 + 360) % 360;
+    applyUpdate({ ...editing, rotation: next });
+    try {
+      const updated = await api.setPhotoRotation(editing.id, next);
+      applyUpdate(updated);
+    } catch {
+      // Revert on failure.
+      applyUpdate({ ...editing });
     }
   };
 
@@ -132,7 +211,13 @@ export default function Photos() {
           try {
             await api.deletePhoto(target.id);
             setPhotos((prev) => prev.filter((p) => p.id !== target.id));
-            setEditing(null);
+            // Keep the editor on the same slot (now the next photo), or close.
+            setEditIdx((cur) => {
+              if (cur == null) return null;
+              const remaining = ordered.length - 1;
+              if (remaining <= 0) return null;
+              return Math.min(cur, remaining - 1);
+            });
           } catch (e: any) {
             Alert.alert("Delete failed", e.message);
           } finally {
@@ -151,22 +236,15 @@ export default function Photos() {
     );
   }
 
-  // Group by tag, preserving newest-first order within each group.
-  const groups = new Map<string, Photo[]>();
-  for (const p of photos) {
-    const arr = groups.get(p.tag) ?? [];
-    arr.push(p);
-    groups.set(p.tag, arr);
-  }
-
   const tagOptions = sectionTags(inspType);
+  const rot = editing ? (((editing.rotation ?? 0) % 360) + 360) % 360 : 0;
 
   return (
     <ScrollView style={styles.root} contentContainerStyle={styles.scroll}>
       <Text style={styles.h1}>Manage photos</Text>
       <Text style={styles.sub}>
         {photos.length} photo{photos.length === 1 ? "" : "s"} attached. Tap a photo to
-        view, fix its section, or delete it.
+        view, caption, rotate, fix its section, or delete it.
       </Text>
 
       <Pressable
@@ -190,25 +268,36 @@ export default function Photos() {
             {prettyTag(tag)} · {items.length}
           </Text>
           <View style={styles.grid}>
-            {items.map((p) => (
-              <Pressable key={p.id} style={styles.cell} onPress={() => setEditing(p)}>
-                {p.url ? (
-                  <Image source={{ uri: p.url }} style={styles.thumb} />
-                ) : (
-                  <View style={[styles.thumb, styles.thumbMissing]}>
-                    <Ionicons name="image-outline" size={28} color={colors.textFaint} />
+            {items.map((p) => {
+              const r = (((p.rotation ?? 0) % 360) + 360) % 360;
+              return (
+                <Pressable key={p.id} style={styles.cell} onPress={() => openPhoto(p)}>
+                  {p.url ? (
+                    <Image
+                      source={{ uri: p.url }}
+                      style={[styles.thumb, !!r && { transform: [{ rotate: `${r}deg` }] }]}
+                    />
+                  ) : (
+                    <View style={[styles.thumb, styles.thumbMissing]}>
+                      <Ionicons name="image-outline" size={28} color={colors.textFaint} />
+                    </View>
+                  )}
+                  {tag === "auto" && (
+                    <View style={styles.autoBadge}>
+                      <Text style={styles.autoBadgeText}>?</Text>
+                    </View>
+                  )}
+                  {!!p.caption?.trim() && (
+                    <View style={styles.capBadge}>
+                      <Ionicons name="chatbubble-ellipses" size={12} color="#fff" />
+                    </View>
+                  )}
+                  <View style={styles.editBadge}>
+                    <Ionicons name="create-outline" size={14} color="#fff" />
                   </View>
-                )}
-                {tag === "auto" && (
-                  <View style={styles.autoBadge}>
-                    <Text style={styles.autoBadgeText}>?</Text>
-                  </View>
-                )}
-                <View style={styles.editBadge}>
-                  <Ionicons name="create-outline" size={14} color="#fff" />
-                </View>
-              </Pressable>
-            ))}
+                </Pressable>
+              );
+            })}
           </View>
         </View>
       ))}
@@ -218,33 +307,83 @@ export default function Photos() {
         visible={!!editing}
         animationType="slide"
         transparent
-        onRequestClose={() => !busy && setEditing(null)}
+        onRequestClose={() => !busy && setEditIdx(null)}
       >
         <View style={styles.modalBackdrop}>
           <View style={styles.sheet}>
             <View style={styles.sheetHead}>
-              <Text style={styles.sheetTitle}>Edit photo</Text>
-              <Pressable onPress={() => !busy && setEditing(null)} hitSlop={10}>
-                <Ionicons name="close" size={24} color={colors.textDim} />
+              <Pressable
+                onPress={() => go(-1)}
+                disabled={editIdx === 0 || !!busy}
+                hitSlop={10}
+                style={editIdx === 0 && { opacity: 0.3 }}
+              >
+                <Ionicons name="chevron-back" size={24} color={colors.accent} />
               </Pressable>
+              <Text style={styles.sheetTitle}>
+                Photo {editIdx != null ? editIdx + 1 : 0} of {ordered.length}
+              </Text>
+              <View style={styles.headRight}>
+                <Pressable
+                  onPress={() => go(1)}
+                  disabled={editIdx == null || editIdx >= ordered.length - 1 || !!busy}
+                  hitSlop={10}
+                  style={
+                    (editIdx == null || editIdx >= ordered.length - 1) && { opacity: 0.3 }
+                  }
+                >
+                  <Ionicons name="chevron-forward" size={24} color={colors.accent} />
+                </Pressable>
+                <Pressable onPress={() => !busy && setEditIdx(null)} hitSlop={10}>
+                  <Ionicons name="close" size={24} color={colors.textDim} />
+                </Pressable>
+              </View>
             </View>
 
             {editing && (
-              <ScrollView contentContainerStyle={styles.sheetScroll}>
-                {editing.url ? (
-                  <Image source={{ uri: editing.url }} style={styles.fullImg} resizeMode="contain" />
-                ) : (
-                  <View style={[styles.fullImg, styles.thumbMissing]}>
-                    <Ionicons name="image-outline" size={48} color={colors.textFaint} />
-                  </View>
-                )}
+              <ScrollView contentContainerStyle={styles.sheetScroll} keyboardShouldPersistTaps="handled">
+                <View style={styles.imageWrap} {...pan.panHandlers}>
+                  {editing.url ? (
+                    <Image
+                      source={{ uri: editing.url }}
+                      style={[styles.fullImg, !!rot && { transform: [{ rotate: `${rot}deg` }] }]}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <View style={[styles.fullImg, styles.thumbMissing]}>
+                      <Ionicons name="image-outline" size={48} color={colors.textFaint} />
+                    </View>
+                  )}
+                </View>
+
+                {/* Quick actions: rotate */}
+                <View style={styles.actionRow}>
+                  <Pressable style={styles.iconBtn} onPress={rotate} disabled={!!busy}>
+                    <Ionicons name="refresh-outline" size={16} color={colors.accent} />
+                    <Text style={styles.iconBtnText}>Rotate 90°</Text>
+                  </Pressable>
+                  <Text style={styles.swipeHint}>‹ swipe to browse ›</Text>
+                </View>
+
+                <Text style={styles.fieldLabel}>CAPTION</Text>
+                <TextInput
+                  style={styles.captionInput}
+                  value={caption}
+                  onChangeText={setCaption}
+                  onBlur={saveCaption}
+                  placeholder="Add a caption (printed under the photo)…"
+                  placeholderTextColor={colors.textFaint}
+                  multiline
+                  returnKeyType="done"
+                  blurOnSubmit
+                  onSubmitEditing={saveCaption}
+                />
 
                 <Text style={styles.fieldLabel}>SECTION</Text>
                 <Text style={styles.hint}>
                   Wrong section? Tap the correct one — AI re-reads the photo for it.
                 </Text>
                 <View style={styles.chips}>
-                  {/* Surface "auto" as a read-only current state if unclassified. */}
                   {editing.tag === "auto" && (
                     <View style={[styles.chip, styles.chipCurrent]}>
                       <Text style={styles.chipCurrentText}>Unsorted</Text>
@@ -374,6 +513,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  capBadge: {
+    position: "absolute",
+    bottom: 6,
+    left: 6,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   autoBadge: {
     position: "absolute",
     top: 6,
@@ -405,15 +555,50 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
-  sheetTitle: { color: colors.text, fontSize: 17, fontFamily: font.bold },
+  headRight: { flexDirection: "row", alignItems: "center", gap: 16 },
+  sheetTitle: { color: colors.text, fontSize: 15, fontFamily: font.bold },
   sheetScroll: { padding: 16, gap: 10, paddingBottom: 32 },
-  fullImg: {
+  imageWrap: {
     width: "100%",
     height: 240,
     borderRadius: 10,
     backgroundColor: colors.card,
     borderWidth: 1,
     borderColor: colors.border,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fullImg: { width: "100%", height: "100%" },
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  iconBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.accent,
+    backgroundColor: colors.accentSoft,
+  },
+  iconBtnText: { color: colors.accent, fontFamily: font.semibold, fontSize: 13 },
+  swipeHint: { color: colors.textFaint, fontSize: 12, fontFamily: font.regular },
+  captionInput: {
+    color: colors.text,
+    fontSize: 14,
+    fontFamily: font.regular,
+    backgroundColor: colors.row,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 10,
+    padding: 12,
+    minHeight: 48,
+    textAlignVertical: "top",
   },
   fieldLabel: {
     color: colors.textDim,

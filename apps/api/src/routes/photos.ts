@@ -88,25 +88,51 @@ photos.delete("/:id", async (c) => {
 
 /**
  * PATCH /photos/:id
- * Body: { tag: string }
+ * Body: { tag?: string, caption?: string, rotation?: number }
  *
- * Re-tag a photo (used by the photo-management editor when the inspector
- * corrects the AI's auto-classification). Clears the stored aiAnalysis
- * because the previous findings were extracted for the OLD tag's field
- * map — the client re-runs /ai/analyze afterward to repopulate.
+ * Edits a photo from the management editor:
+ *   • tag      — re-tag (correcting the AI auto-classifier). Changing the
+ *                tag clears the stored aiAnalysis because the old findings
+ *                were extracted for the OLD tag's field map; the client
+ *                re-runs /ai/analyze afterward to repopulate.
+ *   • caption  — inspector caption printed under the photo in the report.
+ *   • rotation — display rotation in degrees (normalized to 0/90/180/270).
  */
 photos.patch("/:id", async (c) => {
   const id = c.req.param("id");
   const body = await c.req.json().catch(() => ({}));
-  const tag = typeof body?.tag === "string" ? body.tag.trim() : "";
-  if (!tag) return c.json({ error: "missing_tag" }, 400);
 
   const photo = await store.getPhoto(id);
   if (!photo) return c.json({ error: "not_found" }, 404);
 
-  if (tag === photo.tag) return c.json(await withUrl(photo));
+  const next: typeof photo = { ...photo };
+  let changed = false;
 
-  const updated = await store.putPhoto({ ...photo, tag, aiAnalysis: null });
+  if (typeof body?.tag === "string") {
+    const tag = body.tag.trim();
+    if (tag && tag !== photo.tag) {
+      next.tag = tag;
+      next.aiAnalysis = null; // stale findings were for the old tag
+      changed = true;
+    }
+  }
+  if (typeof body?.caption === "string") {
+    const caption = body.caption.trim();
+    if (caption !== (photo.caption ?? "")) {
+      next.caption = caption || undefined;
+      changed = true;
+    }
+  }
+  if (typeof body?.rotation === "number" && Number.isFinite(body.rotation)) {
+    const rotation = ((Math.round(body.rotation / 90) * 90) % 360 + 360) % 360;
+    if (rotation !== (photo.rotation ?? 0)) {
+      next.rotation = rotation || undefined;
+      changed = true;
+    }
+  }
+
+  if (!changed) return c.json(await withUrl(photo));
+  const updated = await store.putPhoto(next);
   return c.json(await withUrl(updated));
 });
 

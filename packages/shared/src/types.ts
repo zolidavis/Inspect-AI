@@ -91,6 +91,10 @@ export const PhotoSchema = z.object({
   storageKey: z.string(),
   url: z.string().url().optional(),
   capturedAt: z.string(),
+  /** Inspector-written caption, printed under the photo in the report. */
+  caption: z.string().optional(),
+  /** Display rotation in degrees (0/90/180/270), applied in-app + in the PDF. */
+  rotation: z.number().int().optional(),
   aiAnalysis: z
     .object({
       summary: z.string(),

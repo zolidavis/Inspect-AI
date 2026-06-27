@@ -125,6 +125,20 @@ export const api = {
       body: JSON.stringify({ tag }),
     }),
 
+  /** Save an inspector caption (printed under the photo in the report). */
+  setPhotoCaption: (photoId: string, caption: string) =>
+    req<Photo>(`/photos/${photoId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ caption }),
+    }),
+
+  /** Set display rotation in degrees (0/90/180/270). */
+  setPhotoRotation: (photoId: string, rotation: number) =>
+    req<Photo>(`/photos/${photoId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ rotation }),
+    }),
+
   pdfUrl: (inspectionId: string, type: InspectionType) =>
     `${BASE}/pdf/${inspectionId}?type=${type}&v=${Date.now()}`,
 

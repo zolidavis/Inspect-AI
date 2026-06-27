@@ -5,7 +5,7 @@
  * shapes validated by the Zod form schemas in @inspect-ai/shared/forms/*
  * before write.
  */
-import { pgTable, text, jsonb, index } from "drizzle-orm/pg-core";
+import { pgTable, text, jsonb, integer, index } from "drizzle-orm/pg-core";
 
 export const inspections = pgTable(
   "inspections",
@@ -77,6 +77,8 @@ export const photos = pgTable(
     // { summary: string, findings: [...] } per the AI analyze route
     aiAnalysis: jsonb("ai_analysis"),
     capturedAt: text("captured_at").notNull(),
+    caption: text("caption"),
+    rotation: integer("rotation"),
   },
   (t) => ({
     inspectionIdx: index("photos_inspection_idx").on(t.inspectionId),

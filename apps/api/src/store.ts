@@ -92,6 +92,8 @@ function rowToPhoto(row: PhotoRow): Photo {
     storageKey: row.storageKey,
     aiAnalysis: (row.aiAnalysis as Photo["aiAnalysis"]) ?? undefined,
     capturedAt: row.capturedAt,
+    caption: row.caption ?? undefined,
+    rotation: row.rotation ?? undefined,
   };
 }
 
@@ -103,6 +105,8 @@ function photoToRow(p: Photo) {
     storageKey: p.storageKey,
     aiAnalysis: p.aiAnalysis ?? null,
     capturedAt: p.capturedAt,
+    caption: p.caption ?? null,
+    rotation: p.rotation ?? null,
   };
 }
 

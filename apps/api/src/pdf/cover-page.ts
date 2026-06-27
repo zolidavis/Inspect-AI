@@ -58,49 +58,62 @@ function decodeDataUri(uri: string): { bytes: Uint8Array; mime: string } | null 
   }
 }
 
-/** Build a 1-page PDF with the cover, returns Uint8Array bytes. Caller
- *  merges via pdf-lib's copyPages flow. Returns empty PDF if no logo.
+/** Friendly label for the inspector license-type enum. */
+function licenseTypeLabel(v: string | undefined): string {
+  switch (v) {
+    case "home_inspector": return "Home Inspector";
+    case "building_code_inspector": return "Building Code Inspector";
+    case "contractor": return "Contractor";
+    case "engineer": return "Professional Engineer";
+    case "architect": return "Professional Architect";
+    case "other_authorized": return "Other Authorized";
+    default: return "";
+  }
+}
+
+/** Build a 1-page title PDF (logo + qualified-inspector block + client).
+ *  Always renders a title page; the logo is optional. Caller merges via
+ *  pdf-lib's copyPages flow.
  */
 export async function buildCoverPage(
   inspection: Inspection,
 ): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
-  if (!inspection.businessLogoPng) return await doc.save();
-
-  const decoded = decodeDataUri(inspection.businessLogoPng);
-  if (!decoded) return await doc.save();
-
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const fontBold = await doc.embedFont(StandardFonts.HelveticaBold);
-
-  let img: PDFImage;
-  try {
-    img =
-      decoded.mime === "image/png"
-        ? await doc.embedPng(decoded.bytes)
-        : await doc.embedJpg(decoded.bytes);
-  } catch {
-    // Couldn't embed (corrupt / unknown subtype) — bail with empty.
-    return await doc.save();
-  }
-
   const page = doc.addPage([PAGE_W, PAGE_H]);
 
-  // ── Logo block (top, ~220pt tall max — leaves room for inspector
-  //    block directly under it) ──────────────────────────────────────
-  const logoMaxW = PAGE_W - 2 * MARGIN;
-  const logoMaxH = 220;
-  const logoScale = Math.min(logoMaxW / img.width, logoMaxH / img.height);
-  const logoW = img.width * logoScale;
-  const logoH = img.height * logoScale;
-  const logoX = (PAGE_W - logoW) / 2;
+  // ── Logo block (top, ~220pt tall max) — optional ───────────────────
   const logoTopY = PAGE_H - 80; // y in pdf-lib coords (origin bottom-left)
-  const logoY = logoTopY - logoH;
-  page.drawImage(img, { x: logoX, y: logoY, width: logoW, height: logoH });
+  let logoY = logoTopY;         // bottom of logo; stays at top if no logo
+  const decoded = inspection.businessLogoPng
+    ? decodeDataUri(inspection.businessLogoPng)
+    : null;
+  if (decoded) {
+    let img: PDFImage | null = null;
+    try {
+      img =
+        decoded.mime === "image/png"
+          ? await doc.embedPng(decoded.bytes)
+          : await doc.embedJpg(decoded.bytes);
+    } catch {
+      img = null; // corrupt/unknown subtype — skip logo, keep the page
+    }
+    if (img) {
+      const logoMaxW = PAGE_W - 2 * MARGIN;
+      const logoMaxH = 220;
+      const logoScale = Math.min(logoMaxW / img.width, logoMaxH / img.height);
+      const logoW = img.width * logoScale;
+      const logoH = img.height * logoScale;
+      const logoX = (PAGE_W - logoW) / 2;
+      logoY = logoTopY - logoH;
+      page.drawImage(img, { x: logoX, y: logoY, width: logoW, height: logoH });
+    }
+  }
 
-  // ── INSPECTOR / COMPANY block — DIRECTLY under the logo ────────────
-  // Label/value pairs, with a divider line above + below for visual
-  // separation from the logo and the "INSPECTION REPORT" title.
+  // ── QUALIFIED INSPECTOR block — DIRECTLY under the logo ────────────
+  // Mirrors the profile's "Qualified Inspector" fields, with a divider
+  // line above + below for visual separation.
   const LABEL_W = 140;
   const ROW_H = 18;
   const DIVIDER_INSET = 60;
@@ -109,13 +122,23 @@ export async function buildCoverPage(
   const push = (label: string, value: string | undefined) => {
     if (value && value.trim()) inspectorRows.push({ label, value: value.trim() });
   };
-  push("Inspector", inspection.inspectorName);
-  push("License #", inspection.inspectorLicense);
-  push("Company",   inspection.inspectorCompany);
-  push("Phone",     inspection.inspectorPhone);
-  push("Email",     inspection.inspectorEmail);
+  push("Inspector",    inspection.inspectorName);
+  push("License type", licenseTypeLabel((inspection as any).inspectorLicenseType));
+  push("License #",    inspection.inspectorLicense);
+  push("Company",      inspection.inspectorCompany);
+  push("Phone",        inspection.inspectorPhone);
+  push("Email",        inspection.inspectorEmail);
 
-  const blockTop = logoY - 24; // top divider sits 24pt below logo bottom
+  // "QUALIFIED INSPECTOR" caption above the divider.
+  const captionY = logoY - 26;
+  const caption = "QUALIFIED INSPECTOR";
+  const capW = fontBold.widthOfTextAtSize(caption, 9);
+  page.drawText(caption, {
+    x: (PAGE_W - capW) / 2, y: captionY, size: 9,
+    font: fontBold, color: rgb(0.45, 0.5, 0.6),
+  });
+
+  const blockTop = captionY - 12; // top divider below the caption
   let cursorY = blockTop;
   // Top divider
   page.drawLine({
