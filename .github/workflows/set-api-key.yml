@@ -40,6 +40,14 @@ jobs:
         with:
           node-version: "22"
 
+      - uses: pnpm/action-setup@v4
+        # Omit `with.version` — conflicts with packageManager in root package.json.
+
+      - name: Install dependencies
+        # eas env:* commands resolve the Expo config, which needs the
+        # app's node_modules (config plugins like expo-router).
+        run: pnpm install --dangerously-allow-all-builds
+
       - uses: expo/expo-github-action@v8
         with:
           eas-version: latest
