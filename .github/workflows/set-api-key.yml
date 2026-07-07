@@ -77,8 +77,9 @@ jobs:
 
       - name: Verify variable exists
         working-directory: apps/mobile
+        # NOTE: `eas env:list` does not accept --non-interactive.
         run: |
-          eas env:list --environment production --non-interactive | grep -q EXPO_PUBLIC_API_KEY
+          eas env:list --environment production | grep -q EXPO_PUBLIC_API_KEY
           echo "EXPO_PUBLIC_API_KEY present in production environment ✓"
 
   vercel-lock:
