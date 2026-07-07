@@ -7,6 +7,16 @@ export const photos = new Hono();
 
 const URL_TTL_SECONDS = Number(process.env.PHOTO_URL_TTL_SECONDS ?? "3600");
 
+const MAX_UPLOAD_BYTES = 15 * 1024 * 1024; // 15 MB
+const ALLOWED_MIME = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+]);
+const MAX_CAPTION_CHARS = 500;
+
 /** Add a fresh signed URL onto a stored Photo. */
 async function withUrl(p: Photo): Promise<Photo> {
   try {
@@ -34,6 +44,14 @@ photos.post("/", async (c) => {
   }
   if (!(await store.getInspection(inspectionId))) {
     return c.json({ error: "inspection_not_found" }, 404);
+  }
+
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return c.json({ error: "file too large (max 15 MB)" }, 413);
+  }
+  const mime = file.type || "image/jpeg";
+  if (!ALLOWED_MIME.has(mime)) {
+    return c.json({ error: `unsupported file type: ${mime}` }, 415);
   }
 
   const id = crypto.randomUUID();
@@ -117,7 +135,7 @@ photos.patch("/:id", async (c) => {
     }
   }
   if (typeof body?.caption === "string") {
-    const caption = body.caption.trim();
+    const caption = body.caption.trim().slice(0, MAX_CAPTION_CHARS);
     if (caption !== (photo.caption ?? "")) {
       next.caption = caption || undefined;
       changed = true;

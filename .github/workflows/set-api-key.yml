@@ -1,0 +1,101 @@
+name: Set API key
+
+# One-off/occasional admin workflow for the shared API key (see
+# apps/api/src/app.ts auth middleware). The key value lives ONLY in the
+# repo secret INSPECT_AI_API_KEY — never in committed files (repo is
+# public). GitHub masks secret values in logs.
+#
+# Rollout order matters:
+#   1. target=eas      → installs EXPO_PUBLIC_API_KEY as an EAS env var so
+#                        the next mobile build sends the key.
+#   2. build + install the new APK.
+#   3. target=vercel-lock → sets API_KEY on the Vercel project (production).
+#                        After this, redeploy the API (deploy-api workflow)
+#                        and every request without the key gets a 401 —
+#                        older APKs stop working by design.
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Where to install the key"
+        required: true
+        default: "eas"
+        type: choice
+        options:
+          - eas
+          - vercel-lock
+
+env:
+  NODE_OPTIONS: "--no-deprecation"
+
+jobs:
+  eas:
+    if: inputs.target == 'eas'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install EXPO_PUBLIC_API_KEY (preview + production environments)
+        working-directory: apps/mobile
+        env:
+          KEY: ${{ secrets.INSPECT_AI_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$KEY" ]; then
+            echo "INSPECT_AI_API_KEY repo secret is not set" >&2
+            exit 1
+          fi
+          for ENVIRONMENT in preview production; do
+            # Create, or fall back to update if the variable already exists.
+            eas env:create --scope project \
+              --name EXPO_PUBLIC_API_KEY --value "$KEY" \
+              --environment "$ENVIRONMENT" --visibility sensitive \
+              --type string --non-interactive \
+            || eas env:update \
+              --variable-name EXPO_PUBLIC_API_KEY \
+              --variable-environment "$ENVIRONMENT" \
+              --value "$KEY" --non-interactive
+          done
+
+      - name: Verify variable exists
+        working-directory: apps/mobile
+        run: |
+          eas env:list --environment production --non-interactive | grep -q EXPO_PUBLIC_API_KEY
+          echo "EXPO_PUBLIC_API_KEY present in production environment ✓"
+
+  vercel-lock:
+    if: inputs.target == 'vercel-lock'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Set API_KEY on Vercel (production)
+        working-directory: apps/api
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          KEY: ${{ secrets.INSPECT_AI_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "$KEY" ]; then
+            echo "INSPECT_AI_API_KEY repo secret is not set" >&2
+            exit 1
+          fi
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN" \
+            || vercel link --yes --token="$VERCEL_TOKEN"
+          # Replace any existing value, then add the current one.
+          vercel env rm API_KEY production --yes --token="$VERCEL_TOKEN" || true
+          printf '%s' "$KEY" | vercel env add API_KEY production --token="$VERCEL_TOKEN"
+          echo "API_KEY set on production. Redeploy the API (deploy-api workflow) to activate."

@@ -20,11 +20,27 @@ const BASE =
   (Constants.expoConfig?.extra?.apiBaseUrl as string) ??
   "http://localhost:8787";
 
+/**
+ * Shared API key. Baked in at EAS build time via the EXPO_PUBLIC_API_KEY
+ * env var (stored as an EAS environment variable — NOT committed, the repo
+ * is public). When empty (local dev against a keyless server) no auth is
+ * sent, and the dev server allows everything when its API_KEY env is unset.
+ */
+const API_KEY =
+  process.env.EXPO_PUBLIC_API_KEY ??
+  (Constants.expoConfig?.extra?.apiKey as string | undefined) ??
+  "";
+
+function authHeaders(): Record<string, string> {
+  return API_KEY ? { "x-api-key": API_KEY } : {};
+}
+
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders(),
       ...(init?.headers ?? {}),
     },
   });
@@ -100,7 +116,13 @@ export const api = {
       name: `${params.tag}-${Date.now()}.jpg`,
       type: "image/jpeg",
     });
-    const res = await fetch(`${BASE}/photos`, { method: "POST", body: form as any });
+    // NOTE: auth header only — do NOT set Content-Type here; FormData must
+    // set its own multipart boundary.
+    const res = await fetch(`${BASE}/photos`, {
+      method: "POST",
+      headers: authHeaders(),
+      body: form as any,
+    });
     if (!res.ok) throw new Error(`upload failed: ${res.status}`);
     return res.json();
   },
@@ -139,8 +161,11 @@ export const api = {
       body: JSON.stringify({ rotation }),
     }),
 
+  // The PDF is fetched as a plain URL (FileSystem.downloadAsync), so auth
+  // rides in the `key` query param instead of a header.
   pdfUrl: (inspectionId: string, type: InspectionType) =>
-    `${BASE}/pdf/${inspectionId}?type=${type}&v=${Date.now()}`,
+    `${BASE}/pdf/${inspectionId}?type=${type}&v=${Date.now()}` +
+    (API_KEY ? `&key=${encodeURIComponent(API_KEY)}` : ""),
 
   getSuggestions: (inspectionId: string) =>
     req<{ suggestions: Suggestion[] }>(`/inspections/${inspectionId}/suggestions`),
@@ -159,7 +184,10 @@ export const api = {
    * Rejects with a CompleteError carrying per-form field errors on 400.
    */
   completeInspection: async (inspectionId: string): Promise<Inspection> => {
-    const res = await fetch(`${BASE}/inspections/${inspectionId}/complete`, { method: "POST" });
+    const res = await fetch(`${BASE}/inspections/${inspectionId}/complete`, {
+      method: "POST",
+      headers: authHeaders(),
+    });
     if (res.ok) return res.json();
     if (res.status === 400) {
       const body = await res.json();

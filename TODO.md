@@ -43,7 +43,8 @@ _(nothing — last active item, Google OAuth, was verified end-to-end on device 
 
 ## 📋 Backlog (real features, deferred)
 
-- [ ] **Server-side auth.** `Inspection` rows are not yet tied to a user. Google OAuth provides `providerUserId`; server needs to validate the Google id_token, upsert a `users` row, then enforce `WHERE inspector_id = ?` on inspections. Mobile API client needs to attach a bearer token. (~3h)
+- [x] **API key gate (v1 auth).** Shared-key middleware in `apps/api/src/app.ts` — server env `API_KEY` (Vercel), mobile `EXPO_PUBLIC_API_KEY` (EAS env var, both stored via repo secret `INSPECT_AI_API_KEY` + the "Set API key" workflow — NEVER committed, repo is public). Accepts `Bearer`/`x-api-key`/`?key=` (query form is for the PDF download URL). Dev stays keyless when `API_KEY` unset. Upload validation added too (15 MB cap, image MIME allowlist, 500-char captions).
+- [ ] **Server-side per-user auth.** `Inspection` rows are not yet tied to a user. Google OAuth provides `providerUserId`; server needs to validate the Google id_token, upsert a `users` row, then enforce `WHERE inspector_id = ?` on inspections. Mobile API client needs to attach a bearer token. (~3h)
 - [ ] **Offline mode.** No `expo-sqlite` mirror + sync queue yet. Florida inspectors do field work in spotty cell coverage. (~4–6h)
 - [ ] **County permit scrapers.** Miami-Dade, Broward, Hillsborough, Orange first. RentCast doesn't return permits reliably. (~1–2h per county)
 - [ ] **Mobile API retry/queue.** `apps/mobile/lib/api.ts` is fire-and-forget. Photo uploads especially should retry on transient network failures.
