@@ -17,6 +17,36 @@ const ALLOWED_MIME = new Set([
 ]);
 const MAX_CAPTION_CHARS = 500;
 
+/**
+ * Detect the real image type from the file's magic bytes, ignoring the
+ * client-declared Content-Type (which is trivially spoofable — you could
+ * upload HTML/SVG/JS while claiming image/png). Returns a canonical MIME
+ * from ALLOWED_MIME, or null if the bytes aren't a recognized raster image.
+ */
+function sniffImageMime(b: Uint8Array): string | null {
+  if (b.length < 12) return null;
+  // JPEG: FF D8 FF
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  // PNG: 89 50 4E 47 0D 0A 1A 0A
+  if (
+    b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47 &&
+    b[4] === 0x0d && b[5] === 0x0a && b[6] === 0x1a && b[7] === 0x0a
+  )
+    return "image/png";
+  // WEBP: "RIFF"...."WEBP"
+  if (
+    b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
+    b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50
+  )
+    return "image/webp";
+  // HEIC/HEIF: ISO-BMFF "ftyp" at offset 4, then a HEIF-family brand.
+  if (b[4] === 0x66 && b[5] === 0x74 && b[6] === 0x79 && b[7] === 0x70) {
+    const brand = String.fromCharCode(b[8]!, b[9]!, b[10]!, b[11]!);
+    if (/hei|hev|mif|msf/i.test(brand)) return "image/heic";
+  }
+  return null;
+}
+
 /** Add a fresh signed URL onto a stored Photo. */
 async function withUrl(p: Photo): Promise<Photo> {
   try {
@@ -49,17 +79,21 @@ photos.post("/", async (c) => {
   if (file.size > MAX_UPLOAD_BYTES) {
     return c.json({ error: "file too large (max 15 MB)" }, 413);
   }
-  const mime = file.type || "image/jpeg";
-  if (!ALLOWED_MIME.has(mime)) {
-    return c.json({ error: `unsupported file type: ${mime}` }, 415);
-  }
 
   const id = crypto.randomUUID();
   const key = buildPhotoKey(inspectionId, id, file.name || "photo.jpg");
   const bytes = new Uint8Array(await file.arrayBuffer());
 
+  // Trust the bytes, not the client-declared type. This is the real upload
+  // guard: reject anything that isn't a recognized raster image, and store
+  // the sniffed Content-Type (so a spoofed image/png can't be served as HTML).
+  const sniffed = sniffImageMime(bytes);
+  if (!sniffed || !ALLOWED_MIME.has(sniffed)) {
+    return c.json({ error: "unsupported or unrecognized image" }, 415);
+  }
+
   try {
-    await storage.put(key, bytes, { contentType: file.type || "image/jpeg" });
+    await storage.put(key, bytes, { contentType: sniffed });
   } catch (err) {
     console.error("[photos] storage.put failed", err);
     return c.json({ error: "upload_failed" }, 502);

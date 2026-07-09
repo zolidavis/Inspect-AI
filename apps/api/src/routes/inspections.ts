@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import {
   AddressSchema,
   FourPoint,
+  InspectionSchema,
   InspectionTypeSchema,
   InspectorLicenseTypeSchema,
   WindMit,
@@ -11,6 +12,18 @@ import { z } from "zod";
 import { store } from "../store.js";
 
 export const inspections = new Hono();
+
+// Allowlist for PATCH: every editable field, validated. Lifecycle fields the
+// client must NOT set directly are omitted — `type` is fixed at create, and
+// `status` may only reach "complete" through the Zod-gated /complete flow.
+const PatchBody = InspectionSchema.omit({
+  id: true,
+  type: true,
+  status: true,
+  photos: true,
+  createdAt: true,
+  updatedAt: true,
+}).partial();
 
 const CreateBody = z.object({
   type: InspectionTypeSchema,
@@ -70,11 +83,14 @@ inspections.get("/:id", async (c) => {
 inspections.patch("/:id", async (c) => {
   const existing = await store.getInspection(c.req.param("id"));
   if (!existing) return c.json({ error: "not_found" }, 404);
-  const patch = await c.req.json();
+  const parsed = PatchBody.safeParse(await c.req.json().catch(() => ({})));
+  if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
   const next: Inspection = {
     ...existing,
-    ...patch,
+    ...parsed.data,
     id: existing.id,
+    type: existing.type,
+    status: existing.status,
     createdAt: existing.createdAt,
     updatedAt: new Date().toISOString(),
   };

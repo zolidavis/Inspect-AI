@@ -14,8 +14,28 @@ import { suggestions } from "./routes/suggestions";
  * serverless functions (via `hono/vercel` from `../api/index.ts`).
  */
 export const app = new Hono();
-app.use("*", logger());
+
+// Redact the `?key=` credential (used by plain-URL PDF downloads) from the
+// request log — hono's logger writes the full path incl. query string, which
+// would otherwise leak the shared API key into Vercel logs on every PDF fetch.
+const redactKey = (msg: string, ...rest: string[]) =>
+  console.log(msg.replace(/([?&]key=)[^&\s]+/gi, "$1[REDACTED]"), ...rest);
+app.use("*", logger(redactKey));
 app.use("*", cors());
+
+/** Length-checked constant-time string compare (Edge-safe, no node:crypto). */
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+// Never leak internal errors/stack traces to clients.
+app.onError((err, c) => {
+  console.error("[api] unhandled error", err);
+  return c.json({ error: "internal_error" }, 500);
+});
 
 // --- API key auth -----------------------------------------------------
 // Shared-key gate (v1 — not per-user auth). If API_KEY is unset (local dev
@@ -43,7 +63,11 @@ app.use("*", async (c, next) => {
   const headerKey = c.req.header("x-api-key") ?? "";
   const queryKey = c.req.query("key") ?? "";
 
-  if (bearer === required || headerKey === required || queryKey === required) {
+  if (
+    safeEqual(bearer, required) ||
+    safeEqual(headerKey, required) ||
+    safeEqual(queryKey, required)
+  ) {
     return next();
   }
   return c.json({ error: "unauthorized" }, 401);
